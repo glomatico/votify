@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import datetime
 from pathlib import Path
 
 from .downloader import Downloader
-from .models import Lyrics, StreamInfo
+from .models import Lyrics
 
 
 class DownloaderSong:

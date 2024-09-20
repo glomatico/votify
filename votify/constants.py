@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .enums import Quality
 
 EXCLUDED_CONFIG_FILE_PARAMS = (
