@@ -176,10 +176,10 @@ def load_config_file(
     help="Path to aria2c binary.",
 )
 @click.option(
-    "--playplay-path",
+    "--unplayplay-path",
     type=str,
-    default=downloader_sig.parameters["playplay_path"].default,
-    help="Path to playplay binary.",
+    default=downloader_sig.parameters["unplayplay_path"].default,
+    help="Path to unplayplay binary.",
 )
 @click.option(
     "--template-folder-album",
@@ -268,7 +268,7 @@ def main(
     temp_path: Path,
     download_mode: DownloadMode,
     aria2c_path: str,
-    playplay_path: str,
+    unplayplay_path: str,
     template_folder_album: str,
     template_folder_compilation: str,
     template_file_single_disc: str,
@@ -296,7 +296,7 @@ def main(
         temp_path,
         download_mode,
         aria2c_path,
-        playplay_path,
+        unplayplay_path,
         template_folder_album,
         template_folder_compilation,
         template_file_single_disc,
@@ -315,8 +315,8 @@ def main(
         downloader,
     )
     if not lrc_only:
-        if not downloader.playplay_path_full:
-            logger.critical(X_NOT_FOUND_STRING.format("playplay", playplay_path))
+        if not downloader.unplayplay_path_full:
+            logger.critical(X_NOT_FOUND_STRING.format("playplay", unplayplay_path))
             return
         if download_mode == DownloadMode.ARIA2C and not downloader.aria2c_path_full:
             logger.critical(X_NOT_FOUND_STRING.format("aria2c", aria2c_path))

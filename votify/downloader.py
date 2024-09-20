@@ -48,7 +48,7 @@ class Downloader:
         temp_path: Path = Path("./temp"),
         download_mode: DownloadMode = DownloadMode.YTDLP,
         aria2c_path: Path = "aria2c",
-        playplay_path: Path = "playplay",
+        unplayplay_path: Path = "unplayplay",
         template_folder_album: str = "{album_artist}/{album}",
         template_folder_compilation: str = "Compilations/{album}",
         template_file_single_disc: str = "{track:02d} {title}",
@@ -67,7 +67,7 @@ class Downloader:
         self.temp_path = temp_path
         self.download_mode = download_mode
         self.aria2c_path = aria2c_path
-        self.playplay_path = playplay_path
+        self.unplayplay_path = unplayplay_path
         self.template_folder_album = template_folder_album
         self.template_folder_compilation = template_folder_compilation
         self.template_file_single_disc = template_file_single_disc
@@ -86,7 +86,7 @@ class Downloader:
 
     def _set_binaries_full_path(self):
         self.aria2c_path_full = shutil.which(self.aria2c_path)
-        self.playplay_path_full = shutil.which(self.playplay_path)
+        self.unplayplay_path_full = shutil.which(self.unplayplay_path)
 
     def _set_exclude_tags_list(self):
         self.exclude_tags_list = (
@@ -292,7 +292,7 @@ class Downloader:
         obfuscated = playplay_license_response.obfuscated_key.hex()
         output = subprocess.check_output(
             [
-                self.playplay_path_full,
+                self.unplayplay_path_full,
                 file_id,
                 obfuscated,
             ],
