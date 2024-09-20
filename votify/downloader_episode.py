@@ -32,7 +32,9 @@ class DownloaderEpisode:
             "track": next(
                 index
                 for index in range(1, len(show_metadata["episodes"]["items"]) + 1)
-                if show_metadata["episodes"]["items"][index - 1]["id"]
+                if show_metadata["episodes"]["items"][
+                    len(show_metadata["episodes"]["items"]) - index
+                ]["id"]
                 == episode_metadata["id"]
             ),
             "url": f"https://open.spotify.com/episode/{episode_metadata['id']}",
