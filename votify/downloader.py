@@ -346,42 +346,17 @@ class Downloader:
         decryption_key: bytes,
         encrypted_path: Path,
         decrypted_path: Path,
-        iv_diff: int = 0x100,
     ):
-        with encrypted_path.open("rb") as encrypted_file:
-            encrypted_buffer = encrypted_file.read()
-            iv_int = int.from_bytes(
-                b"r\xe0g\xfb\xdd\xcb\xcfw\xeb\xe8\xbcd?c\r\x93", "big"
-            )
-            chunk_size = 4096
-            decrypted_buffer = BytesIO()
-            chunk_count = len(encrypted_buffer) // chunk_size
-
-            for chunk_index in range(chunk_count + 1):
-                chunk = encrypted_buffer[
-                    chunk_index * chunk_size : (chunk_index + 1) * chunk_size
-                ]
-                iv = iv_int + (chunk_index * (chunk_size // 16))
-
-                for i in range(0, len(chunk), chunk_size):
-                    cipher = AES.new(
-                        key=decryption_key,
-                        mode=AES.MODE_CTR,
-                        counter=Counter.new(128, initial_value=iv),
-                    )
-                    block = chunk[i : i + chunk_size]
-                    decrypted_chunk = cipher.decrypt(block)
-                    decrypted_buffer.write(decrypted_chunk)
-
-                    iv += iv_diff
-
-            decrypted_buffer.seek(0)
-            decrypted_content = decrypted_buffer.read()
-
-            assert decrypted_content.startswith(b"OggS"), "Decryption failed"
-
-            with decrypted_path.open("wb") as decrypted_file:
-                decrypted_file.write(decrypted_content[167:])
+        cipher = AES.new(
+            decryption_key,
+            AES.MODE_CTR,
+            nonce=bytes.fromhex("72e067fbddcbcf77"),
+            initial_value=bytes.fromhex("ebe8bc643f630d93"),
+        )
+        skip = 167
+        with decrypted_path.open("wb") as decrypted_file:
+            with encrypted_path.open("rb") as encrypted_file:
+                decrypted_file.write(cipher.decrypt(encrypted_file.read())[skip:])
 
     def get_sanitized_string(self, dirty_string: str, is_folder: bool) -> str:
         dirty_string = re.sub(
