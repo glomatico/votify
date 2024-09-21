@@ -94,7 +94,7 @@ class DownloaderSong:
                     if i["disc_number"] == disc
                 )
             ),
-            "url": f"https://open.spotify.com/track/{track_metadata['id']}",
+            "url": track_metadata["linked_from"]["external_urls"]["spotify"],
         }
         return tags
 
