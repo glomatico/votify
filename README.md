@@ -1,6 +1,8 @@
 # Votify
 A Python CLI app for downloading songs/podcasts from Spotify in Vorbis (OGG).
 
+**Discord Server:** https://discord.gg/aBjMEZ9tnq
+
 ## Features
 * Download songs and podcasts in Vorbis 96/128kbps or in 320kbps with a premium account
 * Download synced lyrics
