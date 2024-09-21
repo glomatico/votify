@@ -22,4 +22,4 @@ requires = ["flit_core"]
 build-backend = "flit_core.buildapi"
 
 [project.scripts]
-spotify-web-downloader = "votify.cli:main"
+votify = "votify.cli:main"
