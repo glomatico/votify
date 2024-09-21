@@ -30,6 +30,7 @@ class DownloaderSong:
         external_urls = (track_metadata.get("linked_from") or track_metadata)[
             "external_urls"
         ]
+        track_id = self.downloader.get_media_id(track_metadata)
         release_date_datetime_obj = self.downloader.get_release_date_datetime_obj(
             album_metadata["release_date"],
             album_metadata["release_date_precision"],
@@ -46,9 +47,9 @@ class DownloaderSong:
         )["artists"]
         disc = next(
             (
-                i["disc_number"]
-                for i in album_metadata["tracks"]["items"]
-                if i["id"] == track_metadata["id"]
+                track["disc_number"]
+                for track in album_metadata["tracks"]["items"]
+                if self.downloader.get_media_id(track) == track_id
             ),
         )
         tags = {
@@ -84,17 +85,17 @@ class DownloaderSong:
             "track": int(
                 next(
                     (
-                        i["track_number"]
-                        for i in album_metadata["tracks"]["items"]
-                        if i["id"] == track_metadata["id"]
+                        track["track_number"]
+                        for track in album_metadata["tracks"]["items"]
+                        if self.downloader.get_media_id(track) == track_id
                     ),
                 )
             ),
             "track_total": int(
                 max(
-                    i["track_number"]
-                    for i in album_metadata["tracks"]["items"]
-                    if i["disc_number"] == disc
+                    track["track_number"]
+                    for track in album_metadata["tracks"]["items"]
+                    if track["disc_number"] == disc
                 )
             ),
             "url": external_urls["spotify"],

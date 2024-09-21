@@ -149,6 +149,9 @@ class Downloader:
             )
         return download_queue
 
+    def get_media_id(self, media_metadata: dict) -> str:
+        return (media_metadata.get("linked_from") or media_metadata)["id"]
+
     def get_playlist_tags(self, playlist_metadata: dict, playlist_track: int) -> dict:
         return {
             "playlist_artist": playlist_metadata["owner"]["display_name"],

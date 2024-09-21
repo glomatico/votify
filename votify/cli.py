@@ -349,17 +349,17 @@ def main(
             continue
         medias_metadata = download_queue.medias_metadata
         playlist_metadata = download_queue.playlist_metadata
-        for index, track_metadata in enumerate(medias_metadata, start=1):
+        for index, media_metadata in enumerate(medias_metadata, start=1):
             queue_progress = (
                 f"Track {index}/{len(medias_metadata)} from URL {url_index}/{len(urls)}"
             )
             try:
                 logger.info(
-                    f'({queue_progress}) Downloading "{track_metadata["name"]}"'
+                    f'({queue_progress}) Downloading "{media_metadata["name"]}"'
                 )
                 decrypted_path = None
-                media_id = track_metadata["id"]
-                media_type = track_metadata["type"]
+                media_id = downloader.get_media_id(media_metadata)
+                media_type = media_metadata["type"]
                 logger.debug("Getting stream info")
                 stream_info = downloader.get_stream_info(
                     **{f"{media_type}_id": media_id},
@@ -382,14 +382,14 @@ def main(
                     if not download_queue.album_metadata:
                         logger.debug("Getting album metadata")
                         album_metadata = spotify_api.get_album(
-                            track_metadata["album"]["id"]
+                            media_metadata["album"]["id"]
                         )
                     else:
                         album_metadata = download_queue.album_metadata
                     logger.debug("Getting track credits")
                     track_credits = spotify_api.get_track_credits(media_id)
                     tags = downloader_song.get_tags(
-                        track_metadata,
+                        media_metadata,
                         album_metadata,
                         track_credits,
                         lyrics.unsynced,
@@ -440,12 +440,12 @@ def main(
                     if not download_queue.show_metadata:
                         logger.debug("Getting show metadata")
                         show_metadata = spotify_api.get_show(
-                            track_metadata["show"]["id"]
+                            media_metadata["show"]["id"]
                         )
                     else:
                         show_metadata = download_queue.show_metadata
                     tags = downloader_episode.get_tags(
-                        track_metadata,
+                        media_metadata,
                         show_metadata,
                     )
                     if playlist_metadata:
@@ -462,7 +462,7 @@ def main(
                         ".ogg",
                     )
                     cover_path = downloader_episode.get_cover_path(final_path)
-                    cover_url = downloader_song.get_cover_url(track_metadata)
+                    cover_url = downloader_song.get_cover_url(media_metadata)
                     if final_path.exists() and not overwrite:
                         logger.warning(
                             f'({queue_progress}) Track already exists at "{final_path}", skipping'
@@ -501,7 +501,7 @@ def main(
             except Exception as e:
                 error_count += 1
                 logger.error(
-                    f'({queue_progress}) Failed to download "{track_metadata["name"]}"',
+                    f'({queue_progress}) Failed to download "{media_metadata["name"]}"',
                     exc_info=print_exceptions,
                 )
             finally:
