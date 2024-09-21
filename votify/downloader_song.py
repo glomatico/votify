@@ -27,6 +27,9 @@ class DownloaderSong:
         lyrics_unsynced: str,
     ) -> dict:
         external_ids = track_metadata.get("external_ids")
+        external_urls = (track_metadata.get("linked_from") or track_metadata)[
+            "external_urls"
+        ]
         release_date_datetime_obj = self.downloader.get_release_date_datetime_obj(
             album_metadata["release_date"],
             album_metadata["release_date_precision"],
@@ -94,7 +97,7 @@ class DownloaderSong:
                     if i["disc_number"] == disc
                 )
             ),
-            "url": track_metadata["linked_from"]["external_urls"]["spotify"],
+            "url": external_urls["spotify"],
         }
         return tags
 
