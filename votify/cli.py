@@ -120,7 +120,7 @@ def load_config_file(
 @click.option(
     "--config-path",
     type=Path,
-    default=Path.home() / ".spotify-web-downloader" / "config.json",
+    default=Path.home() / ".votify" / "config.json",
     help="Path to config file.",
 )
 @click.option(
