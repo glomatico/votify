@@ -15,6 +15,7 @@ from .downloader import Downloader
 from .downloader_episode import DownloaderEpisode
 from .downloader_song import DownloaderSong
 from .enums import DownloadMode, Quality
+from .models import Lyrics
 from .spotify_api import SpotifyApi
 
 spotify_api_sig = inspect.signature(SpotifyApi.__init__)
@@ -361,9 +362,8 @@ def main(
                 media_id = downloader.get_media_id(media_metadata)
                 media_type = media_metadata["type"]
                 logger.debug("Getting stream info")
-                stream_info = downloader.get_stream_info(
-                    **{f"{media_type}_id": media_id},
-                )
+                gid_metadata = downloader.get_gid_metadata(media_id, media_type)
+                stream_info = downloader.get_stream_info(gid_metadata, media_type)
                 if not stream_info.file_id:
                     logger.warning(
                         f"({queue_progress}) Media is not available on Spotify's "
@@ -377,8 +377,11 @@ def main(
                 logger.debug("Getting decryption key")
                 decryption_key = downloader.get_decryption_key(stream_info.file_id)
                 if media_type == "track":
-                    logger.debug("Getting lyrics")
-                    lyrics = downloader_song.get_lyrics(media_id)
+                    if gid_metadata.get("has_lyrics"):
+                        logger.debug("Getting lyrics")
+                        lyrics = downloader_song.get_lyrics(media_id)
+                    else:
+                        lyrics = Lyrics()
                     if not download_queue.album_metadata:
                         logger.debug("Getting album metadata")
                         album_metadata = spotify_api.get_album(

@@ -250,21 +250,26 @@ class Downloader:
                     return quality, audio_file
         return None, None
 
+    def get_gid_metadata(
+        self,
+        media_id: str,
+        media_type: str,
+    ) -> dict:
+        gid = self.spotify_api.media_id_to_gid(media_id)
+        return self.spotify_api.get_gid_metadata(gid, media_type)
+
     def get_stream_info(
         self,
-        track_id: str = None,
-        episode_id: str = None,
+        gid_metadata: dict,
+        media_type: str,
     ) -> StreamInfo:
-        if not track_id and not episode_id:
-            raise RuntimeError()
         stream_info = StreamInfo()
-        gid = self.spotify_api.media_id_to_gid(track_id or episode_id)
-        if track_id:
-            gid_metadata = self.spotify_api.get_gid_metadata(gid, "track")
+        if media_type == "track":
             audio_files = gid_metadata.get("file")
-        elif episode_id:
-            gid_metadata = self.spotify_api.get_gid_metadata(gid, "episode")
+        elif media_type == "episode":
             audio_files = gid_metadata.get("audio")
+        else:
+            raise RuntimeError()
         audio_files = audio_files or gid_metadata.get("alternative")
         if not audio_files:
             return stream_info
