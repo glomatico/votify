@@ -364,16 +364,16 @@ def main(
                 stream_info = downloader.get_stream_info(
                     **{f"{media_type}_id": media_id},
                 )
-                if stream_info.quality != quality:
-                    logger.warning(
-                        f"({queue_progress}) Quality has been changed to {stream_info.quality.value}"
-                    )
                 if not stream_info.file_id:
                     logger.warning(
                         f"({queue_progress}) Media is not available on Spotify's "
                         "servers and no alternative found, skipping"
                     )
                     continue
+                if stream_info.quality != quality:
+                    logger.warning(
+                        f"({queue_progress}) Quality has been changed to {stream_info.quality.value}"
+                    )
                 logger.debug("Getting decryption key")
                 decryption_key = downloader.get_decryption_key(stream_info.file_id)
                 if media_type == "track":
