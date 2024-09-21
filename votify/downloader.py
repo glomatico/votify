@@ -15,17 +15,17 @@ from Crypto.Util import Counter
 from mutagen.flac import Picture
 from mutagen.oggvorbis import OggVorbis, OggVorbisHeaderError
 from PIL import Image
+from yt_dlp import YoutubeDL
+
+from .constants import QUALITY_X_FORMAT_ID_MAPPING, VORBIS_TAGS_MAPPING
+from .enums import DownloadMode, Quality
+from .models import DownloadQueue, StreamInfo, UrlInfo
 from .playplay_pb2 import (
     AUDIO_TRACK,
     Interactivity,
     PlayPlayLicenseRequest,
     PlayPlayLicenseResponse,
 )
-from yt_dlp import YoutubeDL
-
-from .constants import QUALITY_X_FORMAT_ID_MAPPING, VORBIS_TAGS_MAPPING
-from .enums import DownloadMode, Quality
-from .models import DownloadQueue, StreamInfo, UrlInfo
 from .spotify_api import SpotifyApi
 from .utils import check_response
 
@@ -266,6 +266,8 @@ class Downloader:
         audio_files = audio_files or gid_metadata.get("alternative")
         if not audio_files:
             return stream_info
+        if audio_files[0].get("gid"):
+            audio_files = audio_files[0]["file"]
         quality, audio_file = self.get_audio_file(audio_files)
         if not audio_file:
             return stream_info
