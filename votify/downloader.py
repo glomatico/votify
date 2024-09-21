@@ -11,7 +11,6 @@ from pathlib import Path
 
 import requests
 from Crypto.Cipher import AES
-from Crypto.Util import Counter
 from mutagen.flac import Picture
 from mutagen.oggvorbis import OggVorbis, OggVorbisHeaderError
 from PIL import Image
