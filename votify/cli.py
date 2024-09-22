@@ -362,7 +362,7 @@ def main(
             continue
         for index, download_queue_item in enumerate(download_queue, start=1):
             queue_progress = (
-                f"Track {index}/{len(download_queue)}" f" from URL {url}/{len(urls)}"
+                f"Track {index}/{len(download_queue)} from URL {url_index}/{len(urls)}"
             )
             media_metadata = download_queue_item.media_metadata
             try:
