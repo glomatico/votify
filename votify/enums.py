@@ -1,10 +1,10 @@
 from enum import Enum
 
 
-class Quality(Enum):
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
+class AudioQuality(Enum):
+    VORBIS_HIGH = "high"
+    VORBIS_MEDIUM = "medium"
+    VORBIS_LOW = "low"
 
 
 class DownloadMode(Enum):

@@ -14,7 +14,7 @@ from .constants import EXCLUDED_CONFIG_FILE_PARAMS, X_NOT_FOUND_STRING
 from .downloader import Downloader
 from .downloader_episode import DownloaderEpisode
 from .downloader_song import DownloaderSong
-from .enums import DownloadMode, Quality
+from .enums import DownloadMode, AudioQuality
 from .spotify_api import SpotifyApi
 
 logger = logging.getLogger("votify")
@@ -118,11 +118,11 @@ def load_config_file(
 )
 # Downloader specific options
 @click.option(
-    "--quality",
-    "-q",
-    type=Quality,
-    default=downloader_sig.parameters["quality"].default,
-    help="Audio quality.",
+    "--audio-quality",
+    "-a",
+    type=AudioQuality,
+    default=downloader_sig.parameters["audio_quality"].default,
+    help="Audio quality for songs and podcasts.",
 )
 @click.option(
     "--output-path",
@@ -206,7 +206,6 @@ def load_config_file(
 )
 @click.option(
     "--save-cover",
-    "-s",
     is_flag=True,
     help="Save cover as a separate file.",
 )
@@ -261,7 +260,7 @@ def main(
     log_level: str,
     print_exceptions: bool,
     cookies_path: Path,
-    quality: Quality,
+    audio_quality: AudioQuality,
     output_path: Path,
     temp_path: Path,
     download_mode: DownloadMode,
@@ -293,7 +292,7 @@ def main(
     spotify_api = SpotifyApi(cookies_path)
     downloader = Downloader(
         spotify_api,
-        quality,
+        audio_quality,
         output_path,
         temp_path,
         download_mode,
@@ -331,7 +330,10 @@ def main(
         spotify_api.config_info["isPremium"] = (
             True if force_premium else spotify_api.config_info["isPremium"]
         )
-        if not spotify_api.config_info["isPremium"] and quality == Quality.HIGH:
+        if (
+            not spotify_api.config_info["isPremium"]
+            and audio_quality == AudioQuality.VORBIS_HIGH
+        ):
             logger.critical("Cannot download at chosen quality with a free account")
             return
     error_count = 0

@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 
 from .downloader import Downloader
-from .models import Lyrics, StreamInfo
+from .models import Lyrics, StreamInfoAudio
 
 logger = logging.getLogger("votify")
 
@@ -145,7 +145,7 @@ class DownloaderSong:
         track_metadata: dict = None,
         album_metadata: dict = None,
         gid_metadata: dict = None,
-        stream_info: StreamInfo = None,
+        stream_info: StreamInfoAudio = None,
         playlist_metadata: dict = None,
         playlist_track: int = None,
         decryption_key: bytes = None,
@@ -163,14 +163,14 @@ class DownloaderSong:
             gid_metadata = self.downloader.get_gid_metadata(track_id, "track")
         if not stream_info:
             logger.debug("Getting stream info")
-            stream_info = self.downloader.get_stream_info(gid_metadata, "track")
+            stream_info = self.downloader.get_stream_info_audio(gid_metadata, "track")
         if not stream_info.file_id:
             logger.warning(
                 "Track is not available on Spotify's "
                 "servers and no alternative found, skipping"
             )
             return
-        if stream_info.quality != self.downloader.quality:
+        if stream_info.quality != self.downloader.audio_quality:
             logger.warning(f"Quality has been changed to {stream_info.quality.value}")
         if gid_metadata.get("has_lyrics"):
             logger.debug("Getting lyrics")

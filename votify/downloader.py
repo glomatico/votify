@@ -19,8 +19,8 @@ from PIL import Image
 from yt_dlp import YoutubeDL
 
 from .constants import QUALITY_X_FORMAT_ID_MAPPING, VORBIS_TAGS_MAPPING
-from .enums import DownloadMode, Quality
-from .models import DownloadQueueItem, StreamInfo, UrlInfo
+from .enums import AudioQuality, DownloadMode
+from .models import DownloadQueueItem, StreamInfoAudio, UrlInfo
 from .playplay_pb2 import (
     AUDIO_TRACK,
     Interactivity,
@@ -44,7 +44,7 @@ class Downloader:
     def __init__(
         self,
         spotify_api: SpotifyApi,
-        quality: Quality = Quality.MEDIUM,
+        audio_quality: AudioQuality = AudioQuality.VORBIS_MEDIUM,
         output_path: Path = Path("./Spotify"),
         temp_path: Path = Path("./temp"),
         download_mode: DownloadMode = DownloadMode.YTDLP,
@@ -66,7 +66,7 @@ class Downloader:
         silence: bool = False,
     ):
         self.spotify_api = spotify_api
-        self.quality = quality
+        self.audio_quality = audio_quality
         self.output_path = output_path
         self.temp_path = temp_path
         self.download_mode = download_mode
@@ -333,9 +333,9 @@ class Downloader:
     def get_audio_file(
         self,
         audio_files: list[dict],
-    ) -> tuple[Quality, dict] | tuple[None, None]:
-        qualities = list(Quality)
-        start_index = qualities.index(self.quality)
+    ) -> tuple[AudioQuality, dict] | tuple[None, None]:
+        qualities = list(AudioQuality)
+        start_index = qualities.index(self.audio_quality)
         for quality in qualities[start_index:]:
             for audio_file in audio_files:
                 if audio_file["format"] == QUALITY_X_FORMAT_ID_MAPPING[quality]:
@@ -350,12 +350,12 @@ class Downloader:
         gid = self.spotify_api.media_id_to_gid(media_id)
         return self.spotify_api.get_gid_metadata(gid, media_type)
 
-    def get_stream_info(
+    def get_stream_info_audio(
         self,
         gid_metadata: dict,
         media_type: str,
-    ) -> StreamInfo:
-        stream_info = StreamInfo()
+    ) -> StreamInfoAudio:
+        stream_info = StreamInfoAudio()
         if media_type == "track":
             audio_files = gid_metadata.get("file")
         elif media_type == "episode":

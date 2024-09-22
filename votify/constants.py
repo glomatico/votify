@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .enums import Quality
+from .enums import AudioQuality
 
 EXCLUDED_CONFIG_FILE_PARAMS = (
     "urls",
@@ -33,9 +33,11 @@ VORBIS_TAGS_MAPPING = {
 }
 
 QUALITY_X_FORMAT_ID_MAPPING = {
-    Quality.HIGH: "OGG_VORBIS_320",
-    Quality.MEDIUM: "OGG_VORBIS_160",
-    Quality.LOW: "OGG_VORBIS_96",
+    AudioQuality.VORBIS_HIGH: "OGG_VORBIS_320",
+    AudioQuality.VORBIS_MEDIUM: "OGG_VORBIS_160",
+    AudioQuality.VORBIS_LOW: "OGG_VORBIS_96",
 }
 
 X_NOT_FOUND_STRING = "{} not found at {}"
+
+PREMIUM_SONG_QUALITIES = (AudioQuality.VORBIS_HIGH,)

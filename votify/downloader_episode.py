@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 from .downloader import Downloader
-from .models import StreamInfo
+from .models import StreamInfoAudio
 
 logger = logging.getLogger("votify")
 
@@ -68,7 +68,7 @@ class DownloaderEpisode:
         episode_metadata: dict = None,
         show_metadata: dict = None,
         gid_metadata: dict = None,
-        stream_info: StreamInfo = None,
+        stream_info: StreamInfoAudio = None,
         playlist_metadata: dict = None,
         playlist_track: int = None,
         decryption_key: bytes = None,
@@ -86,14 +86,14 @@ class DownloaderEpisode:
             gid_metadata = self.downloader.get_gid_metadata(episode_id, "episode")
         if not stream_info:
             logger.debug("Getting stream info")
-            stream_info = self.downloader.get_stream_info(gid_metadata, "episode")
+            stream_info = self.downloader.get_stream_info_audio(gid_metadata, "episode")
         if not stream_info.file_id:
             logger.warning(
                 "Episode is not available on Spotify's "
                 "servers and no alternative found, skipping"
             )
             return
-        if stream_info.quality != self.downloader.quality:
+        if stream_info.quality != self.downloader.audio_quality:
             logger.warning(f"Quality has been changed to {stream_info.quality.value}")
         tags = self.get_tags(
             episode_metadata,
