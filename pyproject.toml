@@ -1,6 +1,6 @@
 [project]
 name = "votify"
-description = "A Python CLI app for downloading songs/podcasts from Spotify in Vorbis (OGG)."
+description = "A Python CLI app for downloading songs/podcasts from Spotify."
 requires-python = ">=3.8"
 authors = [{ name = "glomatico" }]
 dependencies = [

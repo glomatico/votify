@@ -1,5 +1,5 @@
 # Votify
-A Python CLI app for downloading songs/podcasts from Spotify in Vorbis (OGG).
+A Python CLI app for downloading songs/podcasts from Spotify.
 
 **Discord Server:** https://discord.gg/aBjMEZ9tnq
 
