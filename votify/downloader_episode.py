@@ -137,7 +137,6 @@ class DownloaderEpisode:
             and not self.downloader.overwrite
         ):
             logger.debug(f'Cover already exists at "{cover_path}", skipping')
-            return
         elif self.downloader.save_cover and cover_url is not None:
             logger.debug(f'Saving cover to "{cover_path}"')
             self.downloader.save_cover_file(cover_path, cover_url)
