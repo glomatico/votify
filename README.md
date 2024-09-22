@@ -41,6 +41,16 @@ votify [OPTIONS] URLS...
     ```bash
     votify "https://open.spotify.com/album/0r8D5N674HbTXlR3zNxeU1"
     ```
+* Choose which albums to download from an artist
+    ```bash
+    votify "https://open.spotify.com/artist/0gxyHStUsqpMadRV0Di1Qt"
+    ```
+
+### Interactive prompt controls
+* Arrow keys - Move selection
+* Space - Toggle selection
+* Ctrl + A - Select all
+* Enter - Confirm selection
 
 ## Configuration
 Votify can be configured using the command line arguments or the config file.
@@ -53,12 +63,7 @@ Config file values can be overridden using command line arguments.
 | --------------------------------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------- |
 | `--wait-interval`, `-w` / `wait_interval`                       | Wait interval between downloads in seconds.                        | `10`                                           |
 | `--force-premium`, `-f` / `force_premium`                       | Force to detect the account as premium.                            | `false`                                        |
-| `--save-cover`, `-s` / `save_cover`                             | Save cover as a separate file.                                     | `false`                                        |
-| `--overwrite` / `overwrite`                                     | Overwrite existing files.                                          | `false`                                        |
 | `--read-urls-as-txt`, `-r` / -                                  | Interpret URLs as paths to text files containing URLs.             | `false`                                        |
-| `--save-playlist` / `save_playlist`                             | Save a M3U8 playlist file when downloading a playlist.             | `false`                                        |
-| `--lrc-only`, `-l` / `lrc_only`                                 | Download only the synced lyrics.                                   | `false`                                        |
-| `--no-lrc` / `no_lrc`                                           | Don't download the synced lyrics.                                  | `false`                                        |
 | `--config-path` / -                                             | Path to config file.                                               | `<home>/.votify/config.json`                   |
 | `--log-level` / `log_level`                                     | Log level.                                                         | `INFO`                                         |
 | `--print-exceptions` / `print_exceptions`                       | Print exceptions.                                                  | `false`                                        |
@@ -77,9 +82,15 @@ Config file values can be overridden using command line arguments.
 | `--template-file-episode` / `template_file_episode`             | Template file for episodes (podcasts).                             | `{track:02d} {title}`                          |
 | `--template-file-playlist` / `template_file_playlist`           | Template file for the M3U8 playlist.                               | `Playlists/{playlist_artist}/{playlist_title}` |
 | `--date-tag-template` / `date_tag_template`                     | Date tag template.                                                 | `%Y-%m-%dT%H:%M:%SZ`                           |
+| `--save-cover`, `-s` / `save_cover`                             | Save cover as a separate file.                                     | `false`                                        |
+| `--save-playlist` / `save_playlist`                             | Save a M3U8 playlist file when downloading a playlist.             | `false`                                        |
+| `--overwrite` / `overwrite`                                     | Overwrite existing files.                                          | `false`                                        |
 | `--exclude-tags` / `exclude_tags`                               | Comma-separated tags to exclude.                                   | `null`                                         |
 | `--truncate` / `truncate`                                       | Maximum length of the file/folder names.                           | `null`                                         |
+| `--lrc-only`, `-l` / `lrc_only`                                 | Download only the synced lyrics.                                   | `false`                                        |
+| `--no-lrc` / `no_lrc`                                           | Don't download the synced lyrics.                                  | `false`                                        |
 | `--no-config-file`, `-n` / -                                    | Do not use a config file.                                          | `false`                                        |
+
 
 
 ### Tag variables
