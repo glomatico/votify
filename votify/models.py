@@ -29,6 +29,7 @@ class DownloadQueueItem:
 class StreamInfoAudio:
     stream_url: str = None
     file_id: str = None
+    widevine_pssh: str = None
     quality: AudioQuality = None
 
 

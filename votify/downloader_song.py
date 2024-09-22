@@ -4,20 +4,21 @@ import datetime
 import logging
 from pathlib import Path
 
-from .downloader import Downloader
+from .constants import AAC_AUDIO_QUALITIES
+from .downloader_audio import DownloaderAudio
 from .models import Lyrics, StreamInfoAudio
 
 logger = logging.getLogger("votify")
 
 
-class DownloaderSong:
+class DownloaderSong(DownloaderAudio):
     def __init__(
         self,
-        downloader: Downloader,
+        downloader_audio: DownloaderAudio,
         lrc_only: bool = False,
         no_lrc: bool = False,
     ):
-        self.downloader = downloader
+        self.__dict__.update(downloader_audio.__dict__)
         self.lrc_only = lrc_only
         self.no_lrc = no_lrc
 
@@ -75,6 +76,7 @@ class DownloaderSong:
             "isrc": external_ids.get("isrc") if external_ids is not None else None,
             "label": album_metadata.get("label"),
             "lyrics": lyrics_unsynced,
+            "media_type": "Song",
             "producer": (
                 self.downloader.get_artist_string(producers) if producers else None
             ),
@@ -161,14 +163,14 @@ class DownloaderSong:
             gid_metadata = self.downloader.get_gid_metadata(track_id, "track")
         if not stream_info:
             logger.debug("Getting stream info")
-            stream_info = self.downloader.get_stream_info_audio(gid_metadata, "track")
+            stream_info = self.get_stream_info(gid_metadata, "track")
         if not stream_info.file_id:
             logger.warning(
                 "Track is not available on Spotify's "
                 "servers and no alternative found, skipping"
             )
             return
-        if stream_info.quality != self.downloader.audio_quality:
+        if stream_info.quality != self.audio_quality:
             logger.warning(f"Quality has been changed to {stream_info.quality.value}")
         if gid_metadata.get("has_lyrics"):
             logger.debug("Getting lyrics")
@@ -191,10 +193,11 @@ class DownloaderSong:
                     playlist_track,
                 ),
             }
+        file_extension = self.get_file_extension()
         final_path = self.downloader.get_final_path(
             "track",
             tags,
-            ".ogg",
+            file_extension,
         )
         lrc_path = self.downloader.get_lrc_path(final_path)
         cover_path = self.get_cover_path(final_path)
@@ -207,20 +210,32 @@ class DownloaderSong:
         else:
             if not decryption_key:
                 logger.debug("Getting decryption key")
-                decryption_key = self.downloader.get_decryption_key(stream_info.file_id)
+                decryption_key = self.get_decryption_key(stream_info)
             encrypted_path = self.downloader.get_file_temp_path(
-                track_id, "_encrypted", ".ogg"
+                track_id,
+                "_encrypted",
+                file_extension,
             )
             decrypted_path = self.downloader.get_file_temp_path(
-                track_id, "_decrypted", ".ogg"
+                track_id,
+                "_decrypted",
+                file_extension,
+            )
+            remuxed_path = self.downloader.get_file_temp_path(
+                track_id,
+                "_remuxed",
+                file_extension,
             )
             logger.debug(f'Downloading to "{encrypted_path}"')
-            self.downloader.download_stream_url(encrypted_path, stream_info.stream_url)
-            logger.debug(f'Decrypting to "{decrypted_path}"')
-            self.downloader.decrypt(
+            self.download_stream_url(encrypted_path, stream_info.stream_url)
+            logger.debug(
+                f'Decrypting to "{decrypted_path}" and remuxing to "{remuxed_path}"'
+            )
+            self.decrypt(
                 decryption_key,
                 encrypted_path,
                 decrypted_path,
+                remuxed_path,
             )
         if self.no_lrc or not lyrics.synced:
             pass
@@ -232,7 +247,7 @@ class DownloaderSong:
         self.downloader._final_processing(
             cover_path,
             cover_url,
-            decrypted_path,
+            remuxed_path if remuxed_path.exists() else decrypted_path,
             final_path,
             tags,
             playlist_metadata,

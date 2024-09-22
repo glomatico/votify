@@ -11,22 +11,16 @@ from io import BytesIO
 from pathlib import Path
 
 import requests
-from Crypto.Cipher import AES
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 from mutagen.flac import Picture
 from mutagen.mp4 import MP4, MP4Cover, MP4FreeForm
 from mutagen.oggvorbis import OggVorbis, OggVorbisHeaderError
 from PIL import Image
-from yt_dlp import YoutubeDL
+from pywidevine import PSSH, Cdm, Device
 
-from .constants import (
-    AUDIO_QUALITY_X_FORMAT_ID_MAPPING,
-    MP4_TAGS_MAP,
-    VORBIS_TAGS_MAPPING,
-)
-from .enums import AudioQuality, DownloadMode, VideoFormat
-from .models import DownloadQueueItem, StreamInfoAudio, UrlInfo
+from .constants import MEDIA_TYPE_MP4_MAPPING, MP4_TAGS_MAP, VORBIS_TAGS_MAPPING
+from .models import DownloadQueueItem, UrlInfo
 from .playplay_pb2 import (
     AUDIO_TRACK,
     Interactivity,
@@ -52,20 +46,23 @@ class Downloader:
     def __init__(
         self,
         spotify_api: SpotifyApi,
-        audio_quality: AudioQuality = AudioQuality.VORBIS_MEDIUM,
-        video_format: VideoFormat = VideoFormat.MP4,
         output_path: Path = Path("./Spotify"),
         temp_path: Path = Path("./temp"),
-        download_mode: DownloadMode = DownloadMode.YTDLP,
-        aria2c_path: Path = "aria2c",
-        unplayplay_path: Path = "unplayplay",
-        ffmpeg_path: Path = "ffmpeg",
+        wvd_path: Path = Path("./device.wvd"),
+        aria2c_path: str = "aria2c",
+        unplayplay_path: str = "unplayplay",
+        ffmpeg_path: str = "ffmpeg",
+        mp4box_path: str = "mp4box",
+        mp4decrypt_path: str = "mp4decrypt",
+        packager_path: str = "packager",
         template_folder_album: str = "{album_artist}/{album}",
         template_folder_compilation: str = "Compilations/{album}",
         template_file_single_disc: str = "{track:02d} {title}",
         template_file_multi_disc: str = "{disc}-{track:02d} {title}",
         template_folder_episode: str = "Podcasts/{album}",
         template_file_episode: str = "{track:02d} {title}",
+        template_folder_music_video: str = "{artist}/Unknown Album",
+        template_file_music_video: str = "{title}",
         template_file_playlist: str = "Playlists/{playlist_artist}/{playlist_title}",
         date_tag_template: str = "%Y-%m-%dT%H:%M:%SZ",
         save_cover: bool = False,
@@ -76,20 +73,23 @@ class Downloader:
         silence: bool = False,
     ):
         self.spotify_api = spotify_api
-        self.audio_quality = audio_quality
-        self.video_format = video_format
         self.output_path = output_path
         self.temp_path = temp_path
-        self.download_mode = download_mode
+        self.wvd_path = wvd_path
         self.aria2c_path = aria2c_path
         self.unplayplay_path = unplayplay_path
         self.ffmpeg_path = ffmpeg_path
+        self.mp4box_path = mp4box_path
+        self.mp4decrypt_path = mp4decrypt_path
+        self.packager_path = packager_path
         self.template_folder_album = template_folder_album
         self.template_folder_compilation = template_folder_compilation
         self.template_file_single_disc = template_file_single_disc
         self.template_file_multi_disc = template_file_multi_disc
         self.template_folder_episode = template_folder_episode
         self.template_file_episode = template_file_episode
+        self.template_folder_music_video = template_folder_music_video
+        self.template_file_music_video = template_file_music_video
         self.template_file_playlist = template_file_playlist
         self.date_tag_template = date_tag_template
         self.save_cover = save_cover
@@ -98,6 +98,7 @@ class Downloader:
         self.exclude_tags = exclude_tags
         self.truncate = truncate
         self.silence = silence
+        self.cdm = None
         self._set_binaries_full_path()
         self._set_exclude_tags_list()
         self._set_truncate()
@@ -107,6 +108,9 @@ class Downloader:
         self.aria2c_path_full = shutil.which(self.aria2c_path)
         self.unplayplay_path_full = shutil.which(self.unplayplay_path)
         self.ffmpeg_path_full = shutil.which(self.ffmpeg_path)
+        self.mp4box_path_full = shutil.which(self.mp4box_path)
+        self.mp4decrypt_path_full = shutil.which(self.mp4decrypt_path)
+        self.packager_path_full = shutil.which(self.packager_path)
 
     def _set_exclude_tags_list(self):
         self.exclude_tags_list = (
@@ -127,6 +131,9 @@ class Downloader:
             }
         else:
             self.subprocess_additional_args = {}
+
+    def set_cdm(self) -> None:
+        self.cdm = Cdm.from_device(Device.load(self.wvd_path))
 
     def get_url_info(self, url: str) -> UrlInfo:
         url_regex_result = re.search(self.URL_RE, url)
@@ -302,6 +309,9 @@ class Downloader:
         elif media_type == "episode":
             template_folder = self.template_folder_episode.split("/")
             template_file = self.template_file_episode.split("/")
+        elif media_type == "music-video":
+            template_folder = self.template_folder_music_video.split("/")
+            template_file = self.template_file_music_video.split("/")
         else:
             raise RuntimeError()
         template_final = template_folder + template_file
@@ -343,18 +353,6 @@ class Downloader:
         with playlist_file_path.open("w", encoding="utf8") as playlist_file:
             playlist_file.writelines(playlist_file_lines)
 
-    def get_audio_file(
-        self,
-        audio_files: list[dict],
-    ) -> tuple[AudioQuality, dict] | tuple[None, None]:
-        qualities = list(AudioQuality)
-        start_index = qualities.index(self.audio_quality)
-        for quality in qualities[start_index:]:
-            for audio_file in audio_files:
-                if audio_file["format"] == AUDIO_QUALITY_X_FORMAT_ID_MAPPING[quality]:
-                    return quality, audio_file
-        return None, None
-
     def get_gid_metadata(
         self,
         media_id: str,
@@ -363,34 +361,7 @@ class Downloader:
         gid = self.spotify_api.media_id_to_gid(media_id)
         return self.spotify_api.get_gid_metadata(gid, media_type)
 
-    def get_stream_info_audio(
-        self,
-        gid_metadata: dict,
-        media_type: str,
-    ) -> StreamInfoAudio:
-        stream_info = StreamInfoAudio()
-        if media_type == "track":
-            audio_files = gid_metadata.get("file")
-        elif media_type == "episode":
-            audio_files = gid_metadata.get("audio")
-        else:
-            raise RuntimeError()
-        audio_files = audio_files or gid_metadata.get("alternative")
-        if not audio_files:
-            return stream_info
-        if audio_files[0].get("gid"):
-            audio_files = audio_files[0]["file"]
-        quality, audio_file = self.get_audio_file(audio_files)
-        if not audio_file:
-            return stream_info
-        file_id = audio_file["file_id"]
-        stream_url = self.spotify_api.get_stream_urls(file_id)["cdnurl"][0]
-        stream_info.stream_url = stream_url
-        stream_info.file_id = file_id
-        stream_info.quality = quality
-        return stream_info
-
-    def get_decryption_key(self, file_id: str) -> bytes:
+    def get_playplay_decryption_key(self, file_id: str) -> bytes:
         playplay_license_request = PlayPlayLicenseRequest(
             version=2,
             token=bytes.fromhex("01e132cae527bd21620e822f58514932"),
@@ -416,61 +387,25 @@ class Downloader:
         assert key
         return key
 
-    def download_stream_url(self, input_path: Path, stream_url: str):
-        if self.download_mode == DownloadMode.YTDLP:
-            self.download_stream_url_ytdlp(input_path, stream_url)
-        elif self.download_mode == DownloadMode.ARIA2C:
-            self.download_stream_url_aria2c(input_path, stream_url)
-
-    def download_stream_url_ytdlp(self, input_path: Path, stream_url: str) -> None:
-        with YoutubeDL(
-            {
-                "quiet": True,
-                "no_warnings": True,
-                "outtmpl": str(input_path),
-                "allow_unplayable_formats": True,
-                "fixup": "never",
-                "allowed_extractors": ["generic"],
-                "noprogress": self.silence,
-            }
-        ) as ydl:
-            ydl.download(stream_url)
-
-    def download_stream_url_aria2c(self, input_path: Path, stream_url: str) -> None:
-        input_path.parent.mkdir(parents=True, exist_ok=True)
-        subprocess.run(
-            [
-                self.aria2c_path_full,
-                "--no-conf",
-                "--download-result=hide",
-                "--console-log-level=error",
-                "--summary-interval=0",
-                "--file-allocation=none",
-                stream_url,
-                "--out",
-                input_path,
-            ],
-            check=True,
-            **self.subprocess_additional_args,
-        )
-        print("\r", end="")
-
-    def decrypt(
+    def get_widevine_decryption_key(
         self,
-        decryption_key: bytes,
-        encrypted_path: Path,
-        decrypted_path: Path,
-    ):
-        cipher = AES.new(
-            decryption_key,
-            AES.MODE_CTR,
-            nonce=bytes.fromhex("72e067fbddcbcf77"),
-            initial_value=bytes.fromhex("ebe8bc643f630d93"),
-        )
-        skip = 167
-        with decrypted_path.open("wb") as decrypted_file:
-            with encrypted_path.open("rb") as encrypted_file:
-                decrypted_file.write(cipher.decrypt(encrypted_file.read())[skip:])
+        pssh: bytes,
+        media_type: str,
+    ) -> tuple[str, str]:
+        try:
+            pssh = PSSH(pssh)
+            cdm_session = self.cdm.open()
+            challenge = self.cdm.get_license_challenge(cdm_session, pssh)
+            license = self.spotify_api.get_widevine_license(challenge, media_type)
+            self.cdm.parse_license(cdm_session, license)
+            keys = next(
+                i for i in self.cdm.get_keys(cdm_session) if i.type == "CONTENT"
+            )
+            decryption_key = keys.key.hex()
+            key_id = keys.kid.hex
+        finally:
+            self.cdm.close(cdm_session)
+        return key_id, decryption_key
 
     def get_sanitized_string(self, dirty_string: str, is_folder: bool) -> str:
         dirty_string = re.sub(
@@ -589,6 +524,8 @@ class Downloader:
                 ]
             elif tag_name == "rating":
                 mp4_tags["rtng"] = [1] if tags[tag_name] == "Explicit" else [0]
+            elif tag_name == "media_type":
+                mp4_tags["stik"] = [MEDIA_TYPE_MP4_MAPPING[tags[tag_name]]]
             elif MP4_TAGS_MAP.get(tag_name) is not None:
                 mp4_tags[MP4_TAGS_MAP[tag_name]] = [tags[tag_name]]
         if "cover" not in self.exclude_tags_list and cover_url is not None:
@@ -619,7 +556,7 @@ class Downloader:
             self.save_cover_file(cover_path, cover_url)
         if media_temp_path:
             logger.debug("Applying tags")
-            if media_temp_path.suffix == ".mp4":
+            if media_temp_path.suffix in (".mp4", ".m4a"):
                 self.apply_tags_mp4(media_temp_path, tags, cover_url)
             elif media_temp_path.suffix == ".ogg":
                 self.apply_tags_ogg(media_temp_path, tags, cover_url)

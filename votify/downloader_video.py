@@ -9,7 +9,7 @@ from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 
 from .downloader import Downloader
-from .enums import VideoFormat
+from .enums import RemuxModeAudio, RemuxModeVideo, VideoFormat
 from .models import StreamInfoVideo
 from .utils import check_response
 
@@ -18,8 +18,30 @@ class DownloaderVideo:
     def __init__(
         self,
         downloader: Downloader,
+        video_format: VideoFormat = VideoFormat.MP4,
+        remux_mode: RemuxModeVideo = RemuxModeVideo.FFMPEG,
     ):
         self.downloader = downloader
+        self.video_format = video_format
+        self.remux_mode = remux_mode
+        self._adjust_remux_mode()
+
+    def _adjust_remux_mode(self):
+        if self.video_format == VideoFormat.WEBM:
+            self.remux_mode = RemuxModeVideo.FFMPEG
+
+    def get_cover_path(self, final_path: Path) -> Path:
+        return final_path.with_suffix(".jpg")
+
+    def get_file_extension(
+        self,
+        file_type_video: str,
+        file_type_audio: str,
+    ) -> str:
+        if file_type_video == file_type_audio:
+            return "." + file_type_video
+        else:
+            return ".mp4"
 
     def get_encryption_info(
         self,
@@ -55,16 +77,25 @@ class DownloaderVideo:
             and encryption_index
             in (profile.get("encryption_indices", [encryption_index]))
         )
+        video_profiles = list(
+            filter(
+                lambda x: x["mime_type"].startswith("video")
+                and encryption_index
+                in (x.get("encryption_indices", [encryption_index])),
+                manifest["contents"][0]["profiles"],
+            )
+        )
         audio_profiles = list(
-            profile
-            for profile in manifest["contents"][0]["profiles"]
-            if profile["mime_type"].startswith("audio")
-            and encryption_index
-            in (profile.get("encryption_indices", [encryption_index]))
+            filter(
+                lambda x: x["mime_type"].startswith("audio")
+                and encryption_index
+                in (x.get("encryption_indices", [encryption_index])),
+                manifest["contents"][0]["profiles"],
+            )
         )
         if not video_profiles or not audio_profiles:
             return stream_info
-        if self.downloader.video_format == VideoFormat.ASK:
+        if self.video_format == VideoFormat.ASK:
             profile_video, profile_audio = (
                 self.get_video_profile_from_user(
                     video_profiles,
@@ -76,14 +107,12 @@ class DownloaderVideo:
         else:
             profile_video, profile_audio = (
                 self.get_best_profile_by_bitrate(
-                    manifest["contents"][0]["profiles"],
-                    f"video/{self.downloader.video_format.value}",
-                    encryption_info,
+                    video_profiles,
+                    f"video/{self.video_format.value}",
                 ),
                 self.get_best_profile_by_bitrate(
-                    manifest["contents"][0]["profiles"],
-                    f"audio/{self.downloader.video_format.value}",
-                    encryption_index,
+                    audio_profiles,
+                    f"audio/{self.video_format.value}",
                 ),
             )
         profile_id_video = profile_video["id"]
@@ -117,8 +146,14 @@ class DownloaderVideo:
         profiles: list[dict],
         mime_type: str,
     ) -> str:
+        profiles_filtered = list(
+            filter(
+                lambda x: x["mime_type"] == mime_type,
+                profiles,
+            )
+        )
         bitrate_key = f"{mime_type.split('/')[0]}_bitrate"
-        best_profile = max(profiles, key=lambda x: x[bitrate_key])
+        best_profile = max(profiles_filtered, key=lambda x: x[bitrate_key])
         return best_profile
 
     def get_video_profile_from_user(
@@ -213,17 +248,93 @@ class DownloaderVideo:
         for segment_url in tqdm.tqdm(segment_urls, leave=False):
             self.download_segment(segment_url, input_path)
 
-    def get_file_extension(
-        self,
-        file_type_video: str,
-        file_type_audio: str,
-    ) -> str:
-        if file_type_video == file_type_audio:
-            return "." + file_type_video
-        else:
-            return ".mp4"
-
     def remux(
+        self,
+        decrypted_path_video: Path,
+        decrypted_path_audio: Path,
+        remuxed_path: Path,
+        key_id: str | None = None,
+        decryption_key: str | None = None,
+        encrypted_path_video: Path | None = None,
+        encrypted_path_audio: Path | None = None,
+    ):
+        if decryption_key:
+            if remuxed_path.suffix == ".webm":
+                self.decrypt_packager(
+                    key_id,
+                    decryption_key,
+                    encrypted_path_video,
+                    decrypted_path_video,
+                )
+                self.decrypt_packager(
+                    key_id,
+                    decryption_key,
+                    encrypted_path_audio,
+                    decrypted_path_audio,
+                )
+            else:
+                self.decrypt_mp4decrypt(
+                    decryption_key,
+                    encrypted_path_video,
+                    decrypted_path_video,
+                )
+                self.decrypt_mp4decrypt(
+                    decryption_key,
+                    encrypted_path_audio,
+                    decrypted_path_audio,
+                )
+        if self.remux_mode == RemuxModeAudio.MP4BOX:
+            self.remux_mp4box(
+                decrypted_path_video,
+                decrypted_path_audio,
+                remuxed_path,
+            )
+        else:
+            self.remux_ffmpeg(
+                decrypted_path_video,
+                decrypted_path_audio,
+                remuxed_path,
+            )
+
+    def decrypt_packager(
+        self,
+        key_id: str,
+        decryption_key: str,
+        encrypted_path: Path,
+        decrypted_path: Path,
+    ):
+        subprocess.run(
+            [
+                self.downloader.packager_path_full,
+                "--quiet",
+                f"stream=0,in={encrypted_path},output={decrypted_path}",
+                "-enable_raw_key_decryption",
+                "-keys",
+                f"key_id={key_id}:key={decryption_key}",
+            ],
+            check=True,
+            **self.downloader.subprocess_additional_args,
+        )
+
+    def decrypt_mp4decrypt(
+        self,
+        decryption_key: str,
+        encrypted_path: Path,
+        decrypted_path: Path,
+    ):
+        subprocess.run(
+            [
+                self.downloader.mp4decrypt_path_full,
+                "--key",
+                f"1:{decryption_key}",
+                encrypted_path,
+                decrypted_path,
+            ],
+            check=True,
+            **self.downloader.subprocess_additional_args,
+        )
+
+    def remux_ffmpeg(
         self,
         input_path_video: Path,
         input_path_audio: Path,
@@ -247,6 +358,30 @@ class DownloaderVideo:
                 "-map",
                 "1:a:0",
                 output_path,
+            ],
+            check=True,
+            **self.downloader.subprocess_additional_args,
+        )
+
+    def remux_mp4box(
+        self,
+        decrypted_path_video: Path,
+        decrypted_path_audio: Path,
+        remuxed_path: Path,
+    ):
+        subprocess.run(
+            [
+                self.downloader.mp4box_path_full,
+                "-quiet",
+                "-itags",
+                "artist=placeholder",
+                "-keep-utc",
+                "-add",
+                decrypted_path_video,
+                "-add",
+                decrypted_path_audio,
+                "-new",
+                remuxed_path,
             ],
             check=True,
             **self.downloader.subprocess_additional_args,

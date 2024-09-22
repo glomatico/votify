@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .enums import AudioQuality, VideoFormat
+from .enums import AudioQuality
 
 EXCLUDED_CONFIG_FILE_PARAMS = (
     "urls",
@@ -51,8 +51,23 @@ AUDIO_QUALITY_X_FORMAT_ID_MAPPING = {
     AudioQuality.VORBIS_HIGH: "MP4_256",
     AudioQuality.VORBIS_MEDIUM: "OGG_VORBIS_160",
     AudioQuality.VORBIS_LOW: "OGG_VORBIS_96",
+    AudioQuality.AAC_HIGH: "MP4_256",
+    AudioQuality.AAC_MEDIUM: "MP4_128",
 }
+
+VORBIS_AUDIO_QUALITIES = (
+    AudioQuality.VORBIS_HIGH,
+    AudioQuality.VORBIS_MEDIUM,
+    AudioQuality.VORBIS_LOW,
+)
+AAC_AUDIO_QUALITIES = (AudioQuality.AAC_HIGH, AudioQuality.AAC_MEDIUM)
 
 X_NOT_FOUND_STRING = "{} not found at {}"
 
-PREMIUM_SONG_QUALITIES = (AudioQuality.VORBIS_HIGH,)
+PREMIUM_AUDIO_QUALITIES = (AudioQuality.VORBIS_HIGH, AudioQuality.AAC_HIGH)
+
+MEDIA_TYPE_MP4_MAPPING = {
+    "Song": 1,
+    "Podcast": 21,
+    "Music video": 6,
+}

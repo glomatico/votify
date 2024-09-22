@@ -10,19 +10,35 @@ from pathlib import Path
 import click
 
 from . import __version__
-from .constants import EXCLUDED_CONFIG_FILE_PARAMS, X_NOT_FOUND_STRING
+from .constants import (
+    AAC_AUDIO_QUALITIES,
+    EXCLUDED_CONFIG_FILE_PARAMS,
+    PREMIUM_AUDIO_QUALITIES,
+    X_NOT_FOUND_STRING,
+)
 from .downloader import Downloader
+from .downloader_audio import DownloaderAudio
 from .downloader_episode import DownloaderEpisode
 from .downloader_episode_video import DownloaderEpisodeVideo
+from .downloader_music_video import DownloaderMusicVideo
 from .downloader_song import DownloaderSong
-from .enums import AudioQuality, DownloadMode, VideoFormat
+from .downloader_video import DownloaderVideo
+from .enums import (
+    AudioQuality,
+    DownloadMode,
+    RemuxModeAudio,
+    RemuxModeVideo,
+    VideoFormat,
+)
 from .spotify_api import SpotifyApi
 
 logger = logging.getLogger("votify")
 
 spotify_api_sig = inspect.signature(SpotifyApi.__init__)
 downloader_sig = inspect.signature(Downloader.__init__)
+downloader_audio_sig = inspect.signature(DownloaderAudio.__init__)
 downloader_song_sig = inspect.signature(DownloaderSong.__init__)
+downloader_video_sig = inspect.signature(DownloaderVideo.__init__)
 
 
 def get_param_string(param: click.Parameter) -> str:
@@ -82,7 +98,17 @@ def load_config_file(
     help="Wait interval between downloads in seconds.",
 )
 @click.option(
-    "--download-podcast-video",
+    "--enable-videos",
+    is_flag=True,
+    help="Enable video downloads when available.",
+)
+@click.option(
+    "--download-music-videos",
+    is_flag=True,
+    help="Attempt to download music videos from songs (can lead to incorrect results).",
+)
+@click.option(
+    "--download-podcast-videos",
     is_flag=True,
     help="Attempt to download the video version of podcasts.",
 )
@@ -124,19 +150,6 @@ def load_config_file(
 )
 # Downloader specific options
 @click.option(
-    "--audio-quality",
-    "-a",
-    type=AudioQuality,
-    default=downloader_sig.parameters["audio_quality"].default,
-    help="Audio quality for songs and podcasts.",
-)
-@click.option(
-    "--video-format",
-    type=VideoFormat,
-    default=downloader_sig.parameters["video_format"].default,
-    help="Video format.",
-)
-@click.option(
     "--output-path",
     "-o",
     type=Path,
@@ -150,11 +163,10 @@ def load_config_file(
     help="Path to temporary directory.",
 )
 @click.option(
-    "--download-mode",
-    "-d",
-    type=DownloadMode,
-    default=downloader_sig.parameters["download_mode"].default,
-    help="Download mode for songs and podcasts.",
+    "--wvd-path",
+    type=Path,
+    default=downloader_sig.parameters["wvd_path"].default,
+    help="Path to .wvd file.",
 )
 @click.option(
     "--aria2c-path",
@@ -173,6 +185,24 @@ def load_config_file(
     type=str,
     default=downloader_sig.parameters["ffmpeg_path"].default,
     help="Path to ffmpeg binary.",
+)
+@click.option(
+    "--mp4box-path",
+    type=str,
+    default=downloader_sig.parameters["mp4box_path"].default,
+    help="Path to MP4Box binary.",
+)
+@click.option(
+    "--mp4decrypt-path",
+    type=str,
+    default=downloader_sig.parameters["mp4decrypt_path"].default,
+    help="Path to mp4decrypt binary.",
+)
+@click.option(
+    "--packager-path",
+    type=str,
+    default=downloader_sig.parameters["packager_path"].default,
+    help="Path to Shaka Packager binary.",
 )
 @click.option(
     "--template-folder-album",
@@ -208,7 +238,19 @@ def load_config_file(
     "--template-file-episode",
     type=str,
     default=downloader_sig.parameters["template_file_episode"].default,
-    help="Template file for episodes (podcasts).",
+    help="Template file for music videos.",
+)
+@click.option(
+    "--template-folder-music-video",
+    type=str,
+    default=downloader_sig.parameters["template_folder_music_video"].default,
+    help="Template folder for music videos",
+)
+@click.option(
+    "--template-file-music-video",
+    type=str,
+    default=downloader_sig.parameters["template_file_music_video"].default,
+    help="Template file for the tracks that are not part of an album.",
 )
 @click.option(
     "--template-file-playlist",
@@ -249,6 +291,27 @@ def load_config_file(
     default=downloader_sig.parameters["truncate"].default,
     help="Maximum length of the file/folder names.",
 )
+# DownloaderAudio specific options
+@click.option(
+    "--audio-quality",
+    "-a",
+    type=AudioQuality,
+    default=downloader_audio_sig.parameters["audio_quality"].default,
+    help="Audio quality for songs and podcasts.",
+)
+@click.option(
+    "--download-mode",
+    "-d",
+    type=DownloadMode,
+    default=downloader_audio_sig.parameters["download_mode"].default,
+    help="Download mode for songs and podcasts.",
+)
+@click.option(
+    "--remux-mode-audio",
+    type=RemuxModeAudio,
+    default=downloader_audio_sig.parameters["remux_mode"].default,
+    help="Remux mode for songs and podcasts.",
+)
 # DownloaderSong specific options
 @click.option(
     "--lrc-only",
@@ -261,6 +324,19 @@ def load_config_file(
     is_flag=True,
     help="Don't download the synced lyrics.",
 )
+# DownloaderVideo specific options
+@click.option(
+    "--video-format",
+    type=VideoFormat,
+    default=downloader_video_sig.parameters["video_format"].default,
+    help="Video format.",
+)
+@click.option(
+    "--remux-mode-video",
+    type=RemuxModeVideo,
+    default=downloader_video_sig.parameters["remux_mode"].default,
+    help="Remux mode for videos.",
+)
 # This option should always be last
 @click.option(
     "--no-config-file",
@@ -272,27 +348,33 @@ def load_config_file(
 def main(
     urls: list[str],
     wait_interval: float,
-    download_podcast_video: bool,
+    enable_videos: bool,
+    download_music_videos: bool,
+    download_podcast_videos: bool,
     force_premium: bool,
     read_urls_as_txt: bool,
     config_path: Path,
     log_level: str,
     no_exceptions: bool,
     cookies_path: Path,
-    audio_quality: AudioQuality,
-    video_format: VideoFormat,
     output_path: Path,
     temp_path: Path,
+    wvd_path: Path,
     download_mode: DownloadMode,
     aria2c_path: str,
     unplayplay_path: str,
     ffmpeg_path: str,
+    mp4box_path: str,
+    mp4decrypt_path: str,
+    packager_path: str,
     template_folder_album: str,
     template_folder_compilation: str,
     template_file_single_disc: str,
     template_file_multi_disc: str,
     template_folder_episode: str,
     template_file_episode: str,
+    template_folder_music_video: str,
+    template_file_music_video: str,
     template_file_playlist: str,
     date_tag_template: str,
     save_cover: bool,
@@ -300,8 +382,12 @@ def main(
     overwrite: bool,
     exclude_tags: str,
     truncate: int,
+    audio_quality: AudioQuality,
+    remux_mode_audio: RemuxModeAudio,
     lrc_only: bool,
     no_lrc: bool,
+    video_format: VideoFormat,
+    remux_mode_video: RemuxModeVideo,
     no_config_file: bool,
 ) -> None:
     logging.basicConfig(
@@ -313,20 +399,23 @@ def main(
     spotify_api = SpotifyApi(cookies_path)
     downloader = Downloader(
         spotify_api,
-        audio_quality,
-        video_format,
         output_path,
         temp_path,
-        download_mode,
+        wvd_path,
         aria2c_path,
         unplayplay_path,
         ffmpeg_path,
+        mp4box_path,
+        mp4decrypt_path,
+        packager_path,
         template_folder_album,
         template_folder_compilation,
         template_file_single_disc,
         template_file_multi_disc,
         template_folder_episode,
         template_file_episode,
+        template_folder_music_video,
+        template_file_music_video,
         template_file_playlist,
         date_tag_template,
         save_cover,
@@ -335,36 +424,121 @@ def main(
         exclude_tags,
         truncate,
     )
-    downloader_song = DownloaderSong(
+    downloader_audio = DownloaderAudio(
         downloader,
+        audio_quality,
+        download_mode,
+        remux_mode_audio,
+    )
+    downloader_song = DownloaderSong(
+        downloader_audio,
         lrc_only,
         no_lrc,
     )
     downloader_episode = DownloaderEpisode(
+        downloader_audio,
+    )
+    downloader_video = DownloaderVideo(
         downloader,
+        video_format,
+        remux_mode_video,
     )
     downloader_episode_video = DownloaderEpisodeVideo(
+        downloader_video,
         downloader_episode,
     )
+    downloader_music_video = DownloaderMusicVideo(
+        downloader_video,
+    )
+    spotify_api.config_info["isPremium"] = (
+        True if force_premium else spotify_api.config_info["isPremium"]
+    )
     if not lrc_only:
-        if not downloader.unplayplay_path_full:
-            logger.critical(X_NOT_FOUND_STRING.format("Unplayplay", unplayplay_path))
-            return
+        if audio_quality in AAC_AUDIO_QUALITIES:
+            if (
+                remux_mode_audio == RemuxModeAudio.FFMPEG
+                and not downloader.ffmpeg_path_full
+            ):
+                logger.critical(X_NOT_FOUND_STRING.format("FFmpeg", ffmpeg_path))
+            if (
+                remux_mode_audio == RemuxModeAudio.MP4BOX
+                and not downloader.mp4box_path_full
+            ):
+                logger.critical(X_NOT_FOUND_STRING.format("MP4Box", mp4box_path))
+                return
+            if (
+                remux_mode_audio
+                in (
+                    RemuxModeAudio.MP4DECRYPT,
+                    RemuxModeAudio.MP4BOX,
+                )
+                and not downloader.mp4decrypt_path_full
+            ):
+                logger.critical(
+                    X_NOT_FOUND_STRING.format("mp4decrypt", mp4decrypt_path)
+                )
+                return
+            if not wvd_path.exists() and audio_quality in AAC_AUDIO_QUALITIES:
+                logger.critical(
+                    X_NOT_FOUND_STRING.format(".wvd", wvd_path)
+                    + ", a .wvd file is required for downloading in AAC quality"
+                )
+                return
+            downloader.set_cdm()
+        else:
+            if not downloader.unplayplay_path_full:
+                logger.critical(
+                    X_NOT_FOUND_STRING.format("Unplayplay", unplayplay_path)
+                )
+                return
         if download_mode == DownloadMode.ARIA2C and not downloader.aria2c_path_full:
             logger.critical(X_NOT_FOUND_STRING.format("aria2c", aria2c_path))
             return
-        if download_podcast_video and not downloader.ffmpeg_path_full:
-            logger.critical(X_NOT_FOUND_STRING.format("ffmpeg", ffmpeg_path))
-            return
-        spotify_api.config_info["isPremium"] = (
-            True if force_premium else spotify_api.config_info["isPremium"]
-        )
         if (
             not spotify_api.config_info["isPremium"]
-            and audio_quality == AudioQuality.VORBIS_HIGH
+            and audio_quality in PREMIUM_AUDIO_QUALITIES
         ):
             logger.critical("Cannot download at chosen quality with a free account")
             return
+    can_download_music_videos = True
+    if enable_videos:
+        if (
+            downloader_music_video.remux_mode == RemuxModeVideo.FFMPEG
+            and not downloader.ffmpeg_path_full
+        ):
+            logger.critical(X_NOT_FOUND_STRING.format("FFmpeg", ffmpeg_path))
+            return
+        if (
+            downloader_music_video.remux_mode == RemuxModeVideo.MP4BOX
+            and not downloader.mp4box_path_full
+        ):
+            logger.critical(X_NOT_FOUND_STRING.format("MP4Box", mp4box_path))
+            return
+        music_video_warning_message = []
+        if not downloader.mp4decrypt_path_full and video_format != VideoFormat.WEBM:
+            music_video_warning_message.append(
+                X_NOT_FOUND_STRING.format("mp4decrypt", mp4decrypt_path)
+            )
+        elif not downloader.packager_path_full:
+            music_video_warning_message.append(
+                X_NOT_FOUND_STRING.format("Shaka Packager", packager_path)
+            )
+        if not wvd_path.exists():
+            music_video_warning_message.append(
+                X_NOT_FOUND_STRING.format(".wvd file", wvd_path)
+            )
+        else:
+            downloader.set_cdm()
+        if not spotify_api.config_info["isPremium"]:
+            music_video_warning_message.append(
+                "Cannot download music videos with a non-premium account"
+            )
+        if music_video_warning_message:
+            logger.warning(
+                +"Music videos will not be downloaded due to the following reasons:\n"
+                "\n".join(music_video_warning_message)
+            )
+            can_download_music_videos = False
     error_count = 0
     if read_urls_as_txt:
         _urls = []
@@ -402,20 +576,40 @@ def main(
                 )
                 media_id = downloader.get_media_id(media_metadata)
                 media_type = media_metadata["type"]
-                if media_type == "track":
+                gid_metadata = downloader.get_gid_metadata(media_id, media_type)
+                if gid_metadata.get("original_video") or (
+                    media_type == "track" and download_music_videos
+                ):
+                    if not enable_videos or not can_download_music_videos:
+                        logger.warning(
+                            "Music videos are not downloadable with current "
+                            "configuration, skipping"
+                        )
+                        continue
+                    downloader_music_video.download(
+                        music_video_id=media_id,
+                        music_video_metadata=media_metadata,
+                        album_metadata=download_queue_item.album_metadata,
+                        gid_metadata=gid_metadata,
+                        playlist_metadata=download_queue_item.playlist_metadata,
+                        playlist_track=index,
+                    )
+                elif media_type == "track":
                     downloader_song.download(
                         track_id=media_id,
                         track_metadata=media_metadata,
                         album_metadata=download_queue_item.album_metadata,
+                        gid_metadata=gid_metadata,
                         playlist_metadata=download_queue_item.playlist_metadata,
                         playlist_track=index,
                     )
-                elif media_type == "episode" and not lrc_only:
-                    if download_podcast_video:
+                elif media_type == "episode":
+                    if enable_videos and download_podcast_videos:
                         downloader_episode_video.download(
                             episode_id=media_id,
                             episode_metadata=media_metadata,
                             show_metadata=download_queue_item.show_metadata,
+                            gid_metadata=gid_metadata,
                             playlist_metadata=download_queue_item.playlist_metadata,
                             playlist_track=index,
                         )
@@ -424,6 +618,7 @@ def main(
                             episode_id=media_id,
                             episode_metadata=media_metadata,
                             show_metadata=download_queue_item.show_metadata,
+                            gid_metadata=gid_metadata,
                             playlist_metadata=download_queue_item.playlist_metadata,
                             playlist_track=index,
                         )

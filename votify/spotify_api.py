@@ -20,10 +20,15 @@ class SpotifyApi:
     LYRICS_API_URL = "https://spclient.wg.spotify.com/color-lyrics/v2/track/{track_id}"
     METADATA_API_URL = "https://api.spotify.com/v1/{type}/{item_id}"
     GID_METADATA_API_URL = "https://spclient.wg.spotify.com/metadata/4/{media_type}/{gid}?market=from_token"
+    PATHFINDER_API_URL = "https://api-partner.spotify.com/pathfinder/v1/query"
     VIDEO_MANIFEST_API_URL = "https://gue1-spclient.spotify.com/manifests/v7/json/sources/{gid}/options/supports_drm"
     PLAYPLAY_LICENSE_API_URL = (
         "https://gew4-spclient.spotify.com/playplay/v1/key/{file_id}"
     )
+    WIDEVINE_LICENSE_API_URL = (
+        "https://gue1-spclient.spotify.com/widevine-license/v1/{type}/license"
+    )
+    SEEK_TABLE_API_URL = "https://seektables.scdn.co/seektable/{file_id}.json"
     TRACK_CREDITS_API_URL = "https://spclient.wg.spotify.com/track-credits-view/v0/experimental/{track_id}/credits"
     STREAM_URLS_API_URL = (
         "https://gue1-spclient.spotify.com/storage-resolve/v2/files/audio/interactive/11/"
@@ -263,6 +268,12 @@ class SpotifyApi:
         check_response(response)
         return response.json()
 
+    def get_seek_table(self, file_id: str) -> dict:
+        self._refresh_session_auth()
+        response = self.session.get(self.SEEK_TABLE_API_URL.format(file_id=file_id))
+        check_response(response)
+        return response.json()
+
     def get_playplay_license(self, file_id: str, challenge: bytes) -> bytes:
         self._refresh_session_auth()
         response = self.session.post(
@@ -272,8 +283,44 @@ class SpotifyApi:
         check_response(response)
         return response.content
 
+    def get_widevine_license(self, challenge: bytes, media_type: str) -> bytes:
+        self._refresh_session_auth()
+        response = self.session.post(
+            self.WIDEVINE_LICENSE_API_URL.format(type=media_type),
+            challenge,
+        )
+        check_response(response)
+        return response.content
+
     def get_stream_urls(self, file_id: str) -> str:
         self._refresh_session_auth()
         response = self.session.get(self.STREAM_URLS_API_URL.format(file_id=file_id))
+        check_response(response)
+        return response.json()
+
+    def get_now_playing_view(self, track_id: str, artist_id: str) -> dict:
+        self._refresh_session_auth()
+        response = self.session.get(
+            self.PATHFINDER_API_URL,
+            params={
+                "operationName": "queryNpvArtist",
+                "variables": json.dumps(
+                    {
+                        "artistUri": f"spotify:artist:{artist_id}",
+                        "trackUri": f"spotify:track:{track_id}",
+                        "enableCredits": True,
+                        "enableRelatedVideos": True,
+                    }
+                ),
+                "extensions": json.dumps(
+                    {
+                        "persistedQuery": {
+                            "version": 1,
+                            "sha256Hash": "4ec4ae302c609a517cab6b8868f601cd3457c751c570ab12e988723cc036284f",
+                        }
+                    }
+                ),
+            },
+        )
         check_response(response)
         return response.json()

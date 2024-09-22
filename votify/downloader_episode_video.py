@@ -11,9 +11,10 @@ logger = logging.getLogger("votify")
 class DownloaderEpisodeVideo(DownloaderVideo):
     def __init__(
         self,
+        downloader_video: DownloaderVideo,
         downloader_episode: DownloaderEpisode,
     ):
-        super().__init__(downloader_episode.downloader)
+        self.__dict__.update(downloader_video.__dict__)
         self.downloader_episode = downloader_episode
 
     def get_video_gid(self, gid_metadata: dict) -> str | None:
@@ -69,7 +70,7 @@ class DownloaderEpisodeVideo(DownloaderVideo):
             tags,
             file_extension,
         )
-        cover_path = self.downloader_episode.get_cover_path(final_path)
+        cover_path = self.get_cover_path(final_path)
         cover_url = self.downloader_episode.downloader.get_cover_url(show_metadata)
         remuxed_path = None
         if final_path.exists() and not self.downloader.overwrite:
@@ -96,7 +97,11 @@ class DownloaderEpisodeVideo(DownloaderVideo):
             logger.debug(f'Downloading audio to "{temp_path_audio}"')
             self.download_segments(stream_info.segment_urls_audio, temp_path_audio)
             logger.debug(f'Remuxing to "{remuxed_path}"')
-            self.remux(temp_path_video, temp_path_audio, remuxed_path)
+            self.remux(
+                temp_path_video,
+                temp_path_audio,
+                remuxed_path,
+            )
         self.downloader._final_processing(
             cover_path,
             cover_url,
