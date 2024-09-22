@@ -5,6 +5,7 @@ A Python CLI app for downloading songs/podcasts from Spotify in Vorbis (OGG).
 
 ## Features
 * Download songs and podcasts in Vorbis 96/128kbps or in 320kbps with a premium account
+* Support for artist links to download all of their albums
 * Download synced lyrics
 * Highly configurable
 
