@@ -15,8 +15,10 @@ from .downloader import Downloader
 from .downloader_episode import DownloaderEpisode
 from .downloader_song import DownloaderSong
 from .enums import DownloadMode, Quality
-from .models import Lyrics
+from .models import DownloadQueueItem
 from .spotify_api import SpotifyApi
+
+logger = logging.getLogger("votify")
 
 spotify_api_sig = inspect.signature(SpotifyApi.__init__)
 downloader_sig = inspect.signature(Downloader.__init__)
@@ -86,37 +88,10 @@ def load_config_file(
     help="Force to detect the account as premium.",
 )
 @click.option(
-    "--save-cover",
-    "-s",
-    is_flag=True,
-    help="Save cover as a separate file.",
-)
-@click.option(
-    "--overwrite",
-    is_flag=True,
-    help="Overwrite existing files.",
-)
-@click.option(
     "--read-urls-as-txt",
     "-r",
     is_flag=True,
     help="Interpret URLs as paths to text files containing URLs.",
-)
-@click.option(
-    "--save-playlist",
-    is_flag=True,
-    help="Save a M3U8 playlist file when downloading a playlist.",
-)
-@click.option(
-    "--lrc-only",
-    "-l",
-    is_flag=True,
-    help="Download only the synced lyrics.",
-)
-@click.option(
-    "--no-lrc",
-    is_flag=True,
-    help="Don't download the synced lyrics.",
 )
 @click.option(
     "--config-path",
@@ -231,6 +206,22 @@ def load_config_file(
     help="Date tag template.",
 )
 @click.option(
+    "--save-cover",
+    "-s",
+    is_flag=True,
+    help="Save cover as a separate file.",
+)
+@click.option(
+    "--save-playlist",
+    is_flag=True,
+    help="Save a M3U8 playlist file when downloading a playlist.",
+)
+@click.option(
+    "--overwrite",
+    is_flag=True,
+    help="Overwrite existing files.",
+)
+@click.option(
     "--exclude-tags",
     type=str,
     default=downloader_sig.parameters["exclude_tags"].default,
@@ -241,6 +232,18 @@ def load_config_file(
     type=int,
     default=downloader_sig.parameters["truncate"].default,
     help="Maximum length of the file/folder names.",
+)
+# DownloaderSong specific options
+@click.option(
+    "--lrc-only",
+    "-l",
+    is_flag=True,
+    help="Download only the synced lyrics.",
+)
+@click.option(
+    "--no-lrc",
+    is_flag=True,
+    help="Don't download the synced lyrics.",
 )
 # This option should always be last
 @click.option(
@@ -254,12 +257,7 @@ def main(
     urls: list[str],
     wait_interval: float,
     force_premium: bool,
-    save_cover: bool,
-    overwrite: bool,
     read_urls_as_txt: bool,
-    save_playlist: bool,
-    lrc_only: bool,
-    no_lrc: bool,
     config_path: Path,
     log_level: str,
     print_exceptions: bool,
@@ -278,17 +276,21 @@ def main(
     template_file_episode: str,
     template_file_playlist: str,
     date_tag_template: str,
+    save_cover: bool,
+    save_playlist: bool,
+    overwrite: bool,
     exclude_tags: str,
     truncate: int,
+    lrc_only: bool,
+    no_lrc: bool,
     no_config_file: bool,
 ) -> None:
     logging.basicConfig(
         format="[%(levelname)-8s %(asctime)s] %(message)s",
         datefmt="%H:%M:%S",
     )
-    logger = logging.getLogger(__name__)
     logger.setLevel(log_level)
-    logger.debug("Starting downloader")
+    logger.info("Starting Votify")
     spotify_api = SpotifyApi(cookies_path)
     downloader = Downloader(
         spotify_api,
@@ -306,11 +308,16 @@ def main(
         template_file_episode,
         template_file_playlist,
         date_tag_template,
+        save_cover,
+        save_playlist,
+        overwrite,
         exclude_tags,
         truncate,
     )
     downloader_song = DownloaderSong(
         downloader,
+        lrc_only,
+        no_lrc,
     )
     downloader_episode = DownloaderEpisode(
         downloader,
@@ -340,7 +347,13 @@ def main(
         logger.info(f'({url_progress}) Checking "{url}"')
         try:
             url_info = downloader.get_url_info(url)
-            download_queue = downloader.get_download_queue(url_info)
+            if url_info.type == "artist":
+                download_queue = downloader.get_download_queue_from_artist(url_info.id)
+            else:
+                download_queue = downloader.get_download_queue(
+                    url_info.type,
+                    url_info.id,
+                )
         except Exception as e:
             error_count += 1
             logger.error(
@@ -348,158 +361,32 @@ def main(
                 exc_info=print_exceptions,
             )
             continue
-        medias_metadata = download_queue.medias_metadata
-        playlist_metadata = download_queue.playlist_metadata
-        for index, media_metadata in enumerate(medias_metadata, start=1):
+        for index, download_queue_item in enumerate(download_queue, start=1):
             queue_progress = (
-                f"Track {index}/{len(medias_metadata)} from URL {url_index}/{len(urls)}"
+                f"Track {index}/{len(download_queue)}" f" from URL {url}/{len(urls)}"
             )
+            media_metadata = download_queue_item.media_metadata
             try:
                 logger.info(
                     f'({queue_progress}) Downloading "{media_metadata["name"]}"'
                 )
-                decrypted_path = None
                 media_id = downloader.get_media_id(media_metadata)
                 media_type = media_metadata["type"]
-                logger.debug("Getting stream info")
-                gid_metadata = downloader.get_gid_metadata(media_id, media_type)
-                stream_info = downloader.get_stream_info(gid_metadata, media_type)
-                if not stream_info.file_id:
-                    logger.warning(
-                        f"({queue_progress}) Media is not available on Spotify's "
-                        "servers and no alternative found, skipping"
-                    )
-                    continue
-                if stream_info.quality != quality:
-                    logger.warning(
-                        f"({queue_progress}) Quality has been changed to {stream_info.quality.value}"
-                    )
-                logger.debug("Getting decryption key")
-                decryption_key = downloader.get_decryption_key(stream_info.file_id)
                 if media_type == "track":
-                    if gid_metadata.get("has_lyrics"):
-                        logger.debug("Getting lyrics")
-                        lyrics = downloader_song.get_lyrics(media_id)
-                    else:
-                        lyrics = Lyrics()
-                    if not download_queue.album_metadata:
-                        logger.debug("Getting album metadata")
-                        album_metadata = spotify_api.get_album(
-                            media_metadata["album"]["id"]
-                        )
-                    else:
-                        album_metadata = download_queue.album_metadata
-                    logger.debug("Getting track credits")
-                    track_credits = spotify_api.get_track_credits(media_id)
-                    tags = downloader_song.get_tags(
-                        media_metadata,
-                        album_metadata,
-                        track_credits,
-                        lyrics.unsynced,
+                    downloader_song.download(
+                        track_id=media_id,
+                        track_metadata=media_metadata,
+                        album_metadata=download_queue_item.album_metadata,
+                        playlist_metadata=download_queue_item.playlist_metadata,
+                        playlist_track=index,
                     )
-                    if playlist_metadata:
-                        tags = {
-                            **tags,
-                            **downloader.get_playlist_tags(
-                                playlist_metadata,
-                                index,
-                            ),
-                        }
-                    final_path = downloader.get_final_path(
-                        media_type,
-                        tags,
-                        ".ogg",
-                    )
-                    lrc_path = downloader.get_lrc_path(final_path)
-                    cover_path = downloader_song.get_cover_path(final_path)
-                    cover_url = downloader_song.get_cover_url(album_metadata)
-                    if lrc_only:
-                        pass
-                    elif final_path.exists() and not overwrite:
-                        logger.warning(
-                            f'({queue_progress}) Track already exists at "{final_path}", skipping'
-                        )
-                    else:
-                        encrypted_path = downloader.get_encrypted_path(media_id)
-                        decrypted_path = downloader.get_decrypted_path(media_id)
-                        logger.debug(f'Downloading to "{encrypted_path}"')
-                        downloader.download(encrypted_path, stream_info.stream_url)
-                        logger.debug(f'Decrypting to "{decrypted_path}"')
-                        downloader.decrypt(
-                            decryption_key,
-                            encrypted_path,
-                            decrypted_path,
-                        )
-                    if no_lrc or not lyrics.synced:
-                        pass
-                    elif lrc_path.exists() and not overwrite:
-                        logger.debug(
-                            f'Synced lyrics already exists at "{lrc_path}", skipping'
-                        )
-                    else:
-                        logger.debug(f'Saving synced lyrics to "{lrc_path}"')
-                        downloader.save_lrc(lrc_path, lyrics.synced)
                 elif media_type == "episode" and not lrc_only:
-                    if not download_queue.show_metadata:
-                        logger.debug("Getting show metadata")
-                        show_metadata = spotify_api.get_show(
-                            media_metadata["show"]["id"]
-                        )
-                    else:
-                        show_metadata = download_queue.show_metadata
-                    tags = downloader_episode.get_tags(
-                        media_metadata,
-                        show_metadata,
-                    )
-                    if playlist_metadata:
-                        tags = {
-                            **tags,
-                            **downloader.get_playlist_tags(
-                                playlist_metadata,
-                                index,
-                            ),
-                        }
-                    final_path = downloader.get_final_path(
-                        media_type,
-                        tags,
-                        ".ogg",
-                    )
-                    cover_path = downloader_episode.get_cover_path(final_path)
-                    cover_url = downloader_song.get_cover_url(media_metadata)
-                    if final_path.exists() and not overwrite:
-                        logger.warning(
-                            f'({queue_progress}) Track already exists at "{final_path}", skipping'
-                        )
-                    else:
-                        encrypted_path = downloader.get_encrypted_path(media_id)
-                        decrypted_path = downloader.get_decrypted_path(media_id)
-                        logger.debug(f'Downloading to "{encrypted_path}"')
-                        downloader.download(encrypted_path, stream_info.stream_url)
-                        logger.debug(f'Decrypting to "{decrypted_path}"')
-                        downloader.decrypt(
-                            decryption_key,
-                            encrypted_path,
-                            decrypted_path,
-                        )
-                if lrc_only or not save_cover:
-                    pass
-                elif cover_path.exists() and not overwrite:
-                    logger.debug(f'Cover already exists at "{cover_path}", skipping')
-                elif cover_url is not None:
-                    logger.debug(f'Saving cover to "{cover_path}"')
-                    downloader.save_cover(cover_path, cover_url)
-                if decrypted_path:
-                    logger.debug("Applying tags")
-                    downloader.apply_tags(decrypted_path, tags, cover_url)
-                    logger.debug(f'Moving to "{final_path}"')
-                    downloader.move_to_final_path(decrypted_path, final_path)
-                if not lrc_only and save_playlist and playlist_metadata:
-                    playlist_file_path = downloader.get_playlist_file_path(tags)
-                    logger.debug(f'Updating M3U8 playlist from "{playlist_file_path}"')
-                    downloader.update_playlist_file(
-                        playlist_file_path,
-                        final_path,
-                        index,
+                    downloader_episode.download(
+                        episode_id=media_id,
+                        episode_metadata=media_metadata,
+                        show_metadata=download_queue_item.show_metadata,
+                        playlist_metadata=download_queue_item.playlist_metadata,
+                        playlist_track=index,
                     )
             except Exception as e:
                 error_count += 1
@@ -508,12 +395,9 @@ def main(
                     exc_info=print_exceptions,
                 )
             finally:
-                if temp_path.exists():
-                    logger.debug(f'Cleaning up "{temp_path}"')
-                    downloader.cleanup_temp_path()
-                if wait_interval > 0 and index != len(medias_metadata):
+                if wait_interval > 0 and index != len(download_queue):
                     logger.debug(
                         f"Waiting for {wait_interval} second(s) before continuing"
                     )
                     time.sleep(wait_interval)
-    logger.info(f"Done ({error_count} error(s))")
+        logger.info(f"Done ({error_count} error(s))")

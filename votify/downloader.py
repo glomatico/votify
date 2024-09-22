@@ -11,6 +11,8 @@ from pathlib import Path
 
 import requests
 from Crypto.Cipher import AES
+from InquirerPy import inquirer
+from InquirerPy.base.control import Choice
 from mutagen.flac import Picture
 from mutagen.oggvorbis import OggVorbis, OggVorbisHeaderError
 from PIL import Image
@@ -18,7 +20,7 @@ from yt_dlp import YoutubeDL
 
 from .constants import QUALITY_X_FORMAT_ID_MAPPING, VORBIS_TAGS_MAPPING
 from .enums import DownloadMode, Quality
-from .models import DownloadQueue, StreamInfo, UrlInfo
+from .models import DownloadQueueItem, StreamInfo, UrlInfo
 from .playplay_pb2 import (
     AUDIO_TRACK,
     Interactivity,
@@ -31,7 +33,7 @@ from .utils import check_response
 
 class Downloader:
     ILLEGAL_CHARACTERS_REGEX = r'[\\/:*?"<>|;]'
-    URL_RE = r"(album|playlist|track|show|episode)/(\w{22})"
+    URL_RE = r"(album|playlist|track|show|episode|artist)/(\w{22})"
     ILLEGAL_CHARACTERS_REPLACEMENT = "_"
     RELEASE_DATE_PRECISION_MAPPING = {
         "year": "%Y",
@@ -56,6 +58,9 @@ class Downloader:
         template_file_episode: str = "{track:02d} {title}",
         template_file_playlist: str = "Playlists/{playlist_artist}/{playlist_title}",
         date_tag_template: str = "%Y-%m-%dT%H:%M:%SZ",
+        save_cover: bool = False,
+        save_playlist: bool = False,
+        overwrite: bool = False,
         exclude_tags: str = None,
         truncate: int = None,
         silence: bool = False,
@@ -75,6 +80,9 @@ class Downloader:
         self.template_file_episode = template_file_episode
         self.template_file_playlist = template_file_playlist
         self.date_tag_template = date_tag_template
+        self.save_cover = save_cover
+        self.save_playlist = save_playlist
+        self.overwrite = overwrite
         self.exclude_tags = exclude_tags
         self.truncate = truncate
         self.silence = silence
@@ -115,37 +123,119 @@ class Downloader:
 
     def get_download_queue(
         self,
-        url_info: UrlInfo,
-    ) -> DownloadQueue:
-        download_queue = DownloadQueue(medias_metadata=[])
-        if url_info.type == "album":
-            album = self.spotify_api.get_album(url_info.id)
-            download_queue.medias_metadata.extend(
-                track for track in album["tracks"]["items"] if track is not None
+        media_type: str,
+        media_id: str,
+    ) -> list[DownloadQueueItem]:
+        download_queue = []
+        if media_type == "album":
+            album = self.spotify_api.get_album(media_id)
+            for track in album["tracks"]["items"]:
+                download_queue.append(
+                    DownloadQueueItem(
+                        album_metadata=album,
+                        media_metadata=track,
+                    )
+                )
+        elif media_type == "playlist":
+            playlist = self.spotify_api.get_playlist(media_id)
+            for track in playlist["tracks"]["items"]:
+                if track["track"] is None:
+                    continue
+                download_queue.append(
+                    DownloadQueueItem(
+                        playlist_metadata=playlist,
+                        media_metadata=track["track"],
+                    )
+                )
+        elif media_type == "track":
+            download_queue.append(
+                DownloadQueueItem(
+                    media_metadata=self.spotify_api.get_track(media_id),
+                )
             )
-            download_queue.album_metadata = album
-        elif url_info.type == "playlist":
-            playlist = self.spotify_api.get_playlist(url_info.id)
-            download_queue.playlist_metadata = playlist.copy()
-            download_queue.playlist_metadata.pop("tracks")
-            download_queue.medias_metadata.extend(
-                track_metadata["track"]
-                for track_metadata in playlist["tracks"]["items"]
-                if track_metadata["track"] is not None
+        elif media_type == "episode":
+            download_queue.append(
+                DownloadQueueItem(
+                    media_metadata=self.spotify_api.get_episode(media_id),
+                )
             )
-        elif url_info.type == "track":
-            download_queue.medias_metadata.append(
-                self.spotify_api.get_track(url_info.id)
+        elif media_type == "show":
+            show = self.spotify_api.get_show(media_id)
+            for episode in show["episodes"]["items"]:
+                download_queue.append(
+                    DownloadQueueItem(
+                        show_metadata=show,
+                        media_metadata=episode,
+                    )
+                )
+        return download_queue
+
+    def _filter_artist_albums(
+        self,
+        artist_albums: list[dict],
+        album_type: str,
+    ) -> list[dict]:
+        return [album for album in artist_albums if album["album_type"] == album_type]
+
+    def get_download_queue_from_artist(
+        self,
+        artist_id: str,
+    ) -> list[DownloadQueueItem]:
+        download_queue = []
+        artist_albums = self.spotify_api.get_artist_albums(artist_id)
+        artist_albums_all = {}
+        for album_type in ["album", "single", "compilation", "appears_on"]:
+            artist_albums_all[album_type] = self._filter_artist_albums(
+                artist_albums["items"],
+                album_type,
             )
-        elif url_info.type == "episode":
-            download_queue.medias_metadata.append(
-                self.spotify_api.get_episode(url_info.id)
+        selected_album_type = inquirer.select(
+            message=f"Select which album type to download for artist:",
+            choices=[
+                Choice(
+                    name="Albums",
+                    value="album",
+                ),
+                Choice(
+                    name="Singles",
+                    value="single",
+                ),
+                Choice(
+                    name="Compilations",
+                    value="compilation",
+                ),
+                Choice(
+                    name="Collaborations",
+                    value="appears_on",
+                ),
+            ],
+            validate=lambda result: artist_albums_all.get(result),
+            invalid_message="The artist doesn't have any albums of this type",
+        ).execute()
+        choices = [
+            Choice(
+                name=" | ".join(
+                    [
+                        f"{album['total_tracks']:03d}",
+                        album["release_date"][:4],
+                        album["name"],
+                    ],
+                ),
+                value=album["id"],
             )
-        elif url_info.type == "show":
-            show = self.spotify_api.get_show(url_info.id)
-            download_queue.show_metadata = show.copy()
-            download_queue.medias_metadata.extend(
-                episode for episode in show["episodes"]["items"]
+            for album in artist_albums_all[selected_album_type]
+        ]
+        selected = inquirer.select(
+            message="Select which albums to download: (Total tracks | Release year | Album name)",
+            choices=choices,
+            multiselect=True,
+        ).execute()
+        for album_id in selected:
+            download_queue.extend(
+                self.get_download_queue(
+                    "album",
+                    album_id,
+                )
             )
         return download_queue
 
@@ -199,6 +289,8 @@ class Downloader:
         elif media_type == "episode":
             template_folder = self.template_folder_episode.split("/")
             template_file = self.template_file_episode.split("/")
+        else:
+            raise RuntimeError()
         template_final = template_folder + template_file
         return Path(
             self.output_path,
@@ -311,13 +403,13 @@ class Downloader:
         assert key
         return key
 
-    def download(self, input_path: Path, stream_url: str):
+    def download_stream_url(self, input_path: Path, stream_url: str):
         if self.download_mode == DownloadMode.YTDLP:
-            self.download_ytdlp(input_path, stream_url)
+            self.download_stream_url_ytdlp(input_path, stream_url)
         elif self.download_mode == DownloadMode.ARIA2C:
-            self.download_aria2c(input_path, stream_url)
+            self.download_stream_url_aria2c(input_path, stream_url)
 
-    def download_ytdlp(self, input_path: Path, stream_url: str) -> None:
+    def download_stream_url_ytdlp(self, input_path: Path, stream_url: str) -> None:
         with YoutubeDL(
             {
                 "quiet": True,
@@ -331,7 +423,7 @@ class Downloader:
         ) as ydl:
             ydl.download(stream_url)
 
-    def download_aria2c(self, input_path: Path, stream_url: str) -> None:
+    def download_stream_url_aria2c(self, input_path: Path, stream_url: str) -> None:
         input_path.parent.mkdir(parents=True, exist_ok=True)
         subprocess.run(
             [
@@ -403,7 +495,12 @@ class Downloader:
             + f' & {artist_list[-1]["name"]}'
         )
 
-    def get_cover_url(self, images_dict: list[dict]) -> str:
+    def get_cover_url(self, metadata: dict) -> str | None:
+        if not metadata.get("images"):
+            return None
+        return self._get_cover_url(metadata["images"])
+
+    def _get_cover_url(self, images_dict: list[dict]) -> str:
         return max(images_dict, key=lambda img: img["height"])["url"]
 
     def get_encrypted_path(
@@ -459,7 +556,7 @@ class Downloader:
         shutil.move(input_path, final_path)
 
     @functools.lru_cache()
-    def save_cover(self, cover_path: Path, cover_url: str):
+    def save_cover_file(self, cover_path: Path, cover_url: str):
         if cover_url is not None:
             cover_path.parent.mkdir(parents=True, exist_ok=True)
             cover_path.write_bytes(self.get_response_bytes(cover_url))

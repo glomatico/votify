@@ -18,7 +18,7 @@ class SpotifyApi:
     SPOTIFY_HOME_PAGE_URL = "https://open.spotify.com/"
     CLIENT_VERSION = "1.2.46.25.g7f189073"
     LYRICS_API_URL = "https://spclient.wg.spotify.com/color-lyrics/v2/track/{track_id}"
-    METADATA_API_URL = "https://api.spotify.com/v1/{type}/{track_id}"
+    METADATA_API_URL = "https://api.spotify.com/v1/{type}/{item_id}"
     GID_METADATA_API_URL = "https://spclient.wg.spotify.com/metadata/4/{media_type}/{gid}?market=from_token"
     PLAYPLAY_LICENSE_API_URL = (
         "https://gew4-spclient.spotify.com/playplay/v1/key/{file_id}"
@@ -131,17 +131,15 @@ class SpotifyApi:
     def get_track(self, track_id: str) -> dict:
         self._refresh_session_auth()
         response = self.session.get(
-            self.METADATA_API_URL.format(type="tracks", track_id=track_id)
+            self.METADATA_API_URL.format(type="tracks", item_id=track_id)
         )
         check_response(response)
         return response.json()
 
-    def extend_track_collection(
+    def extended_media_collection(
         self,
-        track_collection: dict,
-        media_type: str,
+        next_url: str,
     ) -> typing.Generator[dict, None, None]:
-        next_url = track_collection[media_type]["next"]
         while next_url is not None:
             response = self.session.get(next_url)
             check_response(response)
@@ -158,7 +156,7 @@ class SpotifyApi:
     ) -> dict:
         self._refresh_session_auth()
         response = self.session.get(
-            self.METADATA_API_URL.format(type="albums", track_id=album_id)
+            self.METADATA_API_URL.format(type="albums", item_id=album_id)
         )
         check_response(response)
         album = response.json()
@@ -166,9 +164,8 @@ class SpotifyApi:
             album["tracks"]["items"].extend(
                 [
                     item
-                    for extended_collection in self.extend_track_collection(
-                        album,
-                        "tracks",
+                    for extended_collection in self.extended_media_collection(
+                        album["tracks"]["next"],
                     )
                     for item in extended_collection["items"]
                 ]
@@ -182,7 +179,7 @@ class SpotifyApi:
     ) -> dict:
         self._refresh_session_auth()
         response = self.session.get(
-            self.METADATA_API_URL.format(type="playlists", track_id=playlist_id)
+            self.METADATA_API_URL.format(type="playlists", item_id=playlist_id)
         )
         check_response(response)
         playlist = response.json()
@@ -190,9 +187,8 @@ class SpotifyApi:
             playlist["tracks"]["items"].extend(
                 [
                     item
-                    for extended_collection in self.extend_track_collection(
-                        playlist,
-                        "tracks",
+                    for extended_collection in self.extended_media_collection(
+                        playlist["tracks"]["next"],
                     )
                     for item in extended_collection["items"]
                 ]
@@ -210,7 +206,7 @@ class SpotifyApi:
     def get_episode(self, episode_id: str) -> dict:
         self._refresh_session_auth()
         response = self.session.get(
-            self.METADATA_API_URL.format(type="episodes", track_id=episode_id)
+            self.METADATA_API_URL.format(type="episodes", item_id=episode_id)
         )
         check_response(response)
         return response.json()
@@ -218,7 +214,7 @@ class SpotifyApi:
     def get_show(self, show_id: str, extend: bool = True) -> dict:
         self._refresh_session_auth()
         response = self.session.get(
-            self.METADATA_API_URL.format(type="shows", track_id=show_id)
+            self.METADATA_API_URL.format(type="shows", item_id=show_id)
         )
         check_response(response)
         show = response.json()
@@ -226,14 +222,36 @@ class SpotifyApi:
             show["episodes"]["items"].extend(
                 [
                     item
-                    for extended_collection in self.extend_track_collection(
-                        show,
-                        "episodes",
+                    for extended_collection in self.extended_media_collection(
+                        show["episodes"]["next"],
                     )
                     for item in extended_collection["items"]
                 ]
             )
         return show
+
+    def get_artist_albums(
+        self,
+        artist_id: str,
+        extend: bool = True,
+    ) -> dict:
+        self._refresh_session_auth()
+        response = self.session.get(
+            self.METADATA_API_URL.format(type="artists", item_id=artist_id) + "/albums"
+        )
+        check_response(response)
+        artist_albums = response.json()
+        if extend:
+            artist_albums["items"].extend(
+                [
+                    item
+                    for extended_collection in self.extended_media_collection(
+                        artist_albums["next"],
+                    )
+                    for item in extended_collection["items"]
+                ]
+            )
+        return artist_albums
 
     def get_playplay_license(self, file_id: str, challenge: bytes) -> bytes:
         self._refresh_session_auth()

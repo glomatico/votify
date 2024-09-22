@@ -18,11 +18,11 @@ class UrlInfo:
 
 
 @dataclass
-class DownloadQueue:
+class DownloadQueueItem:
     playlist_metadata: dict = None
     album_metadata: dict = None
     show_metadata: dict = None
-    medias_metadata: list[dict] = None
+    media_metadata: dict = None
 
 
 @dataclass
