@@ -5,6 +5,7 @@ requires-python = ">=3.8"
 authors = [{ name = "glomatico" }]
 dependencies = [
     "click",
+    "inquirerpy",
     "pillow",
     "protobuf",
     "pybase62",

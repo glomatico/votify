@@ -1,4 +1,5 @@
 click
+inquirerpy
 pillow
 protobuf
 pybase62
