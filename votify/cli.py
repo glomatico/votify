@@ -142,7 +142,7 @@ def load_config_file(
     "-d",
     type=DownloadMode,
     default=downloader_sig.parameters["download_mode"].default,
-    help="Download mode.",
+    help="Download mode for songs and podcasts.",
 )
 @click.option(
     "--aria2c-path",
