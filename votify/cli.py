@@ -323,7 +323,7 @@ def main(
     )
     if not lrc_only:
         if not downloader.unplayplay_path_full:
-            logger.critical(X_NOT_FOUND_STRING.format("playplay", unplayplay_path))
+            logger.critical(X_NOT_FOUND_STRING.format("Unplayplay", unplayplay_path))
             return
         if download_mode == DownloadMode.ARIA2C and not downloader.aria2c_path_full:
             logger.critical(X_NOT_FOUND_STRING.format("aria2c", aria2c_path))
