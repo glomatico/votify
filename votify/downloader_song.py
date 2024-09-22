@@ -201,11 +201,11 @@ class DownloaderSong:
         lrc_path = self.downloader.get_lrc_path(final_path)
         cover_path = self.get_cover_path(final_path)
         cover_url = self.downloader.get_cover_url(album_metadata)
+        decrypted_path = None
         if self.lrc_only:
             pass
         elif final_path.exists() and not self.downloader.overwrite:
             logger.warning(f'Track already exists at "{final_path}", skipping')
-            return
         else:
             if not decryption_key:
                 logger.debug("Getting decryption key")
@@ -238,10 +238,11 @@ class DownloaderSong:
             logger.debug(f'Saving cover to "{cover_path}"')
             self.downloader.save_cover_file(cover_path, cover_url)
             return
-        logger.debug("Applying tags")
-        self.downloader.apply_tags(decrypted_path, tags, cover_url)
-        logger.debug(f'Moving to "{final_path}"')
-        self.downloader.move_to_final_path(decrypted_path, final_path)
+        if decrypted_path:
+            logger.debug("Applying tags")
+            self.downloader.apply_tags(decrypted_path, tags, cover_url)
+            logger.debug(f'Moving to "{final_path}"')
+            self.downloader.move_to_final_path(decrypted_path, final_path)
         if not self.lrc_only and self.downloader.save_playlist and playlist_metadata:
             playlist_file_path = self.downloader.get_playlist_file_path(tags)
             logger.debug(f'Updating M3U8 playlist from "{playlist_file_path}"')
