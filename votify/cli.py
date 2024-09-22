@@ -535,8 +535,8 @@ def main(
             )
         if music_video_warning_message:
             logger.warning(
-                +"Music videos will not be downloaded due to the following reasons:\n"
-                "\n".join(music_video_warning_message)
+                "Music videos will not be downloaded due to the following reasons:\n"
+                + "\n".join(music_video_warning_message)
             )
             can_download_music_videos = False
     error_count = 0
