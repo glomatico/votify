@@ -15,7 +15,6 @@ from .downloader import Downloader
 from .downloader_episode import DownloaderEpisode
 from .downloader_song import DownloaderSong
 from .enums import DownloadMode, Quality
-from .models import DownloadQueueItem
 from .spotify_api import SpotifyApi
 
 logger = logging.getLogger("votify")
