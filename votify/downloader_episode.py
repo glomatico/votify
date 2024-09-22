@@ -108,7 +108,7 @@ class DownloaderEpisode:
                 ),
             }
         final_path = self.downloader.get_final_path(
-            "track",
+            "episode",
             tags,
             ".ogg",
         )
