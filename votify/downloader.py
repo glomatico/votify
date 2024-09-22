@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import datetime
 import functools
+import logging
 import re
 import shutil
 import subprocess
@@ -14,12 +15,17 @@ from Crypto.Cipher import AES
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 from mutagen.flac import Picture
+from mutagen.mp4 import MP4, MP4Cover, MP4FreeForm
 from mutagen.oggvorbis import OggVorbis, OggVorbisHeaderError
 from PIL import Image
 from yt_dlp import YoutubeDL
 
-from .constants import QUALITY_X_FORMAT_ID_MAPPING, VORBIS_TAGS_MAPPING
-from .enums import AudioQuality, DownloadMode
+from .constants import (
+    AUDIO_QUALITY_X_FORMAT_ID_MAPPING,
+    MP4_TAGS_MAP,
+    VORBIS_TAGS_MAPPING,
+)
+from .enums import AudioQuality, DownloadMode, VideoFormat
 from .models import DownloadQueueItem, StreamInfoAudio, UrlInfo
 from .playplay_pb2 import (
     AUDIO_TRACK,
@@ -29,6 +35,8 @@ from .playplay_pb2 import (
 )
 from .spotify_api import SpotifyApi
 from .utils import check_response
+
+logger = logging.getLogger("votify")
 
 
 class Downloader:
@@ -45,11 +53,13 @@ class Downloader:
         self,
         spotify_api: SpotifyApi,
         audio_quality: AudioQuality = AudioQuality.VORBIS_MEDIUM,
+        video_format: VideoFormat = VideoFormat.MP4,
         output_path: Path = Path("./Spotify"),
         temp_path: Path = Path("./temp"),
         download_mode: DownloadMode = DownloadMode.YTDLP,
         aria2c_path: Path = "aria2c",
         unplayplay_path: Path = "unplayplay",
+        ffmpeg_path: Path = "ffmpeg",
         template_folder_album: str = "{album_artist}/{album}",
         template_folder_compilation: str = "Compilations/{album}",
         template_file_single_disc: str = "{track:02d} {title}",
@@ -67,11 +77,13 @@ class Downloader:
     ):
         self.spotify_api = spotify_api
         self.audio_quality = audio_quality
+        self.video_format = video_format
         self.output_path = output_path
         self.temp_path = temp_path
         self.download_mode = download_mode
         self.aria2c_path = aria2c_path
         self.unplayplay_path = unplayplay_path
+        self.ffmpeg_path = ffmpeg_path
         self.template_folder_album = template_folder_album
         self.template_folder_compilation = template_folder_compilation
         self.template_file_single_disc = template_file_single_disc
@@ -94,6 +106,7 @@ class Downloader:
     def _set_binaries_full_path(self):
         self.aria2c_path_full = shutil.which(self.aria2c_path)
         self.unplayplay_path_full = shutil.which(self.unplayplay_path)
+        self.ffmpeg_path_full = shutil.which(self.ffmpeg_path)
 
     def _set_exclude_tags_list(self):
         self.exclude_tags_list = (
@@ -338,7 +351,7 @@ class Downloader:
         start_index = qualities.index(self.audio_quality)
         for quality in qualities[start_index:]:
             for audio_file in audio_files:
-                if audio_file["format"] == QUALITY_X_FORMAT_ID_MAPPING[quality]:
+                if audio_file["format"] == AUDIO_QUALITY_X_FORMAT_ID_MAPPING[quality]:
                     return quality, audio_file
         return None, None
 
@@ -503,19 +516,15 @@ class Downloader:
     def _get_cover_url(self, images_dict: list[dict]) -> str:
         return max(images_dict, key=lambda img: img["height"])["url"]
 
-    def get_encrypted_path(
+    def get_file_temp_path(
         self,
         track_id: str,
+        extra_string: str,
+        extension: str,
     ) -> Path:
-        return self.temp_path / (f"{track_id}_encrypted.ogg")
+        return self.temp_path / (track_id + extra_string + extension)
 
-    def get_decrypted_path(
-        self,
-        track_id: str,
-    ) -> Path:
-        return self.temp_path / (f"{track_id}_decrypted.ogg")
-
-    def apply_tags(
+    def apply_tags_ogg(
         self,
         input_path: Path,
         tags: dict,
@@ -543,6 +552,92 @@ class Downloader:
             file.save()
         except OggVorbisHeaderError:
             pass
+
+    def apply_tags_mp4(self, fixed_location: Path, tags: dict, cover_url: str):
+        to_apply_tags = [
+            tag_name
+            for tag_name in tags.keys()
+            if tag_name not in self.exclude_tags_list
+        ]
+        mp4_tags = {}
+        for tag_name in to_apply_tags:
+            if tags.get(tag_name) is None:
+                continue
+            if tag_name in ("disc", "disc_total"):
+                if mp4_tags.get("disk") is None:
+                    mp4_tags["disk"] = [[0, 0]]
+                if tag_name == "disc":
+                    mp4_tags["disk"][0][0] = tags[tag_name]
+                elif tag_name == "disc_total":
+                    mp4_tags["disk"][0][1] = tags[tag_name]
+            elif tag_name in ("track", "track_total"):
+                if mp4_tags.get("trkn") is None:
+                    mp4_tags["trkn"] = [[0, 0]]
+                if tag_name == "track":
+                    mp4_tags["trkn"][0][0] = tags[tag_name]
+                elif tag_name == "track_total":
+                    mp4_tags["trkn"][0][1] = tags[tag_name]
+            elif tag_name == "compilation":
+                mp4_tags["cpil"] = tags["compilation"]
+            elif tag_name == "isrc":
+                mp4_tags["----:com.apple.iTunes:ISRC"] = [
+                    MP4FreeForm(tags["isrc"].encode("utf-8"))
+                ]
+            elif tag_name == "label":
+                mp4_tags["----:com.apple.iTunes:LABEL"] = [
+                    MP4FreeForm(tags["label"].encode("utf-8"))
+                ]
+            elif tag_name == "rating":
+                mp4_tags["rtng"] = [1] if tags[tag_name] == "Explicit" else [0]
+            elif MP4_TAGS_MAP.get(tag_name) is not None:
+                mp4_tags[MP4_TAGS_MAP[tag_name]] = [tags[tag_name]]
+        if "cover" not in self.exclude_tags_list and cover_url is not None:
+            mp4_tags["covr"] = [
+                MP4Cover(
+                    self.get_response_bytes(cover_url), imageformat=MP4Cover.FORMAT_JPEG
+                )
+            ]
+        mp4 = MP4(fixed_location)
+        mp4.clear()
+        mp4.update(mp4_tags)
+        mp4.save()
+
+    def _final_processing(
+        self,
+        cover_path: Path,
+        cover_url: str,
+        media_temp_path: Path,
+        final_path: Path,
+        tags: dict,
+        playlist_metadata: dict,
+        playlist_track: int,
+    ):
+        if self.save_cover and cover_path.exists() and not self.overwrite:
+            logger.debug(f'Cover already exists at "{cover_path}", skipping')
+        elif self.save_cover and cover_url is not None:
+            logger.debug(f'Saving cover to "{cover_path}"')
+            self.save_cover_file(cover_path, cover_url)
+        if media_temp_path:
+            logger.debug("Applying tags")
+            if media_temp_path.suffix == ".mp4":
+                self.apply_tags_mp4(media_temp_path, tags, cover_url)
+            elif media_temp_path.suffix == ".ogg":
+                self.apply_tags_ogg(media_temp_path, tags, cover_url)
+            logger.debug(f'Moving to "{final_path}"')
+            self.move_to_final_path(media_temp_path, final_path)
+        if self.save_playlist and playlist_metadata:
+            playlist_file_path = self.get_playlist_file_path(tags)
+            logger.debug(f'Updating M3U8 playlist from "{playlist_file_path}"')
+            self.update_playlist_file(
+                playlist_file_path,
+                final_path,
+                playlist_track,
+            )
+
+    def _cleanup_temp_path(self):
+        if self.temp_path.exists():
+            logger.debug(f'Cleaning up "{self.temp_path}"')
+            self.cleanup_temp_path()
 
     @staticmethod
     @functools.lru_cache()

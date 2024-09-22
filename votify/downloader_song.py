@@ -135,9 +135,7 @@ class DownloaderSong:
         try:
             self._download(*args, **kwargs)
         finally:
-            if self.downloader.temp_path.exists():
-                logger.debug(f'Cleaning up "{self.downloader.temp_path}"')
-                self.downloader.cleanup_temp_path()
+            self.downloader._cleanup_temp_path()
 
     def _download(
         self,
@@ -210,8 +208,12 @@ class DownloaderSong:
             if not decryption_key:
                 logger.debug("Getting decryption key")
                 decryption_key = self.downloader.get_decryption_key(stream_info.file_id)
-            encrypted_path = self.downloader.get_encrypted_path(track_id)
-            decrypted_path = self.downloader.get_decrypted_path(track_id)
+            encrypted_path = self.downloader.get_file_temp_path(
+                track_id, "_encrypted", ".ogg"
+            )
+            decrypted_path = self.downloader.get_file_temp_path(
+                track_id, "_decrypted", ".ogg"
+            )
             logger.debug(f'Downloading to "{encrypted_path}"')
             self.downloader.download_stream_url(encrypted_path, stream_info.stream_url)
             logger.debug(f'Decrypting to "{decrypted_path}"')
@@ -227,26 +229,12 @@ class DownloaderSong:
         else:
             logger.debug(f'Saving synced lyrics to "{lrc_path}"')
             self.downloader.save_lrc(lrc_path, lyrics.synced)
-        if (
-            self.downloader.save_cover
-            and cover_path.exists()
-            and not self.downloader.overwrite
-        ):
-            logger.debug(f'Cover already exists at "{cover_path}", skipping')
-            return
-        elif self.downloader.save_cover and cover_url is not None:
-            logger.debug(f'Saving cover to "{cover_path}"')
-            self.downloader.save_cover_file(cover_path, cover_url)
-        if decrypted_path:
-            logger.debug("Applying tags")
-            self.downloader.apply_tags(decrypted_path, tags, cover_url)
-            logger.debug(f'Moving to "{final_path}"')
-            self.downloader.move_to_final_path(decrypted_path, final_path)
-        if not self.lrc_only and self.downloader.save_playlist and playlist_metadata:
-            playlist_file_path = self.downloader.get_playlist_file_path(tags)
-            logger.debug(f'Updating M3U8 playlist from "{playlist_file_path}"')
-            self.downloader.update_playlist_file(
-                playlist_file_path,
-                final_path,
-                playlist_track,
-            )
+        self.downloader._final_processing(
+            cover_path,
+            cover_url,
+            decrypted_path,
+            final_path,
+            tags,
+            playlist_metadata,
+            playlist_track,
+        )

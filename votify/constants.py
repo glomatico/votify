@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .enums import AudioQuality
+from .enums import AudioQuality, VideoFormat
 
 EXCLUDED_CONFIG_FILE_PARAMS = (
     "urls",
@@ -32,7 +32,22 @@ VORBIS_TAGS_MAPPING = {
     "url": "URL",
 }
 
-QUALITY_X_FORMAT_ID_MAPPING = {
+MP4_TAGS_MAP = {
+    "album": "\xa9alb",
+    "album_artist": "aART",
+    "artist": "\xa9ART",
+    "composer": "\xa9wrt",
+    "copyright": "cprt",
+    "lyrics": "\xa9lyr",
+    "publisher": "\xa9pub",
+    "producer": "\xa9prd",
+    "rating": "rtng",
+    "release_date": "\xa9day",
+    "title": "\xa9nam",
+    "url": "\xa9url",
+}
+
+AUDIO_QUALITY_X_FORMAT_ID_MAPPING = {
     AudioQuality.VORBIS_HIGH: "OGG_VORBIS_320",
     AudioQuality.VORBIS_MEDIUM: "OGG_VORBIS_160",
     AudioQuality.VORBIS_LOW: "OGG_VORBIS_96",

@@ -20,6 +20,7 @@ class SpotifyApi:
     LYRICS_API_URL = "https://spclient.wg.spotify.com/color-lyrics/v2/track/{track_id}"
     METADATA_API_URL = "https://api.spotify.com/v1/{type}/{item_id}"
     GID_METADATA_API_URL = "https://spclient.wg.spotify.com/metadata/4/{media_type}/{gid}?market=from_token"
+    VIDEO_MANIFEST_API_URL = "https://gue1-spclient.spotify.com/manifests/v7/json/sources/{gid}/options/supports_drm"
     PLAYPLAY_LICENSE_API_URL = (
         "https://gew4-spclient.spotify.com/playplay/v1/key/{file_id}"
     )
@@ -252,6 +253,15 @@ class SpotifyApi:
                 ]
             )
         return artist_albums
+
+    def get_video_manifest(
+        self,
+        gid: str,
+    ) -> dict:
+        self._refresh_session_auth()
+        response = self.session.get(self.VIDEO_MANIFEST_API_URL.format(gid=gid))
+        check_response(response)
+        return response.json()
 
     def get_playplay_license(self, file_id: str, challenge: bytes) -> bytes:
         self._refresh_session_auth()

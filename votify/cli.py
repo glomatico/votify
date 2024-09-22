@@ -3,7 +3,6 @@ from __future__ import annotations
 import inspect
 import json
 import logging
-import time
 from enum import Enum
 from pathlib import Path
 
@@ -13,8 +12,10 @@ from . import __version__
 from .constants import EXCLUDED_CONFIG_FILE_PARAMS, X_NOT_FOUND_STRING
 from .downloader import Downloader
 from .downloader_episode import DownloaderEpisode
+from .downloader_episode_video import DownloaderEpisodeVideo
 from .downloader_song import DownloaderSong
-from .enums import DownloadMode, AudioQuality
+from .downloader_video import DownloaderVideo
+from .enums import AudioQuality, DownloadMode, VideoFormat
 from .spotify_api import SpotifyApi
 
 logger = logging.getLogger("votify")
@@ -81,6 +82,11 @@ def load_config_file(
     help="Wait interval between downloads in seconds.",
 )
 @click.option(
+    "--download-podcast-video",
+    is_flag=True,
+    help="Attempt to download the video version of podcasts.",
+)
+@click.option(
     "--force-premium",
     "-f",
     is_flag=True,
@@ -125,6 +131,12 @@ def load_config_file(
     help="Audio quality for songs and podcasts.",
 )
 @click.option(
+    "--video-format",
+    type=VideoFormat,
+    default=downloader_sig.parameters["video_format"].default,
+    help="Video format.",
+)
+@click.option(
     "--output-path",
     "-o",
     type=Path,
@@ -155,6 +167,12 @@ def load_config_file(
     type=str,
     default=downloader_sig.parameters["unplayplay_path"].default,
     help="Path to unplayplay binary.",
+)
+@click.option(
+    "--ffmpeg-path",
+    type=str,
+    default=downloader_sig.parameters["ffmpeg_path"].default,
+    help="Path to ffmpeg binary.",
 )
 @click.option(
     "--template-folder-album",
@@ -254,6 +272,7 @@ def load_config_file(
 def main(
     urls: list[str],
     wait_interval: float,
+    download_podcast_video: bool,
     force_premium: bool,
     read_urls_as_txt: bool,
     config_path: Path,
@@ -261,11 +280,13 @@ def main(
     print_exceptions: bool,
     cookies_path: Path,
     audio_quality: AudioQuality,
+    video_format: VideoFormat,
     output_path: Path,
     temp_path: Path,
     download_mode: DownloadMode,
     aria2c_path: str,
     unplayplay_path: str,
+    ffmpeg_path: str,
     template_folder_album: str,
     template_folder_compilation: str,
     template_file_single_disc: str,
@@ -293,11 +314,13 @@ def main(
     downloader = Downloader(
         spotify_api,
         audio_quality,
+        video_format,
         output_path,
         temp_path,
         download_mode,
         aria2c_path,
         unplayplay_path,
+        ffmpeg_path,
         template_folder_album,
         template_folder_compilation,
         template_file_single_disc,
@@ -320,12 +343,21 @@ def main(
     downloader_episode = DownloaderEpisode(
         downloader,
     )
+    downloader_video = DownloaderVideo(
+        downloader,
+    )
+    downloader_episode_video = DownloaderEpisodeVideo(
+        downloader_episode,
+    )
     if not lrc_only:
         if not downloader.unplayplay_path_full:
             logger.critical(X_NOT_FOUND_STRING.format("Unplayplay", unplayplay_path))
             return
         if download_mode == DownloadMode.ARIA2C and not downloader.aria2c_path_full:
             logger.critical(X_NOT_FOUND_STRING.format("aria2c", aria2c_path))
+            return
+        if download_podcast_video and not downloader.ffmpeg_path_full:
+            logger.critical(X_NOT_FOUND_STRING.format("ffmpeg", ffmpeg_path))
             return
         spotify_api.config_info["isPremium"] = (
             True if force_premium else spotify_api.config_info["isPremium"]
@@ -382,13 +414,22 @@ def main(
                         playlist_track=index,
                     )
                 elif media_type == "episode" and not lrc_only:
-                    downloader_episode.download(
-                        episode_id=media_id,
-                        episode_metadata=media_metadata,
-                        show_metadata=download_queue_item.show_metadata,
-                        playlist_metadata=download_queue_item.playlist_metadata,
-                        playlist_track=index,
-                    )
+                    if download_podcast_video:
+                        downloader_episode_video.download(
+                            episode_id=media_id,
+                            episode_metadata=media_metadata,
+                            show_metadata=download_queue_item.show_metadata,
+                            playlist_metadata=download_queue_item.playlist_metadata,
+                            playlist_track=index,
+                        )
+                    else:
+                        downloader_episode.download(
+                            episode_id=media_id,
+                            episode_metadata=media_metadata,
+                            show_metadata=download_queue_item.show_metadata,
+                            playlist_metadata=download_queue_item.playlist_metadata,
+                            playlist_track=index,
+                        )
             except Exception as e:
                 error_count += 1
                 logger.error(
