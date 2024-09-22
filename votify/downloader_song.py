@@ -141,7 +141,7 @@ class DownloaderSong:
 
     def _download(
         self,
-        track_id: str = None,
+        track_id: str,
         track_metadata: dict = None,
         album_metadata: dict = None,
         gid_metadata: dict = None,
@@ -150,8 +150,6 @@ class DownloaderSong:
         playlist_track: int = None,
         decryption_key: bytes = None,
     ):
-        if not track_id:
-            raise RuntimeError("Track ID is required")
         if not track_metadata:
             logger.debug("Getting track metadata")
             track_metadata = self.downloader.spotify_api.get_track(track_id)

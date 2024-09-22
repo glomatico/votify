@@ -64,7 +64,7 @@ class DownloaderEpisode:
 
     def _download(
         self,
-        episode_id: str = None,
+        episode_id: str,
         episode_metadata: dict = None,
         show_metadata: dict = None,
         gid_metadata: dict = None,
@@ -73,8 +73,6 @@ class DownloaderEpisode:
         playlist_track: int = None,
         decryption_key: bytes = None,
     ):
-        if not episode_id:
-            raise RuntimeError("Episode ID is required")
         if not episode_metadata:
             logger.debug("Getting episode metadata")
             episode_metadata = self.downloader.spotify_api.get_episode(episode_id)
