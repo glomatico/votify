@@ -48,7 +48,7 @@ MP4_TAGS_MAP = {
 }
 
 AUDIO_QUALITY_X_FORMAT_ID_MAPPING = {
-    AudioQuality.VORBIS_HIGH: "OGG_VORBIS_320",
+    AudioQuality.VORBIS_HIGH: "MP4_256",
     AudioQuality.VORBIS_MEDIUM: "OGG_VORBIS_160",
     AudioQuality.VORBIS_LOW: "OGG_VORBIS_96",
 }

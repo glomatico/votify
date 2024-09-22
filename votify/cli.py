@@ -111,9 +111,9 @@ def load_config_file(
     help="Log level.",
 )
 @click.option(
-    "--print-exceptions",
+    "--no-exceptions",
     is_flag=True,
-    help="Print exceptions.",
+    help="Don't print exceptions.",
 )
 # SpotifyApi specific options
 @click.option(
@@ -277,7 +277,7 @@ def main(
     read_urls_as_txt: bool,
     config_path: Path,
     log_level: str,
-    print_exceptions: bool,
+    no_exceptions: bool,
     cookies_path: Path,
     audio_quality: AudioQuality,
     video_format: VideoFormat,
@@ -388,7 +388,7 @@ def main(
             error_count += 1
             logger.error(
                 f'({url_progress}) Failed to check "{url}"',
-                exc_info=print_exceptions,
+                exc_info=no_exceptions,
             )
             continue
         for index, download_queue_item in enumerate(download_queue, start=1):
@@ -431,7 +431,7 @@ def main(
                 error_count += 1
                 logger.error(
                     f'({queue_progress}) Failed to download "{media_metadata["name"]}"',
-                    exc_info=print_exceptions,
+                    exc_info=not no_exceptions,
                 )
             finally:
                 if wait_interval > 0 and index != len(download_queue):
