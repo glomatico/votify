@@ -237,7 +237,6 @@ class DownloaderSong:
         elif self.downloader.save_cover and cover_url is not None:
             logger.debug(f'Saving cover to "{cover_path}"')
             self.downloader.save_cover_file(cover_path, cover_url)
-            return
         if decrypted_path:
             logger.debug("Applying tags")
             self.downloader.apply_tags(decrypted_path, tags, cover_url)
