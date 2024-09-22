@@ -15,7 +15,6 @@ from .downloader import Downloader
 from .downloader_episode import DownloaderEpisode
 from .downloader_episode_video import DownloaderEpisodeVideo
 from .downloader_song import DownloaderSong
-from .downloader_video import DownloaderVideo
 from .enums import AudioQuality, DownloadMode, VideoFormat
 from .spotify_api import SpotifyApi
 
@@ -342,9 +341,6 @@ def main(
         no_lrc,
     )
     downloader_episode = DownloaderEpisode(
-        downloader,
-    )
-    downloader_video = DownloaderVideo(
         downloader,
     )
     downloader_episode_video = DownloaderEpisodeVideo(
