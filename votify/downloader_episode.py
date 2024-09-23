@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from .constants import AAC_AUDIO_QUALITIES
 from .downloader_audio import DownloaderAudio
 from .models import StreamInfoAudio
 
