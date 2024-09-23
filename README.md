@@ -25,7 +25,7 @@ The following tools are optional but required for specific features. Add them to
 * [MP4Box](https://gpac.io/downloads/gpac-nightly-builds/)
     * Used when setting `mp4box` as remux mode.
 * [Shaka Packager](https://github.com/shaka-project/shaka-packager/releases/latest)
-    * Used when setting `webm` as video format and exclusively used for music videos.
+    * Used when setting `webm` as video format and when downloading music videos.
 * [mp4decrypt](https://www.bento4.com/downloads/)
     * Used when setting `mp4box` or `mp4decrypt` as remux mode.
 * [aria2c](https://github.com/aria2/aria2/releases)
