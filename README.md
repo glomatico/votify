@@ -13,27 +13,27 @@ A Python CLI app for downloading songs/podcasts/videos from Spotify.
 ## Prerequisites
 * Python 3.8 or higher
 * The cookies file of your Spotify browser session in Netscape format (free or premium)
-    * You can get your cookies by using one of the following extensions on your browser of choice at the Spotify website with your account signed in:
+    * To export your cookies, use one of the following browser extensions while signed in to Spotify:
         * Firefox: https://addons.mozilla.org/addon/export-cookies-txt
         * Chromium based browsers: https://chrome.google.com/webstore/detail/gdocmgbfkjnnpapoeobnolbbkoibbcif
 
 ### Optional dependencies
-The following dependencies are optional and have to be added to your PATH or specified its path using the command-line arguments/config file.
+The following tools are optional but required for specific features. Add them to your system’s PATH or specify their paths using command-line arguments or the config file.
 * [FFmpeg](https://ffmpeg.org/download.html)
+    * Used when setting `ffmpeg` as remux mode.
+    * Used when setting `mp4` or `webm` as video format.
 * [MP4Box](https://gpac.io/downloads/gpac-nightly-builds/)
+    * Used when setting `mp4box` as remux mode.
 * [Shaka Packager](https://github.com/shaka-project/shaka-packager/releases/latest)
+    * Used when setting `webm` as video format and exclusively used for music videos.
 * [mp4decrypt](https://www.bento4.com/downloads/)
+    * Used when setting `mp4box` or `mp4decrypt` as remux mode.
 * [aria2c](https://github.com/aria2/aria2/releases)
+    * Used when setting `aria2c` as download mode.
 * .wvd file
+    * Used when setting `aac` as audio quality or when downloading music videos.
     * A .wvd file contains the Widevine keys from a device and is required to decrypt music videos and songs in AAC. The easiest method of obtaining one is using KeyDive, which extracts it from an Android device. Detailed instructions can be found here: https://github.com/hyugogirubato/KeyDive.
-    * .wvd files extracted from emulated devices may not work.
-
-#### Use cases
-* Downloading podcast videos in MP4 requires either FFmpeg or MP4Box.
-* Downloading podcast videos in WebM requires FFmpeg.
-* Downloading songs in AAC requires a .wvd file and either FFmpeg, mp4decrypt or MP4Box and mp4decrypt.
-* Downloading music videos in MP4 requires a .wvd file and either FFmpeg and mp4decrypt or MP4Box and mp4decrypt.
-* Downloading music videos in WebM requires a .wvd file, FFmpeg and Shaka Packager when downloading in WebM.
+    * Note: .wvd files extracted from emulated devices may not work.
 
 ## Installation
 1. Install the package `votify` using pip
@@ -175,7 +175,7 @@ The following qualities are available:
 * `aac-medium` (128kbps)
 * `aac-high` (256kbps)
 
-## Video formats
+### Video formats
 The following video formats are available:
 * `mp4`
 * `webm`
@@ -188,20 +188,19 @@ The following modes are available:
 * `aria2c`
     * Will not be used for downloading videos
     * Faster than `ytdlp`
-    * Can be obtained from here: https://github.com/aria2/aria2/releases
 
-## Video remux modes
+### Video remux modes
 The following remux modes for videos are available:
 * `ffmpeg`
 * `mp4box`
 
-## Audio remux modes
+### Audio remux modes
 The following remux modes for songs and podcasts are available when downloading in AAC quality:
 * `ffmpeg`
 * `mp4box`
 * `mp4decrypt`
 
-## Credits
+### Credits
 * [spotify-oggmp4-dl](https://github.com/DevLARLEY/spotify-oggmp4-dl)
 * [spsync](https://github.com/baltitenger/spsync)
 * [unplayplay](https://git.gay/uhwot/unplayplay)
