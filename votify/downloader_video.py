@@ -3,15 +3,14 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-import requests
-import tqdm
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
+from yt_dlp.downloader.fragment import FragmentFD
+from yt_dlp.YoutubeDL import YoutubeDL
 
 from .downloader import Downloader
 from .enums import RemuxModeAudio, RemuxModeVideo, VideoFormat
 from .models import StreamInfoVideo
-from .utils import check_response
 
 
 class DownloaderVideo:
@@ -217,7 +216,7 @@ class DownloaderVideo:
         segment_urls = []
         first_segment = base_url + initialization_template_formatted
         segment_urls.append(first_segment)
-        for i in range(0, int(end_time_millis / 1000), segment_length):
+        for i in range(0, int(end_time_millis / 1000) + 5, segment_length):
             segment_template_url_formatted = (
                 segment_template.replace("{{profile_id}}", str(profile_id))
                 .replace("{{segment_timestamp}}", str(i))
@@ -226,27 +225,40 @@ class DownloaderVideo:
             segment_urls.append(base_url + segment_template_url_formatted)
         return segment_urls
 
-    def download_segment(
-        self,
-        segment_url: str,
-        input_path: Path,
-    ):
-        response = requests.get(segment_url, stream=True)
-        check_response(response)
-        chunk_size = 1024
-        input_path.parent.mkdir(parents=True, exist_ok=True)
-        with input_path.open("ab") as file:
-            for chunk in response.iter_content(chunk_size):
-                if chunk:
-                    file.write(chunk)
-
     def download_segments(
         self,
         segment_urls: list[str],
         input_path: Path,
     ):
-        for segment_url in tqdm.tqdm(segment_urls, leave=False):
-            self.download_segment(segment_url, input_path)
+        input_path.parent.mkdir(parents=True, exist_ok=True)
+        segments_dict = [
+            {"url": url, "frag_index": idx + 1} for idx, url in enumerate(segment_urls)
+        ]
+        ctx = {
+            "filename": str(input_path),
+            "total_frags": len(segments_dict),
+        }
+        info_dict = {}
+        with YoutubeDL(
+            {
+                "quiet": True,
+                "no_warnings": True,
+                "noprogress": self.downloader.silence,
+            },
+        ) as ydl:
+            try:
+                fragment_downloader = FragmentFD(ydl, ydl.params)
+                fragment_downloader._prepare_and_start_frag_download(
+                    ctx,
+                    info_dict,
+                )
+                fragment_downloader.download_and_append_fragments(
+                    ctx,
+                    segments_dict,
+                    info_dict,
+                )
+            finally:
+                fragment_downloader._finish_multiline_status()
 
     def remux(
         self,
