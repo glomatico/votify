@@ -66,7 +66,7 @@ votify [OPTIONS] URLS...
     votify "https://open.spotify.com/show/4rOoJ6Egrf8K2IrywzwOMk"
 * Download a music video
     ```bash
-    votify "https://open.spotify.com/track/1ukP6tpWlFWiv0ovPmi1Q1" --enable-videos
+    votify "https://open.spotify.com/track/31k4hgHmrbzorLZMvMWuzq" --enable-videos
     ```
 * Download a music video from a song
     ```bash
