@@ -70,13 +70,6 @@ class DownloaderVideo:
             )
             stream_info.encryption_data_widevine = encryption_info["encryption_data"]
         video_profiles = list(
-            profile
-            for profile in manifest["contents"][0]["profiles"]
-            if profile["mime_type"].startswith("video")
-            and encryption_index
-            in (profile.get("encryption_indices", [encryption_index]))
-        )
-        video_profiles = list(
             filter(
                 lambda x: x["mime_type"].startswith("video")
                 and encryption_index
