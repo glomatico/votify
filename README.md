@@ -97,7 +97,7 @@ Config file values can be overridden using command-line arguments.
 
 | Command-line argument / Config file key                         | Description                                                        | Default value                                  |
 | --------------------------------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------- |
-| `--wait-interval`, `-w` / `wait_interval`                       | Wait interval between downloads in seconds.                        | `10`                                           |
+| `--wait-interval`, `-w` / `wait_interval`                       | Wait interval between downloads in seconds.                        | `5`                                            |
 | `--enable-videos` / `enable_videos`                             | Enable video downloads when available.                             | `false`                                        |
 | `--download-music-videos` / `download_music_videos`             | List and select a related music video to download from songs.      | `false`                                        |
 | `--download-podcast-videos` / `download_podcast_videos`         | Attempt to download the video version of podcasts.                 | `false`                                        |

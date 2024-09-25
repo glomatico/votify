@@ -94,7 +94,7 @@ def load_config_file(
     "--wait-interval",
     "-w",
     type=float,
-    default=10,
+    default=5,
     help="Wait interval between downloads in seconds.",
 )
 @click.option(
