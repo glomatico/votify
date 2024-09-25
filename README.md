@@ -5,7 +5,8 @@ A Python CLI app for downloading songs/podcasts/videos from Spotify.
 
 ## Features
 * Download songs and podcasts in Vorbis or AAC
-* Download podcast videos and music videos with a premium account
+* Download podcast videos
+* Download music videos with a premium account
 * Support for artist links to download all of their albums
 * Download synced lyrics
 * Highly configurable
