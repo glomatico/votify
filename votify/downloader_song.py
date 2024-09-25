@@ -4,20 +4,20 @@ import datetime
 import logging
 from pathlib import Path
 
-from .downloader import Downloader
-from .models import Lyrics, StreamInfo
+from .downloader_audio import DownloaderAudio
+from .models import Lyrics, StreamInfoAudio
 
 logger = logging.getLogger("votify")
 
 
-class DownloaderSong:
+class DownloaderSong(DownloaderAudio):
     def __init__(
         self,
-        downloader: Downloader,
+        downloader_audio: DownloaderAudio,
         lrc_only: bool = False,
         no_lrc: bool = False,
     ):
-        self.downloader = downloader
+        self.__dict__.update(downloader_audio.__dict__)
         self.lrc_only = lrc_only
         self.no_lrc = no_lrc
 
@@ -75,6 +75,7 @@ class DownloaderSong:
             "isrc": external_ids.get("isrc") if external_ids is not None else None,
             "label": album_metadata.get("label"),
             "lyrics": lyrics_unsynced,
+            "media_type": "Song",
             "producer": (
                 self.downloader.get_artist_string(producers) if producers else None
             ),
@@ -135,9 +136,7 @@ class DownloaderSong:
         try:
             self._download(*args, **kwargs)
         finally:
-            if self.downloader.temp_path.exists():
-                logger.debug(f'Cleaning up "{self.downloader.temp_path}"')
-                self.downloader.cleanup_temp_path()
+            self.downloader.cleanup_temp_path()
 
     def _download(
         self,
@@ -145,7 +144,7 @@ class DownloaderSong:
         track_metadata: dict = None,
         album_metadata: dict = None,
         gid_metadata: dict = None,
-        stream_info: StreamInfo = None,
+        stream_info: StreamInfoAudio = None,
         playlist_metadata: dict = None,
         playlist_track: int = None,
         decryption_key: bytes = None,
@@ -163,14 +162,14 @@ class DownloaderSong:
             gid_metadata = self.downloader.get_gid_metadata(track_id, "track")
         if not stream_info:
             logger.debug("Getting stream info")
-            stream_info = self.downloader.get_stream_info(gid_metadata, "track")
+            stream_info = self.get_stream_info(gid_metadata, "track")
         if not stream_info.file_id:
             logger.warning(
                 "Track is not available on Spotify's "
                 "servers and no alternative found, skipping"
             )
             return
-        if stream_info.quality != self.downloader.quality:
+        if stream_info.quality != self.audio_quality:
             logger.warning(f"Quality has been changed to {stream_info.quality.value}")
         if gid_metadata.get("has_lyrics"):
             logger.debug("Getting lyrics")
@@ -193,15 +192,17 @@ class DownloaderSong:
                     playlist_track,
                 ),
             }
+        file_extension = self.get_file_extension()
         final_path = self.downloader.get_final_path(
             "track",
             tags,
-            ".ogg",
+            file_extension,
         )
         lrc_path = self.downloader.get_lrc_path(final_path)
         cover_path = self.get_cover_path(final_path)
         cover_url = self.downloader.get_cover_url(album_metadata)
         decrypted_path = None
+        remuxed_path = None
         if self.lrc_only:
             pass
         elif final_path.exists() and not self.downloader.overwrite:
@@ -209,16 +210,32 @@ class DownloaderSong:
         else:
             if not decryption_key:
                 logger.debug("Getting decryption key")
-                decryption_key = self.downloader.get_decryption_key(stream_info.file_id)
-            encrypted_path = self.downloader.get_encrypted_path(track_id)
-            decrypted_path = self.downloader.get_decrypted_path(track_id)
+                decryption_key = self.get_decryption_key(stream_info)
+            encrypted_path = self.downloader.get_file_temp_path(
+                track_id,
+                "_encrypted",
+                file_extension,
+            )
+            decrypted_path = self.downloader.get_file_temp_path(
+                track_id,
+                "_decrypted",
+                file_extension,
+            )
+            remuxed_path = self.downloader.get_file_temp_path(
+                track_id,
+                "_remuxed",
+                file_extension,
+            )
             logger.debug(f'Downloading to "{encrypted_path}"')
-            self.downloader.download_stream_url(encrypted_path, stream_info.stream_url)
-            logger.debug(f'Decrypting to "{decrypted_path}"')
-            self.downloader.decrypt(
+            self.download_stream_url(encrypted_path, stream_info.stream_url)
+            logger.debug(
+                f'Decrypting to "{decrypted_path}" and remuxing to "{remuxed_path}"'
+            )
+            self.decrypt(
                 decryption_key,
                 encrypted_path,
                 decrypted_path,
+                remuxed_path,
             )
         if self.no_lrc or not lyrics.synced:
             pass
@@ -227,26 +244,17 @@ class DownloaderSong:
         else:
             logger.debug(f'Saving synced lyrics to "{lrc_path}"')
             self.downloader.save_lrc(lrc_path, lyrics.synced)
-        if (
-            self.downloader.save_cover
-            and cover_path.exists()
-            and not self.downloader.overwrite
-        ):
-            logger.debug(f'Cover already exists at "{cover_path}", skipping')
-            return
-        elif self.downloader.save_cover and cover_url is not None:
-            logger.debug(f'Saving cover to "{cover_path}"')
-            self.downloader.save_cover_file(cover_path, cover_url)
-        if decrypted_path:
-            logger.debug("Applying tags")
-            self.downloader.apply_tags(decrypted_path, tags, cover_url)
-            logger.debug(f'Moving to "{final_path}"')
-            self.downloader.move_to_final_path(decrypted_path, final_path)
-        if not self.lrc_only and self.downloader.save_playlist and playlist_metadata:
-            playlist_file_path = self.downloader.get_playlist_file_path(tags)
-            logger.debug(f'Updating M3U8 playlist from "{playlist_file_path}"')
-            self.downloader.update_playlist_file(
-                playlist_file_path,
-                final_path,
-                playlist_track,
-            )
+        media_temp_path = (
+            remuxed_path
+            if remuxed_path is not None and remuxed_path.exists()
+            else decrypted_path
+        )
+        self.downloader._final_processing(
+            cover_path,
+            cover_url,
+            media_temp_path,
+            final_path,
+            tags,
+            playlist_metadata,
+            playlist_track,
+        )

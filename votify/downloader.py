@@ -3,24 +3,25 @@ from __future__ import annotations
 import base64
 import datetime
 import functools
+import logging
 import re
 import shutil
 import subprocess
 from io import BytesIO
 from pathlib import Path
 
+from re_unplayplay import decrypt_and_bind_key
 import requests
-from Crypto.Cipher import AES
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 from mutagen.flac import Picture
+from mutagen.mp4 import MP4, MP4Cover, MP4FreeForm
 from mutagen.oggvorbis import OggVorbis, OggVorbisHeaderError
 from PIL import Image
-from yt_dlp import YoutubeDL
+from pywidevine import PSSH, Cdm, Device
 
-from .constants import QUALITY_X_FORMAT_ID_MAPPING, VORBIS_TAGS_MAPPING
-from .enums import DownloadMode, Quality
-from .models import DownloadQueueItem, StreamInfo, UrlInfo
+from .constants import MEDIA_TYPE_MP4_MAPPING, MP4_TAGS_MAP, VORBIS_TAGS_MAPPING
+from .models import DownloadQueueItem, UrlInfo
 from .playplay_pb2 import (
     AUDIO_TRACK,
     Interactivity,
@@ -29,6 +30,8 @@ from .playplay_pb2 import (
 )
 from .spotify_api import SpotifyApi
 from .utils import check_response
+
+logger = logging.getLogger("votify")
 
 
 class Downloader:
@@ -44,18 +47,22 @@ class Downloader:
     def __init__(
         self,
         spotify_api: SpotifyApi,
-        quality: Quality = Quality.MEDIUM,
         output_path: Path = Path("./Spotify"),
         temp_path: Path = Path("./temp"),
-        download_mode: DownloadMode = DownloadMode.YTDLP,
-        aria2c_path: Path = "aria2c",
-        unplayplay_path: Path = "unplayplay",
+        wvd_path: Path = Path("./device.wvd"),
+        aria2c_path: str = "aria2c",
+        ffmpeg_path: str = "ffmpeg",
+        mp4box_path: str = "mp4box",
+        mp4decrypt_path: str = "mp4decrypt",
+        packager_path: str = "packager",
         template_folder_album: str = "{album_artist}/{album}",
         template_folder_compilation: str = "Compilations/{album}",
         template_file_single_disc: str = "{track:02d} {title}",
         template_file_multi_disc: str = "{disc}-{track:02d} {title}",
         template_folder_episode: str = "Podcasts/{album}",
         template_file_episode: str = "{track:02d} {title}",
+        template_folder_music_video: str = "{artist}/Unknown Album",
+        template_file_music_video: str = "{title}",
         template_file_playlist: str = "Playlists/{playlist_artist}/{playlist_title}",
         date_tag_template: str = "%Y-%m-%dT%H:%M:%SZ",
         save_cover: bool = False,
@@ -64,20 +71,25 @@ class Downloader:
         exclude_tags: str = None,
         truncate: int = None,
         silence: bool = False,
+        skip_cleanup: bool = False,
     ):
         self.spotify_api = spotify_api
-        self.quality = quality
         self.output_path = output_path
         self.temp_path = temp_path
-        self.download_mode = download_mode
+        self.wvd_path = wvd_path
         self.aria2c_path = aria2c_path
-        self.unplayplay_path = unplayplay_path
+        self.ffmpeg_path = ffmpeg_path
+        self.mp4box_path = mp4box_path
+        self.mp4decrypt_path = mp4decrypt_path
+        self.packager_path = packager_path
         self.template_folder_album = template_folder_album
         self.template_folder_compilation = template_folder_compilation
         self.template_file_single_disc = template_file_single_disc
         self.template_file_multi_disc = template_file_multi_disc
         self.template_folder_episode = template_folder_episode
         self.template_file_episode = template_file_episode
+        self.template_folder_music_video = template_folder_music_video
+        self.template_file_music_video = template_file_music_video
         self.template_file_playlist = template_file_playlist
         self.date_tag_template = date_tag_template
         self.save_cover = save_cover
@@ -86,6 +98,7 @@ class Downloader:
         self.exclude_tags = exclude_tags
         self.truncate = truncate
         self.silence = silence
+        self.skip_cleanup = skip_cleanup
         self._set_binaries_full_path()
         self._set_exclude_tags_list()
         self._set_truncate()
@@ -93,7 +106,10 @@ class Downloader:
 
     def _set_binaries_full_path(self):
         self.aria2c_path_full = shutil.which(self.aria2c_path)
-        self.unplayplay_path_full = shutil.which(self.unplayplay_path)
+        self.ffmpeg_path_full = shutil.which(self.ffmpeg_path)
+        self.mp4box_path_full = shutil.which(self.mp4box_path)
+        self.mp4decrypt_path_full = shutil.which(self.mp4decrypt_path)
+        self.packager_path_full = shutil.which(self.packager_path)
 
     def _set_exclude_tags_list(self):
         self.exclude_tags_list = (
@@ -114,6 +130,9 @@ class Downloader:
             }
         else:
             self.subprocess_additional_args = {}
+
+    def set_cdm(self) -> None:
+        self.cdm = Cdm.from_device(Device.load(self.wvd_path))
 
     def get_url_info(self, url: str) -> UrlInfo:
         url_regex_result = re.search(self.URL_RE, url)
@@ -289,6 +308,9 @@ class Downloader:
         elif media_type == "episode":
             template_folder = self.template_folder_episode.split("/")
             template_file = self.template_file_episode.split("/")
+        elif media_type == "music-video":
+            template_folder = self.template_folder_music_video.split("/")
+            template_file = self.template_file_music_video.split("/")
         else:
             raise RuntimeError()
         template_final = template_folder + template_file
@@ -330,18 +352,6 @@ class Downloader:
         with playlist_file_path.open("w", encoding="utf8") as playlist_file:
             playlist_file.writelines(playlist_file_lines)
 
-    def get_audio_file(
-        self,
-        audio_files: list[dict],
-    ) -> tuple[Quality, dict] | tuple[None, None]:
-        qualities = list(Quality)
-        start_index = qualities.index(self.quality)
-        for quality in qualities[start_index:]:
-            for audio_file in audio_files:
-                if audio_file["format"] == QUALITY_X_FORMAT_ID_MAPPING[quality]:
-                    return quality, audio_file
-        return None, None
-
     def get_gid_metadata(
         self,
         media_id: str,
@@ -350,34 +360,7 @@ class Downloader:
         gid = self.spotify_api.media_id_to_gid(media_id)
         return self.spotify_api.get_gid_metadata(gid, media_type)
 
-    def get_stream_info(
-        self,
-        gid_metadata: dict,
-        media_type: str,
-    ) -> StreamInfo:
-        stream_info = StreamInfo()
-        if media_type == "track":
-            audio_files = gid_metadata.get("file")
-        elif media_type == "episode":
-            audio_files = gid_metadata.get("audio")
-        else:
-            raise RuntimeError()
-        audio_files = audio_files or gid_metadata.get("alternative")
-        if not audio_files:
-            return stream_info
-        if audio_files[0].get("gid"):
-            audio_files = audio_files[0]["file"]
-        quality, audio_file = self.get_audio_file(audio_files)
-        if not audio_file:
-            return stream_info
-        file_id = audio_file["file_id"]
-        stream_url = self.spotify_api.get_stream_urls(file_id)["cdnurl"][0]
-        stream_info.stream_url = stream_url
-        stream_info.file_id = file_id
-        stream_info.quality = quality
-        return stream_info
-
-    def get_decryption_key(self, file_id: str) -> bytes:
+    def get_playplay_decryption_key(self, file_id: str) -> bytes:
         playplay_license_request = PlayPlayLicenseRequest(
             version=2,
             token=bytes.fromhex("01e132cae527bd21620e822f58514932"),
@@ -390,74 +373,29 @@ class Downloader:
         )
         playplay_license_response = PlayPlayLicenseResponse()
         playplay_license_response.ParseFromString(playplay_license_response_bytes)
-        obfuscated = playplay_license_response.obfuscated_key.hex()
-        output = subprocess.check_output(
-            [
-                self.unplayplay_path_full,
-                file_id,
-                obfuscated,
-            ],
-            shell=False,
-        )
-        key = bytes.fromhex(output.strip().decode("utf-8"))
-        assert key
+        obfuscated_key = playplay_license_response.obfuscated_key
+        key = decrypt_and_bind_key(obfuscated_key, file_id)
         return key
 
-    def download_stream_url(self, input_path: Path, stream_url: str):
-        if self.download_mode == DownloadMode.YTDLP:
-            self.download_stream_url_ytdlp(input_path, stream_url)
-        elif self.download_mode == DownloadMode.ARIA2C:
-            self.download_stream_url_aria2c(input_path, stream_url)
-
-    def download_stream_url_ytdlp(self, input_path: Path, stream_url: str) -> None:
-        with YoutubeDL(
-            {
-                "quiet": True,
-                "no_warnings": True,
-                "outtmpl": str(input_path),
-                "allow_unplayable_formats": True,
-                "fixup": "never",
-                "allowed_extractors": ["generic"],
-                "noprogress": self.silence,
-            }
-        ) as ydl:
-            ydl.download(stream_url)
-
-    def download_stream_url_aria2c(self, input_path: Path, stream_url: str) -> None:
-        input_path.parent.mkdir(parents=True, exist_ok=True)
-        subprocess.run(
-            [
-                self.aria2c_path_full,
-                "--no-conf",
-                "--download-result=hide",
-                "--console-log-level=error",
-                "--summary-interval=0",
-                "--file-allocation=none",
-                stream_url,
-                "--out",
-                input_path,
-            ],
-            check=True,
-            **self.subprocess_additional_args,
-        )
-        print("\r", end="")
-
-    def decrypt(
+    def get_widevine_decryption_key(
         self,
-        decryption_key: bytes,
-        encrypted_path: Path,
-        decrypted_path: Path,
-    ):
-        cipher = AES.new(
-            decryption_key,
-            AES.MODE_CTR,
-            nonce=bytes.fromhex("72e067fbddcbcf77"),
-            initial_value=bytes.fromhex("ebe8bc643f630d93"),
-        )
-        skip = 167
-        with decrypted_path.open("wb") as decrypted_file:
-            with encrypted_path.open("rb") as encrypted_file:
-                decrypted_file.write(cipher.decrypt(encrypted_file.read())[skip:])
+        pssh: bytes,
+        media_type: str,
+    ) -> tuple[str, str]:
+        try:
+            pssh = PSSH(pssh)
+            cdm_session = self.cdm.open()
+            challenge = self.cdm.get_license_challenge(cdm_session, pssh)
+            license = self.spotify_api.get_widevine_license(challenge, media_type)
+            self.cdm.parse_license(cdm_session, license)
+            keys = next(
+                i for i in self.cdm.get_keys(cdm_session) if i.type == "CONTENT"
+            )
+            decryption_key = keys.key.hex()
+            key_id = keys.kid.hex
+        finally:
+            self.cdm.close(cdm_session)
+        return key_id, decryption_key
 
     def get_sanitized_string(self, dirty_string: str, is_folder: bool) -> str:
         dirty_string = re.sub(
@@ -503,19 +441,15 @@ class Downloader:
     def _get_cover_url(self, images_dict: list[dict]) -> str:
         return max(images_dict, key=lambda img: img["height"])["url"]
 
-    def get_encrypted_path(
+    def get_file_temp_path(
         self,
         track_id: str,
+        extra_string: str,
+        extension: str,
     ) -> Path:
-        return self.temp_path / (f"{track_id}_encrypted.ogg")
+        return self.temp_path / (track_id + extra_string + extension)
 
-    def get_decrypted_path(
-        self,
-        track_id: str,
-    ) -> Path:
-        return self.temp_path / (f"{track_id}_decrypted.ogg")
-
-    def apply_tags(
+    def apply_tags_ogg(
         self,
         input_path: Path,
         tags: dict,
@@ -544,6 +478,94 @@ class Downloader:
         except OggVorbisHeaderError:
             pass
 
+    def apply_tags_mp4(self, fixed_location: Path, tags: dict, cover_url: str):
+        to_apply_tags = [
+            tag_name
+            for tag_name in tags.keys()
+            if tag_name not in self.exclude_tags_list
+        ]
+        mp4_tags = {}
+        for tag_name in to_apply_tags:
+            if tags.get(tag_name) is None:
+                continue
+            if tag_name in ("disc", "disc_total"):
+                if mp4_tags.get("disk") is None:
+                    mp4_tags["disk"] = [[0, 0]]
+                if tag_name == "disc":
+                    mp4_tags["disk"][0][0] = tags[tag_name]
+                elif tag_name == "disc_total":
+                    mp4_tags["disk"][0][1] = tags[tag_name]
+            elif tag_name in ("track", "track_total"):
+                if mp4_tags.get("trkn") is None:
+                    mp4_tags["trkn"] = [[0, 0]]
+                if tag_name == "track":
+                    mp4_tags["trkn"][0][0] = tags[tag_name]
+                elif tag_name == "track_total":
+                    mp4_tags["trkn"][0][1] = tags[tag_name]
+            elif tag_name == "compilation":
+                mp4_tags["cpil"] = tags["compilation"]
+            elif tag_name == "isrc":
+                mp4_tags["----:com.apple.iTunes:ISRC"] = [
+                    MP4FreeForm(tags["isrc"].encode("utf-8"))
+                ]
+            elif tag_name == "label":
+                mp4_tags["----:com.apple.iTunes:LABEL"] = [
+                    MP4FreeForm(tags["label"].encode("utf-8"))
+                ]
+            elif tag_name == "rating":
+                mp4_tags["rtng"] = [1] if tags[tag_name] == "Explicit" else [0]
+            elif tag_name == "media_type":
+                mp4_tags["stik"] = [MEDIA_TYPE_MP4_MAPPING[tags[tag_name]]]
+            elif MP4_TAGS_MAP.get(tag_name) is not None:
+                mp4_tags[MP4_TAGS_MAP[tag_name]] = [tags[tag_name]]
+        if "cover" not in self.exclude_tags_list and cover_url is not None:
+            mp4_tags["covr"] = [
+                MP4Cover(
+                    self.get_response_bytes(cover_url), imageformat=MP4Cover.FORMAT_JPEG
+                )
+            ]
+        mp4 = MP4(fixed_location)
+        mp4.clear()
+        mp4.update(mp4_tags)
+        mp4.save()
+
+    def _final_processing(
+        self,
+        cover_path: Path,
+        cover_url: str,
+        media_temp_path: Path,
+        final_path: Path,
+        tags: dict,
+        playlist_metadata: dict,
+        playlist_track: int,
+    ):
+        if self.save_cover and cover_path.exists() and not self.overwrite:
+            logger.debug(f'Cover already exists at "{cover_path}", skipping')
+        elif self.save_cover and cover_url is not None:
+            logger.debug(f'Saving cover to "{cover_path}"')
+            self.save_cover_file(cover_path, cover_url)
+        if media_temp_path:
+            logger.debug("Applying tags")
+            if media_temp_path.suffix in (".mp4", ".m4a"):
+                self.apply_tags_mp4(media_temp_path, tags, cover_url)
+            elif media_temp_path.suffix == ".ogg":
+                self.apply_tags_ogg(media_temp_path, tags, cover_url)
+            logger.debug(f'Moving to "{final_path}"')
+            self.move_to_final_path(media_temp_path, final_path)
+        if self.save_playlist and playlist_metadata:
+            playlist_file_path = self.get_playlist_file_path(tags)
+            logger.debug(f'Updating M3U8 playlist from "{playlist_file_path}"')
+            self.update_playlist_file(
+                playlist_file_path,
+                final_path,
+                playlist_track,
+            )
+
+    def cleanup_temp_path(self):
+        if self.temp_path.exists() and not self.skip_cleanup:
+            logger.debug(f'Cleaning up "{self.temp_path}"')
+            shutil.rmtree(self.temp_path)
+
     @staticmethod
     @functools.lru_cache()
     def get_response_bytes(url: str) -> bytes:
@@ -560,6 +582,3 @@ class Downloader:
         if cover_url is not None:
             cover_path.parent.mkdir(parents=True, exist_ok=True)
             cover_path.write_bytes(self.get_response_bytes(cover_url))
-
-    def cleanup_temp_path(self):
-        shutil.rmtree(self.temp_path)

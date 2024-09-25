@@ -3,18 +3,18 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from .downloader import Downloader
-from .models import StreamInfo
+from .downloader_audio import DownloaderAudio
+from .models import StreamInfoAudio
 
 logger = logging.getLogger("votify")
 
 
-class DownloaderEpisode:
+class DownloaderEpisode(DownloaderAudio):
     def __init__(
         self,
-        downloader: Downloader,
+        downloader_audio: DownloaderAudio,
     ):
-        self.downloader = downloader
+        self.__dict__.update(downloader_audio.__dict__)
 
     def get_tags(
         self,
@@ -28,6 +28,7 @@ class DownloaderEpisode:
         tags = {
             "album": show_metadata["name"],
             "description": episode_metadata["description"],
+            "media_type": "Podcast",
             "publisher": show_metadata.get("publisher"),
             "rating": "Explicit" if episode_metadata.get("explicit") else "Unknown",
             "release_date": self.downloader.get_release_date_tag(
@@ -58,9 +59,7 @@ class DownloaderEpisode:
         try:
             self._download(*args, **kwargs)
         finally:
-            if self.downloader.temp_path.exists():
-                logger.debug(f'Cleaning up "{self.downloader.temp_path}"')
-                self.downloader.cleanup_temp_path()
+            self.downloader.cleanup_temp_path()
 
     def _download(
         self,
@@ -68,7 +67,7 @@ class DownloaderEpisode:
         episode_metadata: dict = None,
         show_metadata: dict = None,
         gid_metadata: dict = None,
-        stream_info: StreamInfo = None,
+        stream_info: StreamInfoAudio = None,
         playlist_metadata: dict = None,
         playlist_track: int = None,
         decryption_key: bytes = None,
@@ -86,14 +85,14 @@ class DownloaderEpisode:
             gid_metadata = self.downloader.get_gid_metadata(episode_id, "episode")
         if not stream_info:
             logger.debug("Getting stream info")
-            stream_info = self.downloader.get_stream_info(gid_metadata, "episode")
+            stream_info = self.get_stream_info(gid_metadata, "episode")
         if not stream_info.file_id:
             logger.warning(
                 "Episode is not available on Spotify's "
                 "servers and no alternative found, skipping"
             )
             return
-        if stream_info.quality != self.downloader.quality:
+        if stream_info.quality != self.audio_quality:
             logger.warning(f"Quality has been changed to {stream_info.quality.value}")
         tags = self.get_tags(
             episode_metadata,
@@ -107,49 +106,59 @@ class DownloaderEpisode:
                     playlist_track,
                 ),
             }
+        file_extension = self.get_file_extension()
         final_path = self.downloader.get_final_path(
             "episode",
             tags,
-            ".ogg",
+            file_extension,
         )
         cover_path = self.get_cover_path(final_path)
         cover_url = self.downloader.get_cover_url(episode_metadata)
         decrypted_path = None
+        remuxed_path = None
         if final_path.exists() and not self.downloader.overwrite:
             logger.warning(f'Track already exists at "{final_path}", skipping')
         else:
             if not decryption_key:
                 logger.debug("Getting decryption key")
-                decryption_key = self.downloader.get_decryption_key(stream_info.file_id)
-            encrypted_path = self.downloader.get_encrypted_path(episode_id)
-            decrypted_path = self.downloader.get_decrypted_path(episode_id)
+                decryption_key = self.get_decryption_key(stream_info)
+            encrypted_path = self.downloader.get_file_temp_path(
+                episode_id,
+                "_encrypted",
+                file_extension,
+            )
+            decrypted_path = self.downloader.get_file_temp_path(
+                episode_id,
+                "_decrypted",
+                file_extension,
+            )
+            remuxed_path = self.downloader.get_file_temp_path(
+                episode_id,
+                "_remuxed",
+                file_extension,
+            )
             logger.debug(f'Downloading to "{encrypted_path}"')
-            self.downloader.download_stream_url(encrypted_path, stream_info.stream_url)
-            logger.debug(f'Decrypting to "{decrypted_path}"')
-            self.downloader.decrypt(
+            self.download_stream_url(encrypted_path, stream_info.stream_url)
+            logger.debug(
+                f'Decrypting to "{decrypted_path}" and remuxing to "{remuxed_path}"'
+            )
+            self.decrypt(
                 decryption_key,
                 encrypted_path,
                 decrypted_path,
+                remuxed_path,
             )
-        if (
-            self.downloader.save_cover
-            and cover_path.exists()
-            and not self.downloader.overwrite
-        ):
-            logger.debug(f'Cover already exists at "{cover_path}", skipping')
-        elif self.downloader.save_cover and cover_url is not None:
-            logger.debug(f'Saving cover to "{cover_path}"')
-            self.downloader.save_cover_file(cover_path, cover_url)
-        if decrypted_path:
-            logger.debug("Applying tags")
-            self.downloader.apply_tags(decrypted_path, tags, cover_url)
-            logger.debug(f'Moving to "{final_path}"')
-            self.downloader.move_to_final_path(decrypted_path, final_path)
-        if self.downloader.save_playlist and playlist_metadata:
-            playlist_file_path = self.downloader.get_playlist_file_path(tags)
-            logger.debug(f'Updating M3U8 playlist from "{playlist_file_path}"')
-            self.downloader.update_playlist_file(
-                playlist_file_path,
-                final_path,
-                playlist_track,
-            )
+        media_temp_path = (
+            remuxed_path
+            if remuxed_path is not None and remuxed_path.exists()
+            else decrypted_path
+        )
+        self.downloader._final_processing(
+            cover_path,
+            cover_url,
+            media_temp_path,
+            final_path,
+            tags,
+            playlist_metadata,
+            playlist_track,
+        )

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .enums import Quality
+from .enums import AudioQuality
 
 EXCLUDED_CONFIG_FILE_PARAMS = (
     "urls",
@@ -32,10 +32,42 @@ VORBIS_TAGS_MAPPING = {
     "url": "URL",
 }
 
-QUALITY_X_FORMAT_ID_MAPPING = {
-    Quality.HIGH: "OGG_VORBIS_320",
-    Quality.MEDIUM: "OGG_VORBIS_160",
-    Quality.LOW: "OGG_VORBIS_96",
+MP4_TAGS_MAP = {
+    "album": "\xa9alb",
+    "album_artist": "aART",
+    "artist": "\xa9ART",
+    "composer": "\xa9wrt",
+    "copyright": "cprt",
+    "lyrics": "\xa9lyr",
+    "publisher": "\xa9pub",
+    "producer": "\xa9prd",
+    "rating": "rtng",
+    "release_date": "\xa9day",
+    "title": "\xa9nam",
+    "url": "\xa9url",
 }
 
+AUDIO_QUALITY_X_FORMAT_ID_MAPPING = {
+    AudioQuality.VORBIS_HIGH: "OGG_VORBIS_320",
+    AudioQuality.VORBIS_MEDIUM: "OGG_VORBIS_160",
+    AudioQuality.VORBIS_LOW: "OGG_VORBIS_96",
+    AudioQuality.AAC_HIGH: "MP4_256",
+    AudioQuality.AAC_MEDIUM: "MP4_128",
+}
+
+VORBIS_AUDIO_QUALITIES = (
+    AudioQuality.VORBIS_HIGH,
+    AudioQuality.VORBIS_MEDIUM,
+    AudioQuality.VORBIS_LOW,
+)
+AAC_AUDIO_QUALITIES = (AudioQuality.AAC_HIGH, AudioQuality.AAC_MEDIUM)
+
 X_NOT_FOUND_STRING = "{} not found at {}"
+
+PREMIUM_AUDIO_QUALITIES = (AudioQuality.VORBIS_HIGH, AudioQuality.AAC_HIGH)
+
+MEDIA_TYPE_MP4_MAPPING = {
+    "Song": 1,
+    "Podcast": 21,
+    "Music video": 6,
+}

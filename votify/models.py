@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .enums import Quality
+from .enums import AudioQuality
 
 
 @dataclass
@@ -26,7 +26,17 @@ class DownloadQueueItem:
 
 
 @dataclass
-class StreamInfo:
+class StreamInfoAudio:
     stream_url: str = None
     file_id: str = None
-    quality: Quality = None
+    widevine_pssh: str = None
+    quality: AudioQuality = None
+
+
+@dataclass
+class StreamInfoVideo:
+    segment_urls_video: list[str] = None
+    segment_urls_audio: list[str] = None
+    file_type_video: str = None
+    file_type_audio: str = None
+    encryption_data_widevine: str = None
