@@ -572,10 +572,10 @@ class Downloader:
                 playlist_track,
             )
 
-    def _cleanup_temp_path(self):
+    def cleanup_temp_path(self):
         if self.temp_path.exists() and not self.skip_cleanup:
             logger.debug(f'Cleaning up "{self.temp_path}"')
-            self.cleanup_temp_path()
+            shutil.rmtree(self.temp_path)
 
     @staticmethod
     @functools.lru_cache()
@@ -593,6 +593,3 @@ class Downloader:
         if cover_url is not None:
             cover_path.parent.mkdir(parents=True, exist_ok=True)
             cover_path.write_bytes(self.get_response_bytes(cover_url))
-
-    def cleanup_temp_path(self):
-        shutil.rmtree(self.temp_path)

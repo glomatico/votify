@@ -59,7 +59,7 @@ class DownloaderEpisode(DownloaderAudio):
         try:
             self._download(*args, **kwargs)
         finally:
-            self.downloader._cleanup_temp_path()
+            self.downloader.cleanup_temp_path()
 
     def _download(
         self,

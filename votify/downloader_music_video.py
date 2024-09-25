@@ -94,7 +94,7 @@ class DownloaderMusicVideo(DownloaderVideo):
         finally:
             if self.downloader.temp_path.exists():
                 logger.debug(f'Cleaning up "{self.downloader.temp_path}"')
-                self.downloader.cleanup_temp_path()
+                self.downloader.cleanup_temp_path_ab()
 
     def _download(
         self,
