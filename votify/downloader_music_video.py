@@ -115,7 +115,7 @@ class DownloaderMusicVideo(DownloaderVideo):
             ]
         )
         selected_music_video_id = inquirer.select(
-            message="Select which music video to download (Artist | Title):",
+            message="Select which music video to download: (Artist | Title)",
             choices=choices,
         ).execute()
         return selected_music_video_id
