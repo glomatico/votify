@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import logging
 
+from InquirerPy import inquirer
+from InquirerPy.base.control import Choice
+
 from .downloader_video import DownloaderVideo
 
 logger = logging.getLogger("votify")
@@ -82,7 +85,40 @@ class DownloaderMusicVideo(DownloaderVideo):
         ]
         if not related_music_videos:
             return
-        return related_music_videos[0]["trackOfVideo"]["data"]["uri"].split(":")[-1]
+        choices = [
+            Choice(
+                name="None",
+                value=None,
+            )
+        ]
+        choices.extend(
+            [
+                Choice(
+                    name=" | ".join(
+                        [
+                            self.downloader.get_artist_string(
+                                [
+                                    {"name": artist["profile"]["name"]}
+                                    for artist in related_music_video["trackOfVideo"][
+                                        "data"
+                                    ]["artists"]["items"]
+                                ]
+                            ),
+                            related_music_video["trackOfVideo"]["data"]["name"],
+                        ]
+                    ),
+                    value=related_music_video["trackOfVideo"]["data"]["uri"].split(":")[
+                        -1
+                    ],
+                )
+                for related_music_video in related_music_videos
+            ]
+        )
+        selected_music_video_id = inquirer.select(
+            message="Select which music video to download:",
+            choices=choices,
+        ).execute()
+        return selected_music_video_id
 
     def download(
         self,
@@ -94,7 +130,7 @@ class DownloaderMusicVideo(DownloaderVideo):
         finally:
             if self.downloader.temp_path.exists():
                 logger.debug(f'Cleaning up "{self.downloader.temp_path}"')
-                self.downloader.cleanup_temp_path_ab()
+                self.downloader.cleanup_temp_path()
 
     def _download(
         self,
@@ -124,7 +160,9 @@ class DownloaderMusicVideo(DownloaderVideo):
                 album_metadata["artists"][0]["id"],
             )
             if not music_video_id:
-                logger.warning("No alternative music video ID found, skipping")
+                logger.warning(
+                    "No related music videos found or no music video selected, skipping"
+                )
                 return
             music_video_metadata = self.downloader.spotify_api.get_track(music_video_id)
             logger.warning(
