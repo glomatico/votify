@@ -68,7 +68,7 @@ votify [OPTIONS] URLS...
     ```bash
     votify "https://open.spotify.com/track/31k4hgHmrbzorLZMvMWuzq" --enable-videos
     ```
-* Download a music video from a song
+* List and select a related music video to download from a song
     ```bash
     votify "https://open.spotify.com/track/0a0n6u6j3t6m0p4k0t0k0u0" --enable-videos --download-music-videos
     ```
@@ -94,50 +94,50 @@ The config file is created automatically when you run Votify for the first time 
 
 Config file values can be overridden using command-line arguments.
 
-| Command-line argument / Config file key                         | Description                                                                  | Default value                                  |
-| --------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------- |
-| `--wait-interval`, `-w` / `wait_interval`                       | Wait interval between downloads in seconds.                                  | `10`                                           |
-| `--enable-videos` / `enable_videos`                             | Enable video downloads when available.                                       | `false`                                        |
-| `--download-music-videos` / `download_music_videos`             | Attempt to download music videos from songs (can lead to incorrect results). | `false`                                        |
-| `--download-podcast-videos` / `download_podcast_videos`         | Attempt to download the video version of podcasts.                           | `false`                                        |
-| `--force-premium`, `-f` / `force_premium`                       | Force to detect the account as premium.                                      | `false`                                        |
-| `--read-urls-as-txt`, `-r` / -                                  | Interpret URLs as paths to text files containing URLs.                       | `false`                                        |
-| `--config-path` / -                                             | Path to config file.                                                         | `<home>/.spotify-web-downloader/config.json`   |
-| `--log-level` / `log_level`                                     | Log level.                                                                   | `INFO`                                         |
-| `--no-exceptions` / `no_exceptions`                             | Don't print exceptions.                                                      | `false`                                        |
-| `--cookies-path` / `cookies_path`                               | Path to cookies file.                                                        | `cookies.txt`                                  |
-| `--output-path`, `-o` / `output_path`                           | Path to output directory.                                                    | `Spotify`                                      |
-| `--temp-path` / `temp_path`                                     | Path to temporary directory.                                                 | `temp`                                         |
-| `--wvd-path` / `wvd_path`                                       | Path to .wvd file.                                                           | `device.wvd`                                   |
-| `--aria2c-path` / `aria2c_path`                                 | Path to aria2c binary.                                                       | `aria2c`                                       |
-| `--unplayplay-path` / `unplayplay_path`                         | Path to unplayplay binary.                                                   | `unplayplay`                                   |
-| `--ffmpeg-path` / `ffmpeg_path`                                 | Path to ffmpeg binary.                                                       | `ffmpeg`                                       |
-| `--mp4box-path` / `mp4box_path`                                 | Path to MP4Box binary.                                                       | `mp4box`                                       |
-| `--mp4decrypt-path` / `mp4decrypt_path`                         | Path to mp4decrypt binary.                                                   | `mp4decrypt`                                   |
-| `--packager-path` / `packager_path`                             | Path to Shaka Packager binary.                                               | `packager`                                     |
-| `--template-folder-album` / `template_folder_album`             | Template folder for tracks that are part of an album.                        | `{album_artist}/{album}`                       |
-| `--template-folder-compilation` / `template_folder_compilation` | Template folder for tracks that are part of a compilation album.             | `Compilations/{album}`                         |
-| `--template-file-single-disc` / `template_file_single_disc`     | Template file for the tracks that are part of a single-disc album.           | `{track:02d} {title}`                          |
-| `--template-file-multi-disc` / `template_file_multi_disc`       | Template file for the tracks that are part of a multi-disc album.            | `{disc}-{track:02d} {title}`                   |
-| `--template-folder-episode` / `template_folder_episode`         | Template folder for episodes (podcasts).                                     | `Podcasts/{album}`                             |
-| `--template-file-episode` / `template_file_episode`             | Template file for music videos.                                              | `{track:02d} {title}`                          |
-| `--template-folder-music-video` / `template_folder_music_video` | Template folder for music videos                                             | `{artist}/Unknown Album`                       |
-| `--template-file-music-video` / `template_file_music_video`     | Template file for the tracks that are not part of an album.                  | `{title}`                                      |
-| `--template-file-playlist` / `template_file_playlist`           | Template file for the M3U8 playlist.                                         | `Playlists/{playlist_artist}/{playlist_title}` |
-| `--date-tag-template` / `date_tag_template`                     | Date tag template.                                                           | `%Y-%m-%dT%H:%M:%SZ`                           |
-| `--save-cover` / `save_cover`                                   | Save cover as a separate file.                                               | `false`                                        |
-| `--save-playlist` / `save_playlist`                             | Save a M3U8 playlist file when downloading a playlist.                       | `false`                                        |
-| `--overwrite` / `overwrite`                                     | Overwrite existing files.                                                    | `false`                                        |
-| `--exclude-tags` / `exclude_tags`                               | Comma-separated tags to exclude.                                             | `null`                                         |
-| `--truncate` / `truncate`                                       | Maximum length of the file/folder names.                                     | `null`                                         |
-| `--audio-quality`, `-a` / `audio_quality`                       | Audio quality for songs and podcasts.                                        | `vorbis-medium`                                |
-| `--download-mode`, `-d` / `download_mode`                       | Download mode for songs and podcasts.                                        | `ytdlp`                                        |
-| `--remux-mode-audio` / `remux_mode_audio`                       | Remux mode for songs and podcasts.                                           | `ffmpeg`                                       |
-| `--lrc-only`, `-l` / `lrc_only`                                 | Download only the synced lyrics.                                             | `false`                                        |
-| `--no-lrc` / `no_lrc`                                           | Don't download the synced lyrics.                                            | `false`                                        |
-| `--video-format` / `video_format`                               | Video format.                                                                | `mp4`                                          |
-| `--remux-mode-video` / `remux_mode_video`                       | Remux mode for videos.                                                       | `ffmpeg`                                       |
-| `--no-config-file`, `-n` / -                                    | Do not use a config file.                                                    | `false`                                        |
+| Command-line argument / Config file key                         | Description                                                        | Default value                                  |
+| --------------------------------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------- |
+| `--wait-interval`, `-w` / `wait_interval`                       | Wait interval between downloads in seconds.                        | `10`                                           |
+| `--enable-videos` / `enable_videos`                             | Enable video downloads when available.                             | `false`                                        |
+| `--download-music-videos` / `download_music_videos`             | List and select a related music video to download from songs.      | `false`                                        |
+| `--download-podcast-videos` / `download_podcast_videos`         | Attempt to download the video version of podcasts.                 | `false`                                        |
+| `--force-premium`, `-f` / `force_premium`                       | Force to detect the account as premium.                            | `false`                                        |
+| `--read-urls-as-txt`, `-r` / -                                  | Interpret URLs as paths to text files containing URLs.             | `false`                                        |
+| `--config-path` / -                                             | Path to config file.                                               | `<home>/.spotify-web-downloader/config.json`   |
+| `--log-level` / `log_level`                                     | Log level.                                                         | `INFO`                                         |
+| `--no-exceptions` / `no_exceptions`                             | Don't print exceptions.                                            | `false`                                        |
+| `--cookies-path` / `cookies_path`                               | Path to cookies file.                                              | `cookies.txt`                                  |
+| `--output-path`, `-o` / `output_path`                           | Path to output directory.                                          | `Spotify`                                      |
+| `--temp-path` / `temp_path`                                     | Path to temporary directory.                                       | `temp`                                         |
+| `--wvd-path` / `wvd_path`                                       | Path to .wvd file.                                                 | `device.wvd`                                   |
+| `--aria2c-path` / `aria2c_path`                                 | Path to aria2c binary.                                             | `aria2c`                                       |
+| `--unplayplay-path` / `unplayplay_path`                         | Path to unplayplay binary.                                         | `unplayplay`                                   |
+| `--ffmpeg-path` / `ffmpeg_path`                                 | Path to ffmpeg binary.                                             | `ffmpeg`                                       |
+| `--mp4box-path` / `mp4box_path`                                 | Path to MP4Box binary.                                             | `mp4box`                                       |
+| `--mp4decrypt-path` / `mp4decrypt_path`                         | Path to mp4decrypt binary.                                         | `mp4decrypt`                                   |
+| `--packager-path` / `packager_path`                             | Path to Shaka Packager binary.                                     | `packager`                                     |
+| `--template-folder-album` / `template_folder_album`             | Template folder for tracks that are part of an album.              | `{album_artist}/{album}`                       |
+| `--template-folder-compilation` / `template_folder_compilation` | Template folder for tracks that are part of a compilation album.   | `Compilations/{album}`                         |
+| `--template-file-single-disc` / `template_file_single_disc`     | Template file for the tracks that are part of a single-disc album. | `{track:02d} {title}`                          |
+| `--template-file-multi-disc` / `template_file_multi_disc`       | Template file for the tracks that are part of a multi-disc album.  | `{disc}-{track:02d} {title}`                   |
+| `--template-folder-episode` / `template_folder_episode`         | Template folder for episodes (podcasts).                           | `Podcasts/{album}`                             |
+| `--template-file-episode` / `template_file_episode`             | Template file for music videos.                                    | `{track:02d} {title}`                          |
+| `--template-folder-music-video` / `template_folder_music_video` | Template folder for music videos                                   | `{artist}/Unknown Album`                       |
+| `--template-file-music-video` / `template_file_music_video`     | Template file for the tracks that are not part of an album.        | `{title}`                                      |
+| `--template-file-playlist` / `template_file_playlist`           | Template file for the M3U8 playlist.                               | `Playlists/{playlist_artist}/{playlist_title}` |
+| `--date-tag-template` / `date_tag_template`                     | Date tag template.                                                 | `%Y-%m-%dT%H:%M:%SZ`                           |
+| `--save-cover` / `save_cover`                                   | Save cover as a separate file.                                     | `false`                                        |
+| `--save-playlist` / `save_playlist`                             | Save a M3U8 playlist file when downloading a playlist.             | `false`                                        |
+| `--overwrite` / `overwrite`                                     | Overwrite existing files.                                          | `false`                                        |
+| `--exclude-tags` / `exclude_tags`                               | Comma-separated tags to exclude.                                   | `null`                                         |
+| `--truncate` / `truncate`                                       | Maximum length of the file/folder names.                           | `null`                                         |
+| `--audio-quality`, `-a` / `audio_quality`                       | Audio quality for songs and podcasts.                              | `vorbis-medium`                                |
+| `--download-mode`, `-d` / `download_mode`                       | Download mode for songs and podcasts.                              | `ytdlp`                                        |
+| `--remux-mode-audio` / `remux_mode_audio`                       | Remux mode for songs and podcasts.                                 | `ffmpeg`                                       |
+| `--lrc-only`, `-l` / `lrc_only`                                 | Download only the synced lyrics.                                   | `false`                                        |
+| `--no-lrc` / `no_lrc`                                           | Don't download the synced lyrics.                                  | `false`                                        |
+| `--video-format` / `video_format`                               | Video format.                                                      | `mp4`                                          |
+| `--remux-mode-video` / `remux_mode_video`                       | Remux mode for videos.                                             | `ffmpeg`                                       |
+| `--no-config-file`, `-n` / -                                    | Do not use a config file.                                          | `false`                                        |
 
 ### Tag variables
 The following variables can be used in the template folder/file and/or in the `exclude_tags` list:

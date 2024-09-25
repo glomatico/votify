@@ -105,7 +105,7 @@ def load_config_file(
 @click.option(
     "--download-music-videos",
     is_flag=True,
-    help="Attempt to download music videos from songs (can lead to incorrect results).",
+    help="List and select a related music video to download from songs.",
 )
 @click.option(
     "--download-podcast-videos",
