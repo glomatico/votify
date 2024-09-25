@@ -4,5 +4,6 @@ pillow
 protobuf
 pybase62
 pycryptodome
+pywidevine
 re-unplayplay
 yt-dlp
