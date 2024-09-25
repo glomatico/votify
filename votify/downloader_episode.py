@@ -115,6 +115,7 @@ class DownloaderEpisode(DownloaderAudio):
         cover_path = self.get_cover_path(final_path)
         cover_url = self.downloader.get_cover_url(episode_metadata)
         decrypted_path = None
+        remuxed_path = None
         if final_path.exists() and not self.downloader.overwrite:
             logger.warning(f'Track already exists at "{final_path}", skipping')
         else:
@@ -147,10 +148,15 @@ class DownloaderEpisode(DownloaderAudio):
                 decrypted_path,
                 remuxed_path,
             )
+        media_temp_path = (
+            remuxed_path
+            if remuxed_path is not None and remuxed_path.exists()
+            else decrypted_path
+        )
         self.downloader._final_processing(
             cover_path,
             cover_url,
-            remuxed_path if remuxed_path.exists() else decrypted_path,
+            media_temp_path,
             final_path,
             tags,
             playlist_metadata,

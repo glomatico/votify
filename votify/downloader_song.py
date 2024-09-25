@@ -202,6 +202,7 @@ class DownloaderSong(DownloaderAudio):
         cover_path = self.get_cover_path(final_path)
         cover_url = self.downloader.get_cover_url(album_metadata)
         decrypted_path = None
+        remuxed_path = None
         if self.lrc_only:
             pass
         elif final_path.exists() and not self.downloader.overwrite:
@@ -243,10 +244,15 @@ class DownloaderSong(DownloaderAudio):
         else:
             logger.debug(f'Saving synced lyrics to "{lrc_path}"')
             self.downloader.save_lrc(lrc_path, lyrics.synced)
+        media_temp_path = (
+            remuxed_path
+            if remuxed_path is not None and remuxed_path.exists()
+            else decrypted_path
+        )
         self.downloader._final_processing(
             cover_path,
             cover_url,
-            remuxed_path if remuxed_path.exists() else decrypted_path,
+            media_temp_path,
             final_path,
             tags,
             playlist_metadata,
