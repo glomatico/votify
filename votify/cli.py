@@ -175,12 +175,6 @@ def load_config_file(
     help="Path to aria2c binary.",
 )
 @click.option(
-    "--unplayplay-path",
-    type=str,
-    default=downloader_sig.parameters["unplayplay_path"].default,
-    help="Path to unplayplay binary.",
-)
-@click.option(
     "--ffmpeg-path",
     type=str,
     default=downloader_sig.parameters["ffmpeg_path"].default,
@@ -362,7 +356,6 @@ def main(
     wvd_path: Path,
     download_mode: DownloadMode,
     aria2c_path: str,
-    unplayplay_path: str,
     ffmpeg_path: str,
     mp4box_path: str,
     mp4decrypt_path: str,
@@ -403,7 +396,6 @@ def main(
         temp_path,
         wvd_path,
         aria2c_path,
-        unplayplay_path,
         ffmpeg_path,
         mp4box_path,
         mp4decrypt_path,
@@ -485,12 +477,6 @@ def main(
                 )
                 return
             downloader.set_cdm()
-        else:
-            if not downloader.unplayplay_path_full:
-                logger.critical(
-                    X_NOT_FOUND_STRING.format("Unplayplay", unplayplay_path)
-                )
-                return
         if download_mode == DownloadMode.ARIA2C and not downloader.aria2c_path_full:
             logger.critical(X_NOT_FOUND_STRING.format("aria2c", aria2c_path))
             return

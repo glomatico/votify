@@ -10,6 +10,7 @@ dependencies = [
     "protobuf",
     "pybase62",
     "pycryptodome",
+    "re-unplayplay",
     "yt-dlp",
 ]
 readme = "README.md"

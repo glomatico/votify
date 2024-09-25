@@ -111,7 +111,6 @@ Config file values can be overridden using command-line arguments.
 | `--temp-path` / `temp_path`                                     | Path to temporary directory.                                       | `temp`                                         |
 | `--wvd-path` / `wvd_path`                                       | Path to .wvd file.                                                 | `device.wvd`                                   |
 | `--aria2c-path` / `aria2c_path`                                 | Path to aria2c binary.                                             | `aria2c`                                       |
-| `--unplayplay-path` / `unplayplay_path`                         | Path to unplayplay binary.                                         | `unplayplay`                                   |
 | `--ffmpeg-path` / `ffmpeg_path`                                 | Path to ffmpeg binary.                                             | `ffmpeg`                                       |
 | `--mp4box-path` / `mp4box_path`                                 | Path to MP4Box binary.                                             | `mp4box`                                       |
 | `--mp4decrypt-path` / `mp4decrypt_path`                         | Path to mp4decrypt binary.                                         | `mp4decrypt`                                   |

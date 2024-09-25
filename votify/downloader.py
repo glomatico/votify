@@ -10,6 +10,7 @@ import subprocess
 from io import BytesIO
 from pathlib import Path
 
+from re_unplayplay import decrypt_and_bind_key
 import requests
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
@@ -50,7 +51,6 @@ class Downloader:
         temp_path: Path = Path("./temp"),
         wvd_path: Path = Path("./device.wvd"),
         aria2c_path: str = "aria2c",
-        unplayplay_path: str = "unplayplay",
         ffmpeg_path: str = "ffmpeg",
         mp4box_path: str = "mp4box",
         mp4decrypt_path: str = "mp4decrypt",
@@ -78,7 +78,6 @@ class Downloader:
         self.temp_path = temp_path
         self.wvd_path = wvd_path
         self.aria2c_path = aria2c_path
-        self.unplayplay_path = unplayplay_path
         self.ffmpeg_path = ffmpeg_path
         self.mp4box_path = mp4box_path
         self.mp4decrypt_path = mp4decrypt_path
@@ -107,7 +106,6 @@ class Downloader:
 
     def _set_binaries_full_path(self):
         self.aria2c_path_full = shutil.which(self.aria2c_path)
-        self.unplayplay_path_full = shutil.which(self.unplayplay_path)
         self.ffmpeg_path_full = shutil.which(self.ffmpeg_path)
         self.mp4box_path_full = shutil.which(self.mp4box_path)
         self.mp4decrypt_path_full = shutil.which(self.mp4decrypt_path)
@@ -375,17 +373,8 @@ class Downloader:
         )
         playplay_license_response = PlayPlayLicenseResponse()
         playplay_license_response.ParseFromString(playplay_license_response_bytes)
-        obfuscated = playplay_license_response.obfuscated_key.hex()
-        output = subprocess.check_output(
-            [
-                self.unplayplay_path_full,
-                file_id,
-                obfuscated,
-            ],
-            shell=False,
-        )
-        key = bytes.fromhex(output.strip().decode("utf-8"))
-        assert key
+        obfuscated_key = playplay_license_response.obfuscated_key
+        key = decrypt_and_bind_key(obfuscated_key, file_id)
         return key
 
     def get_widevine_decryption_key(
