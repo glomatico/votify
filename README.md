@@ -169,11 +169,11 @@ The following variables can be used in the template folder/file and/or in the `e
 
 ### Audio qualities
 The following qualities are available:
-* `vorbis-high` (320kbps, requires premium account)
+* `vorbis-high` (320kbps, requires an active premium subscription)
 * `vorbis-medium` (160kbps)
 * `vorbis-low` (96kbps)
 * `aac-medium` (128kbps)
-* `aac-high` (256kbps)
+* `aac-high` (256kbps, requires an active premium subscription)
 
 ### Video formats
 The following video formats are available:
