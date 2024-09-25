@@ -71,6 +71,7 @@ class Downloader:
         exclude_tags: str = None,
         truncate: int = None,
         silence: bool = False,
+        skip_cleanup: bool = False,
     ):
         self.spotify_api = spotify_api
         self.output_path = output_path
@@ -98,7 +99,7 @@ class Downloader:
         self.exclude_tags = exclude_tags
         self.truncate = truncate
         self.silence = silence
-        self.cdm = None
+        self.skip_cleanup = skip_cleanup
         self._set_binaries_full_path()
         self._set_exclude_tags_list()
         self._set_truncate()
@@ -572,7 +573,7 @@ class Downloader:
             )
 
     def _cleanup_temp_path(self):
-        if self.temp_path.exists():
+        if self.temp_path.exists() and not self.skip_cleanup:
             logger.debug(f'Cleaning up "{self.temp_path}"')
             self.cleanup_temp_path()
 
