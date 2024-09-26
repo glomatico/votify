@@ -10,7 +10,13 @@ import subprocess
 from io import BytesIO
 from pathlib import Path
 
-from re_unplayplay import decrypt_and_bind_key
+try:
+    re_unpp_exc: ImportError | None = None
+    from re_unplayplay import decrypt_and_bind_key
+except ImportError as err:
+    decrypt_and_bind_key = lambda a, b: None
+    re_unpp_exc = err
+
 import requests
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
@@ -374,6 +380,8 @@ class Downloader:
         playplay_license_response = PlayPlayLicenseResponse()
         playplay_license_response.ParseFromString(playplay_license_response_bytes)
         obfuscated_key = playplay_license_response.obfuscated_key
+        if re_unpp_exc is not None:
+            raise re_unpp_exc
         key = decrypt_and_bind_key(obfuscated_key, file_id)
         return key
 
