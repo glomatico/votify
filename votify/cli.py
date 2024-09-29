@@ -390,6 +390,11 @@ def main(
     logger.setLevel(log_level)
     logger.info("Starting Votify")
     spotify_api = SpotifyApi(cookies_path)
+    if spotify_api.config_info["isAnonymous"]:
+        logger.critical(
+            "Failed to get a valid session. Try logging in and exporting your cookies again"
+        )
+        return
     downloader = Downloader(
         spotify_api,
         output_path,
