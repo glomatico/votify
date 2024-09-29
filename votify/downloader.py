@@ -12,9 +12,10 @@ from pathlib import Path
 
 try:
     re_unpp_exc: ImportError | None = None
-    from re_unplayplay import decrypt_and_bind_key
+    from re_unplayplay import decrypt_and_bind_key, get_token
 except ImportError as err:
     decrypt_and_bind_key = lambda a, b: None
+    get_token = lambda: None
     re_unpp_exc = err
 
 import requests
@@ -369,7 +370,7 @@ class Downloader:
     def get_playplay_decryption_key(self, file_id: str) -> bytes:
         playplay_license_request = PlayPlayLicenseRequest(
             version=2,
-            token=bytes.fromhex("01e132cae527bd21620e822f58514932"),
+            token=get_token(),
             interactivity=Interactivity.INTERACTIVE,
             content_type=AUDIO_TRACK,
         )
