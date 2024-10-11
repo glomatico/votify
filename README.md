@@ -49,7 +49,7 @@ The following tools are optional but required for specific features. Add them to
 votify [OPTIONS] URLS...
 ```
 
-### URL support
+### Supported URL types
 Votify supports the following types of URLs:
 * Song
 * Album
