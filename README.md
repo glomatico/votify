@@ -49,6 +49,16 @@ The following tools are optional but required for specific features. Add them to
 votify [OPTIONS] URLS...
 ```
 
+### URL support
+Votify supports the following types of URLs:
+* Song
+* Album
+* Playlist
+* Podcast episode
+* Podcast series
+* Music video
+* Artist
+
 ### Examples
 * Download a song
     ```bash
