@@ -400,6 +400,7 @@ def main(
     else:
         if not cookies_path.exists():
             logger.critical(X_NOT_FOUND_STRING.format("Cookies file", cookies_path))
+            return
         spotify_api = SpotifyApi.from_file(cookies_path)
     if spotify_api.config_info["isAnonymous"]:
         logger.critical(
