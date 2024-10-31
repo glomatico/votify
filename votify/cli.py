@@ -483,7 +483,7 @@ def main(
                     X_NOT_FOUND_STRING.format("mp4decrypt", mp4decrypt_path)
                 )
                 return
-            if not wvd_path.exists() and audio_quality in AAC_AUDIO_QUALITIES:
+            if not wvd_path.exists():
                 logger.critical(
                     X_NOT_FOUND_STRING.format(".wvd", wvd_path)
                     + ", a .wvd file is required for downloading in AAC quality"
