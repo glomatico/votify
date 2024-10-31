@@ -514,11 +514,11 @@ def main(
             logger.critical(X_NOT_FOUND_STRING.format("MP4Box", mp4box_path))
             return
         music_video_warning_message = []
-        if not downloader.mp4decrypt_path_full and video_format != VideoFormat.WEBM:
+        if not downloader.mp4decrypt_path_full and video_format == VideoFormat.MP4:
             music_video_warning_message.append(
                 X_NOT_FOUND_STRING.format("mp4decrypt", mp4decrypt_path)
             )
-        elif not downloader.packager_path_full:
+        elif not downloader.packager_path_full and video_format == VideoFormat.WEBM:
             music_video_warning_message.append(
                 X_NOT_FOUND_STRING.format("Shaka Packager", packager_path)
             )
