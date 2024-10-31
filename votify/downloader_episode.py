@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+from .constants import AAC_AUDIO_QUALITIES
 from .downloader_audio import DownloaderAudio
 from .models import StreamInfoAudio
 
@@ -119,9 +120,7 @@ class DownloaderEpisode(DownloaderAudio):
         if final_path.exists() and not self.downloader.overwrite:
             logger.warning(f'Track already exists at "{final_path}", skipping')
         else:
-            if not decryption_key:
-                logger.debug("Getting decryption key")
-                decryption_key = self.get_decryption_key(stream_info)
+            decryption_key = self.DEFAULT_EPISODE_DECRYPTION_KEY
             encrypted_path = self.downloader.get_file_temp_path(
                 episode_id,
                 "_encrypted",
