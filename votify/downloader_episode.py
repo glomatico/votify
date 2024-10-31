@@ -120,7 +120,11 @@ class DownloaderEpisode(DownloaderAudio):
         if final_path.exists() and not self.downloader.overwrite:
             logger.warning(f'Track already exists at "{final_path}", skipping')
         else:
-            decryption_key = self.DEFAULT_EPISODE_DECRYPTION_KEY
+            decryption_key = (
+                self.DEFAULT_EPISODE_DECRYPTION_KEY.hex()
+                if self.audio_quality in AAC_AUDIO_QUALITIES
+                else self.DEFAULT_EPISODE_DECRYPTION_KEY
+            )
             encrypted_path = self.downloader.get_file_temp_path(
                 episode_id,
                 "_encrypted",
