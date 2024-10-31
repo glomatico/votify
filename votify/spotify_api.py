@@ -10,7 +10,6 @@ from pathlib import Path
 
 import base62
 import requests
-import rookiepy
 
 from .utils import check_response
 
@@ -45,15 +44,10 @@ class SpotifyApi:
         self._set_session()
 
     @classmethod
-    def from_file(cls, cookies_path: Path):
+    def from_cookies_file(cls, cookies_path: Path):
         cookies = MozillaCookieJar(cookies_path)
         cookies.load(ignore_discard=True, ignore_expires=True)
         return cls(cookies)
-
-    @classmethod
-    def from_browser(cls, browser: str):
-        cookies: rookiepy.CookieList = getattr(rookiepy, browser)(["spotify.com"])
-        return cls(rookiepy.to_cookiejar(cookies))
 
     def _set_session(self):
         self.session = requests.Session()

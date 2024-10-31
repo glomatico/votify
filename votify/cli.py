@@ -395,13 +395,9 @@ def main(
     )
     logger.setLevel(log_level)
     logger.info("Starting Votify")
-    if cookies_browser:
-        spotify_api = SpotifyApi.from_browser(cookies_browser)
-    else:
-        if not cookies_path.exists():
-            logger.critical(X_NOT_FOUND_STRING.format("Cookies file", cookies_path))
-            return
-        spotify_api = SpotifyApi.from_file(cookies_path)
+    if not cookies_path.exists():
+        logger.critical(X_NOT_FOUND_STRING.format("Cookies file", cookies_path))
+        spotify_api = SpotifyApi.from_cookies_file(cookies_path)
     if spotify_api.config_info["isAnonymous"]:
         logger.critical(
             "Failed to get a valid session. Try logging in and exporting your cookies again"
