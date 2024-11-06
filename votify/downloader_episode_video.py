@@ -57,6 +57,15 @@ class DownloaderEpisodeVideo(DownloaderVideo):
             logger.warning("Episode has no video, skipping")
             return
         stream_info = self.get_stream_info(video_gid)
+        if (
+            stream_info.encryption_data_widevine
+            and not self.downloader.wvd_path.exists()
+        ):
+            logger.warning(
+                "Podcast video has Widevine encryption, but no .wvd file was found at "
+                f'"{self.downloader.wvd_path}", skipping'
+            )
+            return
         tags = self.downloader_episode.get_tags(
             episode_metadata,
             show_metadata,
@@ -77,14 +86,32 @@ class DownloaderEpisodeVideo(DownloaderVideo):
             logger.warning(f'Episode already exists at "{final_path}", skipping')
             return
         else:
-            temp_path_video = self.downloader.get_file_temp_path(
+            key_id, decryption_key = (
+                self.downloader.get_widevine_decryption_key(
+                    stream_info.encryption_data_widevine,
+                    "video",
+                )
+                if stream_info.encryption_data_widevine
+                else (None, None)
+            )
+            encrypted_path_video = self.downloader.get_file_temp_path(
                 episode_id,
-                "_video",
+                "_video_encrypted",
                 file_extension,
             )
-            temp_path_audio = self.downloader.get_file_temp_path(
+            encrypted_path_audio = self.downloader.get_file_temp_path(
                 episode_id,
-                "_audio",
+                "_audio_encrypted",
+                file_extension,
+            )
+            decrypted_path_video = self.downloader.get_file_temp_path(
+                episode_id,
+                "_video_decrypted",
+                file_extension,
+            )
+            decrypted_path_audio = self.downloader.get_file_temp_path(
+                episode_id,
+                "_audio_decrypted",
                 file_extension,
             )
             remuxed_path = self.downloader.get_file_temp_path(
@@ -92,15 +119,21 @@ class DownloaderEpisodeVideo(DownloaderVideo):
                 "_remuxed",
                 file_extension,
             )
+            temp_path_video = encrypted_path_video if key_id else decrypted_path_video
+            temp_path_audio = encrypted_path_audio if key_id else decrypted_path_audio
             logger.debug(f'Downloading video to "{temp_path_video}"')
             self.download_segments(stream_info.segment_urls_video, temp_path_video)
             logger.debug(f'Downloading audio to "{temp_path_audio}"')
             self.download_segments(stream_info.segment_urls_audio, temp_path_audio)
             logger.debug(f'Remuxing to "{remuxed_path}"')
             self.remux(
-                temp_path_video,
-                temp_path_audio,
+                decrypted_path_video,
+                decrypted_path_audio,
                 remuxed_path,
+                key_id,
+                decryption_key,
+                encrypted_path_video,
+                encrypted_path_audio,
             )
         self.downloader._final_processing(
             cover_path,
