@@ -5,7 +5,7 @@ import json
 import re
 import time
 import typing
-from http.cookiejar import MozillaCookieJar
+from http.cookiejar import CookieJar, MozillaCookieJar
 from pathlib import Path
 
 import base62
@@ -38,17 +38,21 @@ class SpotifyApi:
 
     def __init__(
         self,
-        cookies_path: Path | None = Path("./cookies.txt"),
+        cookies: CookieJar = None,
     ):
-        self.cookies_path = cookies_path
+        self.cookies = cookies
         self._set_session()
+
+    @classmethod
+    def from_cookies_file(cls, cookies_path: Path):
+        cookies = MozillaCookieJar(cookies_path)
+        cookies.load(ignore_discard=True, ignore_expires=True)
+        return cls(cookies)
 
     def _set_session(self):
         self.session = requests.Session()
-        if self.cookies_path:
-            cookies = MozillaCookieJar(self.cookies_path)
-            cookies.load(ignore_discard=True, ignore_expires=True)
-            self.session.cookies.update(cookies)
+        if self.cookies is not None:
+            self.session.cookies.update(self.cookies)
         self.session.headers.update(
             {
                 "accept": "application/json",

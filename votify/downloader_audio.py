@@ -18,6 +18,10 @@ from .models import StreamInfoAudio
 
 
 class DownloaderAudio:
+    DEFAULT_EPISODE_DECRYPTION_KEY = (
+        b"\xde\xad\xbe\xef\xde\xad\xbe\xef\xde\xad\xbe\xef\xde\xad\xbe\xef"  # lmao wtf
+    )
+
     def __init__(
         self,
         downloader: Downloader,

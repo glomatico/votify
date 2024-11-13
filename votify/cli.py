@@ -141,12 +141,17 @@ def load_config_file(
     is_flag=True,
     help="Don't print exceptions.",
 )
-# SpotifyApi specific options
 @click.option(
     "--cookies-path",
     type=Path,
-    default=spotify_api_sig.parameters["cookies_path"].default,
+    default=Path("./cookies.txt"),
     help="Path to cookies file.",
+)
+@click.option(
+    "--cookies-browser",
+    type=str,
+    default=None,
+    help="Browser to use to get cookies instead of loading a file.",
 )
 # Downloader specific options
 @click.option(
@@ -351,6 +356,7 @@ def main(
     log_level: str,
     no_exceptions: bool,
     cookies_path: Path,
+    cookies_browser: str,
     output_path: Path,
     temp_path: Path,
     wvd_path: Path,
@@ -389,7 +395,14 @@ def main(
     )
     logger.setLevel(log_level)
     logger.info("Starting Votify")
-    spotify_api = SpotifyApi(cookies_path)
+    if not cookies_path.exists():
+        logger.critical(X_NOT_FOUND_STRING.format("Cookies file", cookies_path))
+    spotify_api = SpotifyApi.from_cookies_file(cookies_path)
+    if spotify_api.config_info["isAnonymous"]:
+        logger.critical(
+            "Failed to get a valid session. Try logging in and exporting your cookies again"
+        )
+        return
     downloader = Downloader(
         spotify_api,
         output_path,
@@ -470,7 +483,7 @@ def main(
                     X_NOT_FOUND_STRING.format("mp4decrypt", mp4decrypt_path)
                 )
                 return
-            if not wvd_path.exists() and audio_quality in AAC_AUDIO_QUALITIES:
+            if not wvd_path.exists():
                 logger.critical(
                     X_NOT_FOUND_STRING.format(".wvd", wvd_path)
                     + ", a .wvd file is required for downloading in AAC quality"
@@ -501,11 +514,11 @@ def main(
             logger.critical(X_NOT_FOUND_STRING.format("MP4Box", mp4box_path))
             return
         music_video_warning_message = []
-        if not downloader.mp4decrypt_path_full and video_format != VideoFormat.WEBM:
+        if not downloader.mp4decrypt_path_full and video_format == VideoFormat.MP4:
             music_video_warning_message.append(
                 X_NOT_FOUND_STRING.format("mp4decrypt", mp4decrypt_path)
             )
-        elif not downloader.packager_path_full:
+        elif not downloader.packager_path_full and video_format == VideoFormat.WEBM:
             music_video_warning_message.append(
                 X_NOT_FOUND_STRING.format("Shaka Packager", packager_path)
             )
