@@ -368,6 +368,10 @@ class Downloader:
         return self.spotify_api.get_gid_metadata(gid, media_type)
 
     def get_playplay_decryption_key(self, file_id: str) -> bytes:
+        # We want to throw re-unplayplay errors only when we actually need re-unplayplay
+        if re_unpp_exc is not None:
+            raise re_unpp_exc
+
         playplay_license_request = PlayPlayLicenseRequest(
             version=2,
             token=get_token(),
@@ -378,13 +382,12 @@ class Downloader:
             file_id,
             playplay_license_request.SerializeToString(),
         )
+
         playplay_license_response = PlayPlayLicenseResponse()
         playplay_license_response.ParseFromString(playplay_license_response_bytes)
         obfuscated_key = playplay_license_response.obfuscated_key
-        if re_unpp_exc is not None:
-            raise re_unpp_exc
-        key = decrypt_and_bind_key(obfuscated_key, file_id)
-        return key
+
+        return decrypt_and_bind_key(obfuscated_key, file_id)
 
     def get_widevine_decryption_key(
         self,
