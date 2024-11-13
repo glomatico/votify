@@ -179,10 +179,19 @@ class DownloaderAudio:
             nonce=bytes.fromhex("72e067fbddcbcf77"),
             initial_value=bytes.fromhex("ebe8bc643f630d93"),
         )
-        skip = 167
+
+        with encrypted_path.open("rb") as encrypted_file:
+            encrypted_data = encrypted_file.read()
+
         with decrypted_path.open("wb") as decrypted_file:
-            with encrypted_path.open("rb") as encrypted_file:
-                decrypted_file.write(cipher.decrypt(encrypted_file.read())[skip:])
+            decrypted_data = cipher.decrypt(encrypted_data)
+
+            offset = decrypted_data.find(b'OggS')
+            if offset == -1:
+                msg = 'Unable to find ogg header'
+                raise ValueError(msg)
+
+            decrypted_file.write(decrypted_data[offset:])
 
     def decrypt_widevine_ffmpeg(
         self,
