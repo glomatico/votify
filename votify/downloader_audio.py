@@ -25,7 +25,7 @@ class DownloaderAudio:
     def __init__(
         self,
         downloader: Downloader,
-        audio_quality: AudioQuality = AudioQuality.VORBIS_MEDIUM,
+        audio_quality: AudioQuality = AudioQuality.AAC_MEDIUM,
         download_mode: DownloadMode = DownloadMode.YTDLP,
         remux_mode: RemuxModeAudio = RemuxModeAudio.FFMPEG,
     ):
@@ -190,9 +190,9 @@ class DownloaderAudio:
         with decrypted_path.open("wb") as decrypted_file:
             decrypted_data = cipher.decrypt(encrypted_data)
 
-            offset = decrypted_data.find(b'OggS')
+            offset = decrypted_data.find(b"OggS")
             if offset == -1:
-                msg = 'Unable to find ogg header'
+                msg = "Unable to find ogg header"
                 raise ValueError(msg)
 
             decrypted_file.write(decrypted_data[offset:])
