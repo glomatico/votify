@@ -1,5 +1,6 @@
 click
 inquirerpy
+mutagen
 pillow
 protobuf
 pybase62

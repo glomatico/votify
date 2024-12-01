@@ -6,6 +6,7 @@ authors = [{ name = "glomatico" }]
 dependencies = [
     "click",
     "inquirerpy",
+    "mutagen",
     "pillow",
     "protobuf",
     "pybase62",
