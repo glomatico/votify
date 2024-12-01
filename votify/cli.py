@@ -600,6 +600,7 @@ def main(
                             "Vorbis audio quality is only supported for podcasts, "
                             "skipping"
                         )
+                        continue
                     downloader_song.download(
                         track_id=media_id,
                         track_metadata=media_metadata,
