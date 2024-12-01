@@ -14,6 +14,7 @@ from .constants import (
     AAC_AUDIO_QUALITIES,
     EXCLUDED_CONFIG_FILE_PARAMS,
     PREMIUM_AUDIO_QUALITIES,
+    VORBIS_AUDIO_QUALITIES,
     X_NOT_FOUND_STRING,
 )
 from .downloader import Downloader
@@ -394,9 +395,9 @@ def main(
         datefmt="%H:%M:%S",
     )
     logger.setLevel(log_level)
-    logger.info("Starting Votify")
     if not cookies_path.exists():
         logger.critical(X_NOT_FOUND_STRING.format("Cookies file", cookies_path))
+    logger.info("Starting Votify")
     spotify_api = SpotifyApi.from_cookies_file(cookies_path)
     if spotify_api.config_info["isAnonymous"]:
         logger.critical(
@@ -594,6 +595,11 @@ def main(
                         playlist_track=index,
                     )
                 elif media_type == "track":
+                    if audio_quality in VORBIS_AUDIO_QUALITIES:
+                        logger.warning(
+                            "Vorbis audio quality is only supported for podcasts, "
+                            "skipping"
+                        )
                     downloader_song.download(
                         track_id=media_id,
                         track_metadata=media_metadata,

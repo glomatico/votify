@@ -4,7 +4,8 @@ A Python CLI app for downloading songs/podcasts/videos from Spotify.
 **Discord Server:** https://discord.gg/aBjMEZ9tnq
 
 ## Features
-* Download songs and podcasts in Vorbis or AAC
+* Download songs in AAC
+* Download podcast in AAC or Vorbis
 * Download podcast videos
 * Download music videos with a premium account
 * Support for artist links to download all of their albums
@@ -17,22 +18,23 @@ A Python CLI app for downloading songs/podcasts/videos from Spotify.
     * To export your cookies, use one of the following browser extensions while signed in to Spotify:
         * Firefox: https://addons.mozilla.org/addon/export-cookies-txt
         * Chromium based browsers: https://chrome.google.com/webstore/detail/gdocmgbfkjnnpapoeobnolbbkoibbcif
+* FFmpeg
+    * Add FFmpeg to your system’s PATH or specify its path using command-line arguments or the config file. Old versions may not work.
+* .wvd file
+    * A .wvd file contains the Widevine keys from a device and is required to decrypt music videos and songs in AAC. The easiest method of obtaining one is using KeyDive, which extracts it from an Android device. Detailed instructions can be found here: https://github.com/hyugogirubato/KeyDive. **.wvd files extracted from emulated devices may not work**.
+
+If you plan on only downloading podcasts in Vorbis quality, you can skip the .wvd file and FFmpeg requirements.
 
 ### Optional dependencies
 The following tools are optional but required for specific features. Add them to your system’s PATH or specify their paths using command-line arguments or the config file.
-* [FFmpeg](https://ffmpeg.org/download.html)
-    * Used when setting `ffmpeg` as remux mode and when setting `mp4` or `webm` as video format.
 * [MP4Box](https://gpac.io/downloads/gpac-nightly-builds/)
     * Used when setting `mp4box` as remux mode.
 * [Shaka Packager](https://github.com/shaka-project/shaka-packager/releases/latest)
-    * Used when setting `webm` as video format and for downloading music videos.
+    * Used when setting `webm` as video format and when downloading music videos.
 * [mp4decrypt](https://www.bento4.com/downloads/)
     * Used when setting `mp4box` or `mp4decrypt` as remux mode.
 * [aria2c](https://github.com/aria2/aria2/releases)
     * Used when setting `aria2c` as download mode.
-* .wvd file
-    * Used when setting `aac` as audio quality or when downloading music videos.
-    * A .wvd file contains the Widevine keys from a device and is required to decrypt music videos and songs in AAC. The easiest method of obtaining one is using KeyDive, which extracts it from an Android device. Detailed instructions can be found here: https://github.com/hyugogirubato/KeyDive. **Note:** .wvd files extracted from emulated devices may not work.
 
 ## Installation
 1. Install the package `votify` using pip

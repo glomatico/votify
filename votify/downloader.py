@@ -10,14 +10,6 @@ import subprocess
 from io import BytesIO
 from pathlib import Path
 
-try:
-    re_unpp_exc: ImportError | None = None
-    from re_unplayplay import decrypt_and_bind_key, get_token
-except ImportError as err:
-    decrypt_and_bind_key = lambda a, b: None
-    get_token = lambda: None
-    re_unpp_exc = err
-
 import requests
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
@@ -29,12 +21,6 @@ from pywidevine import PSSH, Cdm, Device
 
 from .constants import MEDIA_TYPE_MP4_MAPPING, MP4_TAGS_MAP, VORBIS_TAGS_MAPPING
 from .models import DownloadQueueItem, UrlInfo
-from .playplay_pb2 import (
-    AUDIO_TRACK,
-    Interactivity,
-    PlayPlayLicenseRequest,
-    PlayPlayLicenseResponse,
-)
 from .spotify_api import SpotifyApi
 from .utils import check_response
 
@@ -368,26 +354,7 @@ class Downloader:
         return self.spotify_api.get_gid_metadata(gid, media_type)
 
     def get_playplay_decryption_key(self, file_id: str) -> bytes:
-        # We want to throw re-unplayplay errors only when we actually need re-unplayplay
-        if re_unpp_exc is not None:
-            raise re_unpp_exc
-
-        playplay_license_request = PlayPlayLicenseRequest(
-            version=2,
-            token=get_token(),
-            interactivity=Interactivity.INTERACTIVE,
-            content_type=AUDIO_TRACK,
-        )
-        playplay_license_response_bytes = self.spotify_api.get_playplay_license(
-            file_id,
-            playplay_license_request.SerializeToString(),
-        )
-
-        playplay_license_response = PlayPlayLicenseResponse()
-        playplay_license_response.ParseFromString(playplay_license_response_bytes)
-        obfuscated_key = playplay_license_response.obfuscated_key
-
-        return decrypt_and_bind_key(obfuscated_key, file_id)
+        raise NotImplementedError()
 
     def get_widevine_decryption_key(
         self,
