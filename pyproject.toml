@@ -11,7 +11,6 @@ dependencies = [
     "pybase62",
     "pycryptodome",
     "pywidevine",
-    "re-unplayplay",
     "yt-dlp",
 ]
 readme = "README.md"
