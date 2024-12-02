@@ -41,9 +41,9 @@ The following tools are optional but required for specific features. Add them to
     ```bash
     pip install votify
     ```
-2. Set up the cookies file.
+2. Set up the cookies file
     * You can either move to the current directory from which you will be running Votify as `cookies.txt` or specify its path using the command-line arguments/config file.
-3. Set up the .wvd file.
+3. Set up the .wvd file
     * You can either move to the current directory from which you will be running Votify as `device.wvd` or specify its path using the command-line arguments/config file.
 
 ## Usage
