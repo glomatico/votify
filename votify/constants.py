@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .enums import AudioQuality
+from .enums import AudioQuality, CoverSize
 
 EXCLUDED_CONFIG_FILE_PARAMS = (
     "urls",
@@ -70,4 +70,11 @@ MEDIA_TYPE_MP4_MAPPING = {
     "Song": 1,
     "Podcast": 21,
     "Music video": 6,
+}
+
+COVER_SIZE_X_KEY_MAPPING = {
+    CoverSize.SMALL: "ab67616d00004851",
+    CoverSize.MEDIUM: "ab67616d00001e02",
+    CoverSize.LARGE: "ab67616d0000b273",
+    CoverSize.EXTRA_LARGE: "ab67616d000082c1",
 }
