@@ -137,6 +137,7 @@ Config file values can be overridden using command-line arguments.
 | `--template-file-music-video` / `template_file_music_video`     | Template file for the tracks that are not part of an album.        | `{title}`                                      |
 | `--template-file-playlist` / `template_file_playlist`           | Template file for the M3U8 playlist.                               | `Playlists/{playlist_artist}/{playlist_title}` |
 | `--date-tag-template` / `date_tag_template`                     | Date tag template.                                                 | `%Y-%m-%dT%H:%M:%SZ`                           |
+| `--cover-size` / `cover_size`                                   | Cover size.                                                        | `extra-large`                                  |
 | `--save-cover` / `save_cover`                                   | Save cover as a separate file.                                     | `false`                                        |
 | `--save-playlist` / `save_playlist`                             | Save a M3U8 playlist file when downloading a playlist.             | `false`                                        |
 | `--overwrite` / `overwrite`                                     | Overwrite existing files.                                          | `false`                                        |
@@ -178,6 +179,13 @@ The following variables can be used in the template folder/file and/or in the `e
 - `track`
 - `track_total`
 - `url`
+  
+### Cover sizes
+The following cover sizes are available:
+* `small`: up to 64px
+* `medium`: up to 300px
+* `large`: up to 640px
+* `extra-large`: up to 2000px
 
 ### Audio qualities
 The following qualities are available:
