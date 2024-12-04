@@ -29,3 +29,10 @@ class RemuxModeAudio(Enum):
 class RemuxModeVideo(Enum):
     FFMPEG = "ffmpeg"
     MP4BOX = "mp4box"
+
+
+class CoverSize(Enum):
+    SMALL = "small"
+    MEDIUM = "medium"
+    LARGE = "large"
+    EXTRA_LARGE = "extra-large"
