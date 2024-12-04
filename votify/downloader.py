@@ -19,7 +19,13 @@ from mutagen.oggvorbis import OggVorbis, OggVorbisHeaderError
 from PIL import Image
 from pywidevine import PSSH, Cdm, Device
 
-from .constants import MEDIA_TYPE_MP4_MAPPING, MP4_TAGS_MAP, VORBIS_TAGS_MAPPING
+from .constants import (
+    COVER_SIZE_X_KEY_MAPPING,
+    MEDIA_TYPE_MP4_MAPPING,
+    MP4_TAGS_MAP,
+    VORBIS_TAGS_MAPPING,
+)
+from .enums import CoverSize
 from .models import DownloadQueueItem, UrlInfo
 from .spotify_api import SpotifyApi
 from .utils import check_response
@@ -58,6 +64,7 @@ class Downloader:
         template_file_music_video: str = "{title}",
         template_file_playlist: str = "Playlists/{playlist_artist}/{playlist_title}",
         date_tag_template: str = "%Y-%m-%dT%H:%M:%SZ",
+        cover_size: CoverSize = CoverSize.EXTRA_LARGE,
         save_cover: bool = False,
         save_playlist: bool = False,
         overwrite: bool = False,
@@ -85,6 +92,7 @@ class Downloader:
         self.template_file_music_video = template_file_music_video
         self.template_file_playlist = template_file_playlist
         self.date_tag_template = date_tag_template
+        self.cover_size = cover_size
         self.save_cover = save_cover
         self.save_playlist = save_playlist
         self.overwrite = overwrite
@@ -418,7 +426,12 @@ class Downloader:
         return self._get_cover_url(metadata["images"])
 
     def _get_cover_url(self, images_dict: list[dict]) -> str:
-        return max(images_dict, key=lambda img: img["height"])["url"]
+        original_cover_url = images_dict[0]["url"]
+        original_cover_id = original_cover_url.split("/")[-1]
+        cover_key = COVER_SIZE_X_KEY_MAPPING[self.cover_size]
+        cover_id = cover_key + original_cover_id[len(cover_key) :]
+        cover_url = f"{original_cover_url.rpartition('/')[0]}/{cover_id}"
+        return cover_url
 
     def get_file_temp_path(
         self,
