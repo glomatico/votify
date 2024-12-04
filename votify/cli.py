@@ -148,12 +148,6 @@ def load_config_file(
     default=Path("./cookies.txt"),
     help="Path to cookies file.",
 )
-@click.option(
-    "--cookies-browser",
-    type=str,
-    default=None,
-    help="Browser to use to get cookies instead of loading a file.",
-)
 # Downloader specific options
 @click.option(
     "--output-path",
@@ -357,7 +351,6 @@ def main(
     log_level: str,
     no_exceptions: bool,
     cookies_path: Path,
-    cookies_browser: str,
     output_path: Path,
     temp_path: Path,
     wvd_path: Path,
