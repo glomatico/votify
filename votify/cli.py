@@ -26,6 +26,7 @@ from .downloader_song import DownloaderSong
 from .downloader_video import DownloaderVideo
 from .enums import (
     AudioQuality,
+    CoverSize,
     DownloadMode,
     RemuxModeAudio,
     RemuxModeVideo,
@@ -259,6 +260,12 @@ def load_config_file(
     help="Date tag template.",
 )
 @click.option(
+    "--cover-size",
+    type=CoverSize,
+    default=downloader_sig.parameters["cover_size"].default,
+    help="Cover size.",
+)
+@click.option(
     "--save-cover",
     is_flag=True,
     help="Save cover as a separate file.",
@@ -370,6 +377,7 @@ def main(
     template_file_music_video: str,
     template_file_playlist: str,
     date_tag_template: str,
+    cover_size: CoverSize,
     save_cover: bool,
     save_playlist: bool,
     overwrite: bool,
@@ -417,6 +425,7 @@ def main(
         template_file_music_video,
         template_file_playlist,
         date_tag_template,
+        cover_size,
         save_cover,
         save_playlist,
         overwrite,
