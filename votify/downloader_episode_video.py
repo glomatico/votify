@@ -80,7 +80,7 @@ class DownloaderEpisodeVideo(DownloaderVideo):
             file_extension,
         )
         cover_path = self.get_cover_path(final_path)
-        cover_url = self.downloader_episode.downloader.get_cover_url(show_metadata)
+        cover_url = self.downloader_episode.get_cover_url(show_metadata)
         remuxed_path = None
         if final_path.exists() and not self.downloader.overwrite:
             logger.warning(f'Episode already exists at "{final_path}", skipping')

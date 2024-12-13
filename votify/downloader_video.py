@@ -8,6 +8,7 @@ from InquirerPy.base.control import Choice
 from yt_dlp.downloader.fragment import FragmentFD
 from yt_dlp.YoutubeDL import YoutubeDL
 
+from .constants import COVER_SIZE_X_KEY_MAPPING_VIDEO
 from .downloader import Downloader
 from .enums import RemuxModeAudio, RemuxModeVideo, VideoFormat
 from .models import StreamInfoVideo
@@ -24,6 +25,19 @@ class DownloaderVideo:
         self.video_format = video_format
         self.remux_mode = remux_mode
         self._adjust_remux_mode()
+
+    def get_cover_url(self, metadata: dict) -> str | None:
+        if not metadata.get("images"):
+            return None
+        return self._get_cover_url(metadata["images"])
+
+    def _get_cover_url(self, images_dict: list[dict]) -> str:
+        original_cover_url = images_dict[0]["url"]
+        original_cover_id = original_cover_url.split("/")[-1]
+        cover_key = COVER_SIZE_X_KEY_MAPPING_VIDEO[self.downloader.cover_size]
+        cover_id = cover_key + original_cover_id[len(cover_key) :]
+        cover_url = f"{original_cover_url.rpartition('/')[0]}/{cover_id}"
+        return cover_url
 
     def _adjust_remux_mode(self):
         if self.video_format == VideoFormat.WEBM:

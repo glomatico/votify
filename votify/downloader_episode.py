@@ -114,7 +114,7 @@ class DownloaderEpisode(DownloaderAudio):
             file_extension,
         )
         cover_path = self.get_cover_path(final_path)
-        cover_url = self.downloader.get_cover_url(episode_metadata)
+        cover_url = self.get_cover_url(episode_metadata)
         decrypted_path = None
         remuxed_path = None
         if final_path.exists() and not self.downloader.overwrite:

@@ -10,6 +10,7 @@ from yt_dlp.YoutubeDL import YoutubeDL
 from .constants import (
     AAC_AUDIO_QUALITIES,
     AUDIO_QUALITY_X_FORMAT_ID_MAPPING,
+    COVER_SIZE_X_KEY_MAPPING_AUDIO,
     VORBIS_AUDIO_QUALITIES,
 )
 from .downloader import Downloader
@@ -33,6 +34,19 @@ class DownloaderAudio:
         self.audio_quality = audio_quality
         self.download_mode = download_mode
         self.remux_mode = remux_mode
+
+    def get_cover_url(self, metadata: dict) -> str | None:
+        if not metadata.get("images"):
+            return None
+        return self._get_cover_url(metadata["images"])
+
+    def _get_cover_url(self, images_dict: list[dict]) -> str:
+        original_cover_url = images_dict[0]["url"]
+        original_cover_id = original_cover_url.split("/")[-1]
+        cover_key = COVER_SIZE_X_KEY_MAPPING_AUDIO[self.downloader.cover_size]
+        cover_id = cover_key + original_cover_id[len(cover_key) :]
+        cover_url = f"{original_cover_url.rpartition('/')[0]}/{cover_id}"
+        return cover_url
 
     def get_file_extension(
         self,

@@ -72,9 +72,16 @@ MEDIA_TYPE_MP4_MAPPING = {
     "Music video": 6,
 }
 
-COVER_SIZE_X_KEY_MAPPING = {
+COVER_SIZE_X_KEY_MAPPING_AUDIO = {
     CoverSize.SMALL: "ab67616d00004851",
     CoverSize.MEDIUM: "ab67616d00001e02",
     CoverSize.LARGE: "ab67616d0000b273",
     CoverSize.EXTRA_LARGE: "ab67616d000082c1",
+}
+
+COVER_SIZE_X_KEY_MAPPING_VIDEO = {
+    CoverSize.SMALL: "ab6742d3000052b7",
+    CoverSize.MEDIUM: "ab6742d3000052b7",
+    CoverSize.LARGE: "ab6742d3000053b7",
+    CoverSize.EXTRA_LARGE: "ab6742d3000053b7",
 }

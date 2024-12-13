@@ -200,7 +200,7 @@ class DownloaderSong(DownloaderAudio):
         )
         lrc_path = self.downloader.get_lrc_path(final_path)
         cover_path = self.get_cover_path(final_path)
-        cover_url = self.downloader.get_cover_url(album_metadata)
+        cover_url = self.get_cover_url(album_metadata)
         decrypted_path = None
         remuxed_path = None
         if self.lrc_only:
