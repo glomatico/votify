@@ -20,7 +20,6 @@ from PIL import Image
 from pywidevine import PSSH, Cdm, Device
 
 from .constants import (
-    COVER_SIZE_X_KEY_MAPPING_AUDIO,
     MEDIA_TYPE_MP4_MAPPING,
     MP4_TAGS_MAP,
     VORBIS_TAGS_MAPPING,
@@ -258,6 +257,19 @@ class Downloader:
                 )
             )
         return download_queue
+
+    def get_cover_url(self, metadata: dict, cover_size_mapping: dict) -> str | None:
+        if not metadata.get("images"):
+            return None
+        return self._get_cover_url(metadata["images"], cover_size_mapping)
+
+    def _get_cover_url(self, images_dict: list[dict], cover_size_mapping: dict) -> str:
+        original_cover_url = images_dict[0]["url"]
+        original_cover_id = original_cover_url.split("/")[-1]
+        cover_key = cover_size_mapping[self.cover_size]
+        cover_id = cover_key + original_cover_id[len(cover_key) :]
+        cover_url = f"{original_cover_url.rpartition('/')[0]}/{cover_id}"
+        return cover_url
 
     def get_media_id(self, media_metadata: dict) -> str:
         return (media_metadata.get("linked_from") or media_metadata)["id"]

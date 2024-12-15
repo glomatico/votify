@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from .constants import AAC_AUDIO_QUALITIES
+from .constants import AAC_AUDIO_QUALITIES, COVER_SIZE_X_KEY_MAPPING_EPISODE
 from .downloader_audio import DownloaderAudio
 from .models import StreamInfoAudio
 
@@ -114,7 +114,10 @@ class DownloaderEpisode(DownloaderAudio):
             file_extension,
         )
         cover_path = self.get_cover_path(final_path)
-        cover_url = self.get_cover_url(episode_metadata)
+        cover_url = self.downloader.get_cover_url(
+            episode_metadata,
+            COVER_SIZE_X_KEY_MAPPING_EPISODE,
+        )
         decrypted_path = None
         remuxed_path = None
         if final_path.exists() and not self.downloader.overwrite:

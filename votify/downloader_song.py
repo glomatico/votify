@@ -4,6 +4,7 @@ import datetime
 import logging
 from pathlib import Path
 
+from .constants import COVER_SIZE_X_KEY_MAPPING_SONG
 from .downloader_audio import DownloaderAudio
 from .models import Lyrics, StreamInfoAudio
 
@@ -200,7 +201,10 @@ class DownloaderSong(DownloaderAudio):
         )
         lrc_path = self.downloader.get_lrc_path(final_path)
         cover_path = self.get_cover_path(final_path)
-        cover_url = self.get_cover_url(album_metadata)
+        cover_url = self.downloader.get_cover_url(
+            album_metadata,
+            COVER_SIZE_X_KEY_MAPPING_SONG,
+        )
         decrypted_path = None
         remuxed_path = None
         if self.lrc_only:

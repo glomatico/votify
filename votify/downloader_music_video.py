@@ -5,6 +5,7 @@ import logging
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 
+from .constants import COVER_SIZE_X_KEY_MAPPING_VIDEO
 from .downloader_video import DownloaderVideo
 
 logger = logging.getLogger("votify")
@@ -189,7 +190,10 @@ class DownloaderMusicVideo(DownloaderVideo):
             file_extension,
         )
         cover_path = self.get_cover_path(final_path)
-        cover_url = self.get_cover_url(album_metadata)
+        cover_url = self.downloader.get_cover_url(
+            album_metadata,
+            COVER_SIZE_X_KEY_MAPPING_VIDEO,
+        )
         remuxed_path = None
         if final_path.exists() and not self.downloader.overwrite:
             logger.warning(f'Music video already exists at "{final_path}", skipping')
