@@ -398,6 +398,7 @@ def main(
     logger.setLevel(log_level)
     if not cookies_path.exists():
         logger.critical(X_NOT_FOUND_STRING.format("Cookies file", cookies_path))
+        return
     logger.info("Starting Votify")
     spotify_api = SpotifyApi.from_cookies_file(cookies_path)
     if spotify_api.config_info["isAnonymous"]:
