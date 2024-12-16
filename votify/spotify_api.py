@@ -273,8 +273,22 @@ class SpotifyApi:
         return response.json()
 
     def get_seek_table(self, file_id: str) -> dict:
-        self._refresh_session_auth()
-        response = self.session.get(self.SEEK_TABLE_API_URL.format(file_id=file_id))
+        headers = {
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "de,en-US;q=0.7,en;q=0.3",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Origin": "https://open.spotify.com",
+            "Pragma": "no-cache",
+            "Priority": "u=4",
+            "Referer": "https://open.spotify.com/",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "cross-site",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0",
+        }
+        response = requests.get(self.SEEK_TABLE_API_URL.format(file_id=file_id), headers=headers)
         check_response(response)
         return response.json()
 
