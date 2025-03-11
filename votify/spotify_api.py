@@ -16,7 +16,8 @@ from .utils import check_response
 
 class SpotifyApi:
     SPOTIFY_HOME_PAGE_URL = "https://open.spotify.com/"
-    CLIENT_VERSION = "1.2.46.25.g7f189073"
+    SPOTIFY_ACCESS_TOKEN_URL = "https://open.spotify.com/get_access_token"
+    CLIENT_VERSION = "1.2.60.81.gd921a6c8"
     LYRICS_API_URL = "https://spclient.wg.spotify.com/color-lyrics/v2/track/{track_id}"
     METADATA_API_URL = "https://api.spotify.com/v1/{type}/{item_id}"
     GID_METADATA_API_URL = "https://spclient.wg.spotify.com/metadata/4/{media_type}/{gid}?market=from_token"
@@ -75,13 +76,8 @@ class SpotifyApi:
         self._set_session_auth()
 
     def _set_session_auth(self):
+        self.session_info = self.get_access_token()
         home_page = self.get_home_page()
-        self.session_info = json.loads(
-            re.search(
-                r'<script id="session" data-testid="session" type="application/json">(.+?)</script>',
-                home_page,
-            ).group(1)
-        )
         self.config_info = json.loads(
             re.search(
                 r'<script id="config" data-testid="config" type="application/json">(.+?)</script>',
@@ -109,6 +105,13 @@ class SpotifyApi:
         )
         check_response(response)
         return response.text
+
+    def get_access_token(self) -> str:
+        response = self.session.get(
+            self.SPOTIFY_ACCESS_TOKEN_URL,
+        )
+        check_response(response)
+        return response.json()
 
     @staticmethod
     def media_id_to_gid(media_id: str) -> str:
