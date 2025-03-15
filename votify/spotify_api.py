@@ -11,7 +11,7 @@ from pathlib import Path
 import base62
 import requests
 
-from .utils import check_response
+from .utils import check_response, create_totp
 
 
 class SpotifyApi:
@@ -107,8 +107,16 @@ class SpotifyApi:
         return response.text
 
     def get_access_token(self) -> str:
+        nanosecond_timestamp = int(time.time() * 1000)
         response = self.session.get(
             self.SPOTIFY_ACCESS_TOKEN_URL,
+                params = {
+                    'reason': 'init', 
+                    'productType': 'web-player',
+                    'totpVer': 5,
+                    'totp': create_totp(nanosecond_timestamp),
+                    'ts': nanosecond_timestamp
+                }
         )
         check_response(response)
         return response.json()
