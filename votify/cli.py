@@ -8,6 +8,7 @@ from enum import Enum
 from pathlib import Path
 
 import click
+import colorama
 
 from . import __version__
 from .constants import (
@@ -17,6 +18,7 @@ from .constants import (
     VORBIS_AUDIO_QUALITIES,
     X_NOT_FOUND_STRING,
 )
+from .custom_formatter import CustomFormatter
 from .downloader import Downloader
 from .downloader_audio import DownloaderAudio
 from .downloader_episode import DownloaderEpisode
@@ -33,6 +35,7 @@ from .enums import (
     VideoFormat,
 )
 from .spotify_api import SpotifyApi
+from .utils import color_text
 
 logger = logging.getLogger("votify")
 
@@ -391,11 +394,12 @@ def main(
     remux_mode_video: RemuxModeVideo,
     no_config_file: bool,
 ) -> None:
-    logging.basicConfig(
-        format="[%(levelname)-8s %(asctime)s] %(message)s",
-        datefmt="%H:%M:%S",
-    )
+    colorama.just_fix_windows_console()
+    logger = logging.getLogger(__name__)
     logger.setLevel(log_level)
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(CustomFormatter())
+    logger.addHandler(stream_handler)
     if not cookies_path.exists():
         logger.critical(X_NOT_FOUND_STRING.format("Cookies file", cookies_path))
         return
@@ -547,7 +551,7 @@ def main(
                 _urls.extend(Path(url).read_text(encoding="utf-8").splitlines())
         urls = _urls
     for url_index, url in enumerate(urls, start=1):
-        url_progress = f"URL {url_index}/{len(urls)}"
+        url_progress = color_text(f"URL {url_index}/{len(urls)}", colorama.Style.DIM)
         logger.info(f'({url_progress}) Checking "{url}"')
         try:
             url_info = downloader.get_url_info(url)
@@ -566,8 +570,9 @@ def main(
             )
             continue
         for index, download_queue_item in enumerate(download_queue, start=1):
-            queue_progress = (
-                f"Track {index}/{len(download_queue)} from URL {url_index}/{len(urls)}"
+            queue_progress = color_text(
+                f"Track {index}/{len(download_queue)} from URL {url_index}/{len(urls)}",
+                colorama.Style.DIM,
             )
             media_metadata = download_queue_item.media_metadata
             try:
