@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import functools
 import json
-import re
 import time
 import typing
 from http.cookiejar import CookieJar, MozillaCookieJar
@@ -11,6 +10,7 @@ from pathlib import Path
 import base62
 import requests
 
+from .totp import TOTP
 from .utils import check_response
 
 
@@ -50,6 +50,7 @@ class SpotifyApi:
         return cls(cookies)
 
     def _set_session(self):
+        self.totp = TOTP()
         self.session = requests.Session()
         if self.cookies is not None:
             self.session.cookies.update(self.cookies)
@@ -72,25 +73,29 @@ class SpotifyApi:
                 "app-platform": "WebPlayer",
             }
         )
-        self._set_session_auth()
+        self._set_session_info()
+        self._set_user_profile()
 
-    def _set_session_auth(self):
-        home_page = self.get_home_page()
-        self.session_info = json.loads(
-            re.search(
-                r'<script id="session" data-testid="session" type="application/json">(.+?)</script>',
-                home_page,
-            ).group(1)
+    def _set_session_info(self):
+        server_time_response = self.session.get("https://open.spotify.com/server-time")
+        check_response(server_time_response)
+        server_time = 1e3 * server_time_response.json()["serverTime"]
+        totp = self.totp.generate(timestamp=server_time)
+        session_info_response = self.session.get(
+            "https://open.spotify.com/get_access_token",
+            params={
+                "reason": "init",
+                "productType": "web-player",
+                "totp": totp,
+                "totpVer": str(self.totp.version),
+                "ts": str(server_time),
+            },
         )
-        self.config_info = json.loads(
-            re.search(
-                r'<script id="config" data-testid="config" type="application/json">(.+?)</script>',
-                home_page,
-            ).group(1)
-        )
+        check_response(session_info_response)
+        self.session_info = session_info_response.json()
         self.session.headers.update(
             {
-                "Authorization": f"Bearer {self.session_info['accessToken']}",
+                "authorization": f"Bearer {self.session_info['accessToken']}",
             }
         )
 
@@ -101,14 +106,12 @@ class SpotifyApi:
         timestamp_now = time.time() * 1000
         if timestamp_now < timestamp_session_expire:
             return
-        self._set_session_auth()
+        self._set_session_info()
 
-    def get_home_page(self) -> str:
-        response = self.session.get(
-            SpotifyApi.SPOTIFY_HOME_PAGE_URL,
-        )
+    def _set_user_profile(self):
+        response = self.session.get(self.METADATA_API_URL.format(type="me", item_id=""))
         check_response(response)
-        return response.text
+        self.user_profile = response.json()
 
     @staticmethod
     def media_id_to_gid(media_id: str) -> str:

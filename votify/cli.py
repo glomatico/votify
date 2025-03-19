@@ -401,7 +401,7 @@ def main(
         return
     logger.info("Starting Votify")
     spotify_api = SpotifyApi.from_cookies_file(cookies_path)
-    if spotify_api.config_info["isAnonymous"]:
+    if spotify_api.session_info["isAnonymous"]:
         logger.critical(
             "Failed to get a valid session. Try logging in and exporting your cookies again"
         )
@@ -459,8 +459,8 @@ def main(
     downloader_music_video = DownloaderMusicVideo(
         downloader_video,
     )
-    spotify_api.config_info["isPremium"] = (
-        True if force_premium else spotify_api.config_info["isPremium"]
+    is_premium = (
+        True if force_premium else spotify_api.user_profile["product"] == "premium"
     )
     if not lrc_only:
         if audio_quality in AAC_AUDIO_QUALITIES:
@@ -497,10 +497,7 @@ def main(
         if download_mode == DownloadMode.ARIA2C and not downloader.aria2c_path_full:
             logger.critical(X_NOT_FOUND_STRING.format("aria2c", aria2c_path))
             return
-        if (
-            not spotify_api.config_info["isPremium"]
-            and audio_quality in PREMIUM_AUDIO_QUALITIES
-        ):
+        if not is_premium and audio_quality in PREMIUM_AUDIO_QUALITIES:
             logger.critical("Cannot download at chosen quality with a free account")
             return
     can_download_music_videos = True
@@ -532,7 +529,7 @@ def main(
             )
         else:
             downloader.set_cdm()
-        if not spotify_api.config_info["isPremium"]:
+        if is_premium:
             music_video_warning_message.append(
                 "Cannot download music videos with a non-premium account"
             )
