@@ -24,7 +24,7 @@ A Python CLI app for downloading songs, podcasts and videos from Spotify.
 
 #### Notes
 * The .wvd file is not required if you plan on only downloading podcasts.
-* FFmpeg is not required if you plan on only downloading podcasts in Vorbis, but it's needed for AAC.
+* FFmpeg is not required if you plan on only downloading podcasts in Vorbis, but it's needed for downloading podcasts in AAC.
 
 ### Optional dependencies
 The following tools are optional but required for specific features. Add them to your system’s PATH or specify their paths using command-line arguments or the config file.
@@ -195,15 +195,13 @@ The following variables can be used in the template folder/file and/or in the `e
     * `vorbis-low`: 96kbps
 
 ### Video formats
-The following video formats are available:
 * `mp4`: H.264 Up to 1080p with AAC 128kbps.
 * `webm`: VP9 Up to 1080p with Opus 160kbps.
 * `ask`: Prompt to choose available video and audio codecs.
 
 ### Download modes
-The following modes are available:
 * `ytdlp`: Default download mode.
-* `aria2c`: Faster alternative to `ytdlp`.
+* `aria2c`: Faster alternative to `ytdlp` only applicable to songs and podcasts.
 
 ### Video remux modes
 * `ffmpeg`
