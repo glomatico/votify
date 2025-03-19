@@ -1,58 +1,57 @@
 # Votify
-A Python CLI app for downloading songs/podcasts/videos from Spotify.
+A Python CLI app for downloading songs, podcasts and videos from Spotify.
 
 **Discord Server:** https://discord.gg/aBjMEZ9tnq
 
 ## Features
-* Download songs in AAC
-* Download podcast in AAC or Vorbis
-* Download podcast videos
-* Download music videos with a premium account
-* Support for artist links to download all of their albums
-* Download synced lyrics
-* Highly configurable
+* **Songs**: Download songs up in AAC 128kbps or in AAC 256kbps with an active premium subscription.
+* **Podcasts**: Download podcasts in Vorbis or AAC.
+* **Videos**: Download podcast videos and music videos with an active premium subscription.
+* **Synced Lyrics**: Download synced lyrics in LRC.
+* **Artist Support**: Download an entire discography by providing the artist's URL.
+* **Highly Customizable**: Extensive configuration options for advanced users.
 
 ## Prerequisites
-* Python 3.8 or higher
-* The cookies file of your Spotify browser session in Netscape format (free or premium)
-    * To export your cookies, use one of the following browser extensions while signed in to Spotify:
-        * Firefox: https://addons.mozilla.org/addon/export-cookies-txt
-        * Chromium based browsers: https://chrome.google.com/webstore/detail/gdocmgbfkjnnpapoeobnolbbkoibbcif
-* FFmpeg
-    * Add FFmpeg to your system’s PATH or specify its path using command-line arguments or the config file. Old versions may not work.
-* .wvd file
+* **Python 3.9 or higher** installed on your system.
+* The **cookies file** of your Spotify browser session in Netscape format.
+    * **Firefox**: Use the [Export Cookies](https://addons.mozilla.org/addon/export-cookies-txt) extension.
+    * **Chromium-based Browsers**: Use the [Open Cookies.txt](https://chromewebstore.google.com/detail/open-cookiestxt/gdocmgbfkjnnpapoeobnolbbkoibbcif) extension.
+* **FFmpeg** on your system PATH.
+    * **Windows**: Download from [AnimMouse’s FFmpeg Builds](https://github.com/AnimMouse/ffmpeg-stable-autobuild/releases).
+    * **Linux**: Download from [John Van Sickle’s FFmpeg Builds](https://johnvansickle.com/ffmpeg/).
+* A **.wvd file**.
     * A .wvd file contains the Widevine keys from a device and is required to decrypt music videos and songs in AAC. The easiest method of obtaining one is using KeyDive, which extracts it from an Android device. Detailed instructions can be found here: https://github.com/hyugogirubato/KeyDive. **.wvd files extracted from emulated devices may not work**.
 
-If you plan on only downloading podcasts in Vorbis quality, you can skip the .wvd file and FFmpeg requirements.
+#### Notes
+* The .wvd file is not required if you plan on only downloading podcasts.
+* FFmpeg is not required if you plan on only downloading podcasts in Vorbis, but it's needed for AAC.
 
 ### Optional dependencies
 The following tools are optional but required for specific features. Add them to your system’s PATH or specify their paths using command-line arguments or the config file.
-* [MP4Box](https://gpac.io/downloads/gpac-nightly-builds/)
-    * Used when setting `mp4box` as remux mode.
-* [Shaka Packager](https://github.com/shaka-project/shaka-packager/releases/latest)
-    * Used when setting `webm` as video format and when downloading music videos.
-* [mp4decrypt](https://www.bento4.com/downloads/)
-    * Used when setting `mp4box` or `mp4decrypt` as remux mode.
-* [aria2c](https://github.com/aria2/aria2/releases)
-    * Used when setting `aria2c` as download mode.
+* [MP4Box](https://gpac.io/downloads/gpac-nightly-builds/): Required when setting `mp4box` as remux mode.
+* [Shaka Packager](https://github.com/shaka-project/shaka-packager/releases/latest): Required when setting `webm` as video format and when downloading music videos.
+* [mp4decrypt](https://www.bento4.com/downloads/): Required when setting `mp4box` or `mp4decrypt` as remux mode.
+* [aria2c](https://github.com/aria2/aria2/releases): Required when setting `aria2c` as download mode.
 
 ## Installation
-1. Install the package `votify` using pip
+1. Install the package `votify` using pip:
     ```bash
     pip install votify
     ```
-2. Set up the cookies file
-    * You can either move to the current directory from which you will be running Votify as `cookies.txt` or specify its path using the command-line arguments/config file.
-3. Set up the .wvd file
-    * You can either move to the current directory from which you will be running Votify as `device.wvd` or specify its path using the command-line arguments/config file.
+2. Set up the cookies file.
+    * Move the cookies file to the directory where you’ll run Votify and rename it to `cookies.txt`.
+    * Alternatively, specify the path to the cookies file using command-line arguments or the config file.
+3. Set up the .wvd file.
+    * Move the cookies file to the directory where you’ll run Votify and rename it to `device.wvd`.
+    * Alternatively, specify the path to the cookies file using command-line arguments or the config file.
 
 ## Usage
+Run Votify with the following command:
 ```bash
 votify [OPTIONS] URLS...
 ```
 
 ### Supported URL types
-Votify supports the following types of URLs:
 * Song
 * Album
 * Playlist
@@ -95,10 +94,10 @@ Votify supports the following types of URLs:
     ```
 
 ### Interactive prompt controls
-* Arrow keys - Move selection
-* Space - Toggle selection
-* Ctrl + A - Select all
-* Enter - Confirm selection
+* **Arrow keys**: Move selection
+* **Space**: Toggle selection
+* **Ctrl + A**: Select all
+* **Enter**: Confirm selection
 
 ## Configuration
 Votify can be configured using the command-line arguments or the config file.
@@ -181,41 +180,36 @@ The following variables can be used in the template folder/file and/or in the `e
 - `url`
   
 ### Cover sizes
-The following cover sizes are available:
 * `small`: up to 64px
 * `medium`: up to 300px
 * `large`: up to 640px
 * `extra-large`: up to 2000px
 
 ### Audio qualities
-The following qualities are available:
-* `vorbis-high` (320kbps, requires an active premium subscription)
-* `vorbis-medium` (160kbps)
-* `vorbis-low` (96kbps)
-* `aac-medium` (128kbps)
-* `aac-high` (256kbps, requires an active premium subscription)
+* General codecs:
+    * `aac-medium`: 128kbps
+    * `aac-high` 256kbps, requires an active premium subscription
+* Podcast only codecs:
+    * `vorbis-high`: 320kbps, requires an active premium subscription
+    * `vorbis-medium`: 160kbps
+    * `vorbis-low`: 96kbps
 
 ### Video formats
 The following video formats are available:
-* `mp4`
-* `webm`
-* `ask`
-    * When using this option, Votify will ask you which audio and video codec to use that is available for the video.
+* `mp4`: H.264 Up to 1080p with AAC 128kbps.
+* `webm`: VP9 Up to 1080p with Opus 160kbps.
+* `ask`: Prompt to choose available video and audio codecs.
 
 ### Download modes
 The following modes are available:
-* `ytdlp`
-* `aria2c`
-    * Will not be used for downloading videos
-    * Faster than `ytdlp`
+* `ytdlp`: Default download mode.
+* `aria2c`: Faster alternative to `ytdlp`.
 
 ### Video remux modes
-The following remux modes for videos are available:
 * `ffmpeg`
 * `mp4box`
 
 ### Audio remux modes
-The following remux modes for songs and podcasts are available when downloading in AAC quality:
 * `ffmpeg`
 * `mp4box`
 * `mp4decrypt`
