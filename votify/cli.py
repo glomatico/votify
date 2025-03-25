@@ -35,7 +35,7 @@ from .enums import (
     VideoFormat,
 )
 from .spotify_api import SpotifyApi
-from .utils import color_text
+from .utils import color_text, prompt_path
 
 logger = logging.getLogger("votify")
 
@@ -400,9 +400,7 @@ def main(
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(CustomFormatter())
     logger.addHandler(stream_handler)
-    if not cookies_path.exists():
-        logger.critical(X_NOT_FOUND_STRING.format("Cookies file", cookies_path))
-        return
+    cookies_path = prompt_path("Cookies file", cookies_path)
     logger.info("Starting Votify")
     spotify_api = SpotifyApi.from_cookies_file(cookies_path)
     if spotify_api.session_info["isAnonymous"]:
@@ -491,12 +489,7 @@ def main(
                     X_NOT_FOUND_STRING.format("mp4decrypt", mp4decrypt_path)
                 )
                 return
-            if not wvd_path.exists():
-                logger.critical(
-                    X_NOT_FOUND_STRING.format(".wvd", wvd_path)
-                    + ", a .wvd file is required for downloading in AAC quality"
-                )
-                return
+            wvd_path = prompt_path(".wvd file", wvd_path)
             downloader.set_cdm()
         if download_mode == DownloadMode.ARIA2C and not downloader.aria2c_path_full:
             logger.critical(X_NOT_FOUND_STRING.format("aria2c", aria2c_path))
