@@ -533,7 +533,7 @@ def main(
             )
         else:
             downloader.set_cdm()
-        if is_premium:
+        if not is_premium:
             music_video_warning_message.append(
                 "Cannot download music videos with a non-premium account"
             )
