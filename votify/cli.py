@@ -395,7 +395,7 @@ def main(
     no_config_file: bool,
 ) -> None:
     colorama.just_fix_windows_console()
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger("votify")
     logger.setLevel(log_level)
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(CustomFormatter())
