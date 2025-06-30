@@ -77,12 +77,12 @@ class SpotifyApi:
         self._set_user_profile()
 
     def _set_session_info(self):
-        server_time_response = self.session.get("https://open.spotify.com/server-time")
+        server_time_response = self.session.get("https://open.spotify.com/api/server-time")
         check_response(server_time_response)
         server_time = 1e3 * server_time_response.json()["serverTime"]
         totp = self.totp.generate(timestamp=server_time)
         session_info_response = self.session.get(
-            "https://open.spotify.com/get_access_token",
+            "https://open.spotify.com/api/token",
             params={
                 "reason": "init",
                 "productType": "web-player",
