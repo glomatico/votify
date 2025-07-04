@@ -18,7 +18,7 @@ from .constants import (
     VORBIS_AUDIO_QUALITIES,
     X_NOT_FOUND_STRING,
 )
-from .custom_formatter import CustomFormatter
+from .custom_logger_formatter import CustomLoggerFormatter
 from .downloader import Downloader
 from .downloader_audio import DownloaderAudio
 from .downloader_episode import DownloaderEpisode
@@ -398,7 +398,7 @@ def main(
     logger = logging.getLogger("votify")
     logger.setLevel(log_level)
     stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(CustomFormatter())
+    stream_handler.setFormatter(CustomLoggerFormatter())
     logger.addHandler(stream_handler)
     cookies_path = prompt_path("Cookies file", cookies_path)
     logger.info("Starting Votify")
