@@ -103,6 +103,11 @@ def load_config_file(
     help="Wait interval between downloads in seconds.",
 )
 @click.option(
+    "--disable-wvd",
+    is_flag=True,
+    help="Disable Widevine decryption.",
+)
+@click.option(
     "--download-music-videos",
     is_flag=True,
     help="List and select a related music video to download from songs.",
@@ -279,11 +284,6 @@ def load_config_file(
     help="Overwrite existing files.",
 )
 @click.option(
-    "--disable-wvd",
-    is_flag=True,
-    help="Disable Widevine decryption.",
-)
-@click.option(
     "--exclude-tags",
     type=str,
     default=downloader_sig.parameters["exclude_tags"].default,
@@ -352,6 +352,7 @@ def load_config_file(
 def main(
     urls: list[str],
     wait_interval: float,
+    disable_wvd: bool,
     download_music_videos: bool,
     download_podcast_videos: bool,
     force_premium: bool,
@@ -383,7 +384,6 @@ def main(
     save_cover: bool,
     save_playlist: bool,
     overwrite: bool,
-    disable_wvd: bool,
     exclude_tags: str,
     truncate: int,
     audio_quality: AudioQuality,
