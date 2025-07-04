@@ -156,7 +156,7 @@ Config file values can be overridden using command-line arguments.
 | `--overwrite` / `overwrite`                                     | Overwrite existing files.                                          | `false`                                        |
 | `--exclude-tags` / `exclude_tags`                               | Comma-separated tags to exclude.                                   | `null`                                         |
 | `--truncate` / `truncate`                                       | Maximum length of the file/folder names.                           | `null`                                         |
-| `--audio-quality`, `-a` / `audio_quality`                       | Audio quality for songs and podcasts.                              | `vorbis-medium`                                |
+| `--audio-quality`, `-a` / `audio_quality`                       | Audio quality for songs and podcasts.                              | `aac-medium`                                   |
 | `--download-mode`, `-d` / `download_mode`                       | Download mode for songs and podcasts.                              | `ytdlp`                                        |
 | `--remux-mode-audio` / `remux_mode_audio`                       | Remux mode for songs and podcasts.                                 | `ffmpeg`                                       |
 | `--lrc-only`, `-l` / `lrc_only`                                 | Download only the synced lyrics.                                   | `false`                                        |
