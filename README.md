@@ -90,15 +90,15 @@ votify [OPTIONS] URLS...
   ```
 - Download a music video
   ```bash
-  votify "https://open.spotify.com/track/31k4hgHmrbzorLZMvMWuzq" --enable-videos
+  votify "https://open.spotify.com/track/31k4hgHmrbzorLZMvMWuzq" --download-music-videos
   ```
 - List and select a related music video to download from a song
   ```bash
-  votify "https://open.spotify.com/track/0a0n6u6j3t6m0p4k0t0k0u0" --enable-videos --download-music-videos
+  votify "https://open.spotify.com/track/0a0n6u6j3t6m0p4k0t0k0u0" --download-music-videos
   ```
 - Download a podcast video
   ```bash
-  votify "https://open.spotify.com/episode/3kwxWnzGH8T6UY2Nq582zx" --enable-videos --download-podcast-videos
+  votify "https://open.spotify.com/episode/3kwxWnzGH8T6UY2Nq582zx" --download-podcast-videos
   ```
 - Choose which albums to download from an artist
   ```bash
@@ -123,7 +123,7 @@ Config file values can be overridden using command-line arguments.
 | Command-line argument / Config file key                         | Description                                                        | Default value                                  |
 | --------------------------------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------- |
 | `--wait-interval`, `-w` / `wait_interval`                       | Wait interval between downloads in seconds.                        | `5`                                            |
-| `--enable-videos` / `enable_videos`                             | Enable video downloads when available.                             | `false`                                        |
+| `--disable-wvd` / `disable_wvd`                                 | Disable Widevine decryption                                        | `false`                                        |
 | `--download-music-videos` / `download_music_videos`             | List and select a related music video to download from songs.      | `false`                                        |
 | `--download-podcast-videos` / `download_podcast_videos`         | Attempt to download the video version of podcasts.                 | `false`                                        |
 | `--force-premium`, `-f` / `force_premium`                       | Force to detect the account as premium.                            | `false`                                        |
