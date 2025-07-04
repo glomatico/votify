@@ -8,7 +8,6 @@ from InquirerPy.base.control import Choice
 from yt_dlp.downloader.fragment import FragmentFD
 from yt_dlp.YoutubeDL import YoutubeDL
 
-from .constants import COVER_SIZE_X_KEY_MAPPING_VIDEO
 from .downloader import Downloader
 from .enums import RemuxModeAudio, RemuxModeVideo, VideoFormat
 from .models import StreamInfoVideo
