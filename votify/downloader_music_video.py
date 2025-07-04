@@ -233,7 +233,8 @@ class DownloaderMusicVideo(DownloaderVideo):
             logger.debug(f'Downloading audio to "{encrypted_path_audio}"')
             self.download_segments(stream_info.segment_urls_audio, encrypted_path_audio)
             logger.debug(
-                f'Decryping video/audio to "{decrypted_path_video}/{decrypted_path_audio}" and remuxing to "{remuxed_path}"'
+                f'Decryping video/audio to "{decrypted_path_video}"/"{decrypted_path_audio}" '
+                f'and remuxing to "{remuxed_path}"'
             )
             self.remux(
                 decrypted_path_video,

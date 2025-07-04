@@ -129,7 +129,13 @@ class DownloaderEpisodeVideo(DownloaderVideo):
             self.download_segments(stream_info.segment_urls_video, temp_path_video)
             logger.debug(f'Downloading audio to "{temp_path_audio}"')
             self.download_segments(stream_info.segment_urls_audio, temp_path_audio)
-            logger.debug(f'Remuxing to "{remuxed_path}"')
+            if stream_info.encryption_data_widevine:
+                logger.debug(
+                    f'Decryping video/audio to "{decrypted_path_video}"/"{decrypted_path_audio}" '
+                    f'and remuxing to "{remuxed_path}"'
+                )
+            else:
+                logger.debug(f'Remuxing to "{remuxed_path}"')
             self.remux(
                 decrypted_path_video,
                 decrypted_path_audio,
