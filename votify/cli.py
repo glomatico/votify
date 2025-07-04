@@ -400,7 +400,7 @@ def main(
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(CustomLoggerFormatter())
     logger.addHandler(stream_handler)
-    cookies_path = prompt_path("Cookies file", cookies_path)
+    cookies_path = prompt_path(True, cookies_path, "Cookies file")
     logger.info("Starting Votify")
     spotify_api = SpotifyApi.from_cookies_file(cookies_path)
     if spotify_api.session_info["isAnonymous"]:
@@ -489,7 +489,7 @@ def main(
                     X_NOT_FOUND_STRING.format("mp4decrypt", mp4decrypt_path)
                 )
                 return
-            wvd_path = prompt_path(".wvd file", wvd_path)
+            wvd_path = prompt_path(False, wvd_path, ".wvd file")
             downloader.set_cdm()
         if download_mode == DownloadMode.ARIA2C and not downloader.aria2c_path_full:
             logger.critical(X_NOT_FOUND_STRING.format("aria2c", aria2c_path))
