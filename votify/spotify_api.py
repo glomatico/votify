@@ -5,6 +5,7 @@ import json
 import time
 import typing
 from http.cookiejar import CookieJar, MozillaCookieJar
+from urllib.parse import urlparse
 from pathlib import Path
 
 import base62
@@ -16,6 +17,7 @@ from .utils import check_response
 
 class SpotifyApi:
     SPOTIFY_HOME_PAGE_URL = "https://open.spotify.com/"
+    SPOTIFY_COOKIE_DOMAIN = ".spotify.com"
     CLIENT_VERSION = "1.2.46.25.g7f189073"
     LYRICS_API_URL = "https://spclient.wg.spotify.com/color-lyrics/v2/track/{track_id}"
     METADATA_API_URL = "https://api.spotify.com/v1/{type}/{item_id}"
@@ -38,22 +40,31 @@ class SpotifyApi:
 
     def __init__(
         self,
-        cookies: CookieJar = None,
+        sp_dc: str | None = None,
     ):
-        self.cookies = cookies
+        self.sp_dc = sp_dc
         self._set_session()
 
     @classmethod
-    def from_cookies_file(cls, cookies_path: Path):
+    def from_cookies_file(cls, cookies_path: Path) -> SpotifyApi:
         cookies = MozillaCookieJar(cookies_path)
         cookies.load(ignore_discard=True, ignore_expires=True)
-        return cls(cookies)
+        parse_cookie = lambda name: next(
+            (
+                cookie.value
+                for cookie in cookies
+                if cookie.name == name and cookie.domain == cls.SPOTIFY_COOKIE_DOMAIN
+            ),
+            None,
+        )
+        sp_dc = parse_cookie("sp_dc")
+        if sp_dc is None:
+            raise ValueError(f"Cookie file contain 'sp_dc' cookie.")
+        return cls(sp_dc=sp_dc)
 
     def _set_session(self):
         self.totp = TOTP()
         self.session = requests.Session()
-        if self.cookies is not None:
-            self.session.cookies.update(self.cookies)
         self.session.headers.update(
             {
                 "accept": "application/json",
@@ -73,11 +84,19 @@ class SpotifyApi:
                 "app-platform": "WebPlayer",
             }
         )
+        if self.sp_dc:
+            self.session.cookies.update(
+                {
+                    "sp_dc": self.sp_dc,
+                }
+            )
         self._set_session_info()
         self._set_user_profile()
 
     def _set_session_info(self):
-        server_time_response = self.session.get("https://open.spotify.com/api/server-time")
+        server_time_response = self.session.get(
+            "https://open.spotify.com/api/server-time"
+        )
         check_response(server_time_response)
         server_time = 1e3 * server_time_response.json()["serverTime"]
         totp = self.totp.generate(timestamp=server_time)
@@ -91,7 +110,6 @@ class SpotifyApi:
                 "ts": str(server_time),
             },
         )
-        check_response(session_info_response)
         self.session_info = session_info_response.json()
         self.session.headers.update(
             {
