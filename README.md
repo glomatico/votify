@@ -27,7 +27,7 @@ A Python CLI app for downloading songs, podcasts and videos from Spotify.
 
 #### Notes
 
-- The .wvd file is not required if you plan on only downloading podcasts.
+- The .wvd file is not required if you plan on only downloading podcasts and can be skipped by using enabling the `disable_wvd` option.
 - FFmpeg is not required if you plan on only downloading podcasts in Vorbis, but it's needed for downloading podcasts in AAC.
 
 ### Optional dependencies
