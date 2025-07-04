@@ -1,4 +1,5 @@
 click
+colorama
 inquirerpy
 mutagen
 pillow
