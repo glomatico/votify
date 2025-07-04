@@ -20,8 +20,8 @@ A Python CLI app for downloading songs, podcasts and videos from Spotify.
   - **Firefox**: Use the [Export Cookies](https://addons.mozilla.org/addon/export-cookies-txt) extension.
   - **Chromium-based Browsers**: Use the [Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc) extension.
 - **FFmpeg** on your system PATH.
-  - **Windows**: Download from [AnimMouse’s FFmpeg Builds](https://github.com/AnimMouse/ffmpeg-stable-autobuild/releases).
-  - **Linux**: Download from [John Van Sickle’s FFmpeg Builds](https://johnvansickle.com/ffmpeg/).
+  - **Windows**: Download from [AnimMouse's FFmpeg Builds](https://github.com/AnimMouse/ffmpeg-stable-autobuild/releases).
+  - **Linux**: Download from [John Van Sickle's FFmpeg Builds](https://johnvansickle.com/ffmpeg/).
 - A **.wvd file**.
   - A .wvd file contains the Widevine keys from a device and is required to decrypt music videos and songs in AAC. The easiest method of obtaining one is using KeyDive, which extracts it from an Android device. Detailed instructions can be found here: https://github.com/hyugogirubato/KeyDive. **.wvd files extracted from emulated devices may not work**.
 
@@ -32,7 +32,7 @@ A Python CLI app for downloading songs, podcasts and videos from Spotify.
 
 ### Optional dependencies
 
-The following tools are optional but required for specific features. Add them to your system’s PATH or specify their paths using command-line arguments or the config file.
+The following tools are optional but required for specific features. Add them to your system's PATH or specify their paths using command-line arguments or the config file.
 
 - [MP4Box](https://gpac.io/downloads/gpac-nightly-builds/): Required when setting `mp4box` as remux mode.
 - [Shaka Packager](https://github.com/shaka-project/shaka-packager/releases/latest): Required when setting `webm` as video format and when downloading music videos.
@@ -46,10 +46,10 @@ The following tools are optional but required for specific features. Add them to
    pip install votify
    ```
 2. Set up the cookies file.
-   - Move the cookies file to the directory where you’ll run Votify and rename it to `cookies.txt`.
+   - Move the cookies file to the directory where you'll run Votify and rename it to `cookies.txt`.
    - Alternatively, specify the path to the cookies file using command-line arguments or the config file.
 3. Set up the .wvd file.
-   - Move the cookies file to the directory where you’ll run Votify and rename it to `device.wvd`.
+   - Move the cookies file to the directory where you'll run Votify and rename it to `device.wvd`.
    - Alternatively, specify the path to the cookies file using command-line arguments or the config file.
 
 ## Usage
