@@ -18,7 +18,7 @@ A Python CLI app for downloading songs, podcasts and videos from Spotify.
 - **Python 3.10 or higher** installed on your system.
 - The **cookies file** of your Spotify browser session in Netscape format.
   - **Firefox**: Use the [Export Cookies](https://addons.mozilla.org/addon/export-cookies-txt) extension.
-  - **Chromium-based Browsers**: Use the [Open Cookies.txt](https://chromewebstore.google.com/detail/open-cookiestxt/gdocmgbfkjnnpapoeobnolbbkoibbcif) extension.
+  - **Chromium-based Browsers**: Use the [Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc) extension.
 - **FFmpeg** on your system PATH.
   - **Windows**: Download from [AnimMouse’s FFmpeg Builds](https://github.com/AnimMouse/ffmpeg-stable-autobuild/releases).
   - **Linux**: Download from [John Van Sickle’s FFmpeg Builds](https://johnvansickle.com/ffmpeg/).
