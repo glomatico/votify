@@ -103,11 +103,6 @@ def load_config_file(
     help="Wait interval between downloads in seconds.",
 )
 @click.option(
-    "--enable-videos",
-    is_flag=True,
-    help="Enable video downloads when available.",
-)
-@click.option(
     "--download-music-videos",
     is_flag=True,
     help="List and select a related music video to download from songs.",
@@ -352,7 +347,6 @@ def load_config_file(
 def main(
     urls: list[str],
     wait_interval: float,
-    enable_videos: bool,
     download_music_videos: bool,
     download_podcast_videos: bool,
     force_premium: bool,
@@ -465,6 +459,12 @@ def main(
         True if force_premium else spotify_api.user_profile["product"] == "premium"
     )
     if not lrc_only:
+        if download_mode == DownloadMode.ARIA2C and not downloader.aria2c_path_full:
+            logger.critical(X_NOT_FOUND_STRING.format("aria2c", aria2c_path))
+            return
+        if not is_premium and audio_quality in PREMIUM_AUDIO_QUALITIES:
+            logger.critical("Cannot download at chosen quality with a free account")
+            return
         if audio_quality in AAC_AUDIO_QUALITIES:
             if (
                 remux_mode_audio == RemuxModeAudio.FFMPEG
@@ -489,53 +489,36 @@ def main(
                     X_NOT_FOUND_STRING.format("mp4decrypt", mp4decrypt_path)
                 )
                 return
-            wvd_path = prompt_path(False, wvd_path, ".wvd file")
+            wvd_path = prompt_path(True, wvd_path, ".wvd file")
             downloader.set_cdm()
-        if download_mode == DownloadMode.ARIA2C and not downloader.aria2c_path_full:
-            logger.critical(X_NOT_FOUND_STRING.format("aria2c", aria2c_path))
-            return
-        if not is_premium and audio_quality in PREMIUM_AUDIO_QUALITIES:
-            logger.critical("Cannot download at chosen quality with a free account")
-            return
-    can_download_music_videos = True
-    if enable_videos:
-        if (
-            downloader_music_video.remux_mode == RemuxModeVideo.FFMPEG
-            and not downloader.ffmpeg_path_full
-        ):
-            logger.critical(X_NOT_FOUND_STRING.format("FFmpeg", ffmpeg_path))
-            return
-        if (
-            downloader_music_video.remux_mode == RemuxModeVideo.MP4BOX
-            and not downloader.mp4box_path_full
-        ):
-            logger.critical(X_NOT_FOUND_STRING.format("MP4Box", mp4box_path))
-            return
-        music_video_warning_message = []
-        if not downloader.mp4decrypt_path_full and video_format == VideoFormat.MP4:
-            music_video_warning_message.append(
-                X_NOT_FOUND_STRING.format("mp4decrypt", mp4decrypt_path)
-            )
-        elif not downloader.packager_path_full and video_format == VideoFormat.WEBM:
-            music_video_warning_message.append(
-                X_NOT_FOUND_STRING.format("Shaka Packager", packager_path)
-            )
-        if not wvd_path.exists():
-            music_video_warning_message.append(
-                X_NOT_FOUND_STRING.format(".wvd file", wvd_path)
-            )
-        else:
+        if download_podcast_videos or download_music_videos:
+            if (
+                downloader_music_video.remux_mode == RemuxModeVideo.FFMPEG
+                and not downloader.ffmpeg_path_full
+            ):
+                logger.critical(X_NOT_FOUND_STRING.format("FFmpeg", ffmpeg_path))
+                return
+            if (
+                downloader_music_video.remux_mode == RemuxModeVideo.MP4BOX
+                and not downloader.mp4box_path_full
+            ):
+                logger.critical(X_NOT_FOUND_STRING.format("MP4Box", mp4box_path))
+                return
+        if download_music_videos:
+            if not is_premium:
+                logger.critical("Cannot download music videos with a free account")
+                return
+            if not downloader.mp4decrypt_path_full and video_format == VideoFormat.MP4:
+                logger.critical(
+                    X_NOT_FOUND_STRING.format("mp4decrypt", mp4decrypt_path)
+                )
+                return
+            if not downloader.packager_path_full and video_format == VideoFormat.WEBM:
+                logger.critical(
+                    X_NOT_FOUND_STRING.format("Shaka Packager", packager_path)
+                )
+            wvd_path = prompt_path(True, wvd_path, ".wvd file")
             downloader.set_cdm()
-        if not is_premium:
-            music_video_warning_message.append(
-                "Cannot download music videos with a non-premium account"
-            )
-        if music_video_warning_message:
-            logger.warning(
-                "Music videos will not be downloaded due to the following reasons:\n"
-                + "\n".join(music_video_warning_message)
-            )
-            can_download_music_videos = False
     error_count = 0
     if read_urls_as_txt:
         _urls = []
@@ -575,40 +558,33 @@ def main(
                 media_id = downloader.get_media_id(media_metadata)
                 media_type = media_metadata["type"]
                 gid_metadata = downloader.get_gid_metadata(media_id, media_type)
-                if gid_metadata.get("original_video") or (
-                    media_type == "track" and download_music_videos
-                ):
-                    if not enable_videos or not can_download_music_videos:
-                        logger.warning(
-                            "Music videos are not downloadable with current "
-                            "configuration, skipping"
-                        )
-                        continue
-                    downloader_music_video.download(
-                        music_video_id=media_id,
-                        music_video_metadata=media_metadata,
-                        album_metadata=download_queue_item.album_metadata,
-                        gid_metadata=gid_metadata,
-                        playlist_metadata=download_queue_item.playlist_metadata,
-                        playlist_track=index,
-                    )
-                elif media_type == "track":
+                if media_type == "track":
                     if audio_quality in VORBIS_AUDIO_QUALITIES:
                         logger.warning(
                             "Vorbis audio quality is only supported for podcasts, "
                             "skipping"
                         )
                         continue
-                    downloader_song.download(
-                        track_id=media_id,
-                        track_metadata=media_metadata,
-                        album_metadata=download_queue_item.album_metadata,
-                        gid_metadata=gid_metadata,
-                        playlist_metadata=download_queue_item.playlist_metadata,
-                        playlist_track=index,
-                    )
+                    if download_music_videos:
+                        downloader_music_video.download(
+                            music_video_id=media_id,
+                            music_video_metadata=media_metadata,
+                            album_metadata=download_queue_item.album_metadata,
+                            gid_metadata=gid_metadata,
+                            playlist_metadata=download_queue_item.playlist_metadata,
+                            playlist_track=index,
+                        )
+                    else:
+                        downloader_song.download(
+                            track_id=media_id,
+                            track_metadata=media_metadata,
+                            album_metadata=download_queue_item.album_metadata,
+                            gid_metadata=gid_metadata,
+                            playlist_metadata=download_queue_item.playlist_metadata,
+                            playlist_track=index,
+                        )
                 elif media_type == "episode":
-                    if enable_videos and download_podcast_videos:
+                    if download_podcast_videos:
                         downloader_episode_video.download(
                             episode_id=media_id,
                             episode_metadata=media_metadata,
