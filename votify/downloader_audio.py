@@ -10,7 +10,6 @@ from yt_dlp.YoutubeDL import YoutubeDL
 from .constants import (
     AAC_AUDIO_QUALITIES,
     AUDIO_QUALITY_X_FORMAT_ID_MAPPING,
-    COVER_SIZE_X_KEY_MAPPING_SONG,
     VORBIS_AUDIO_QUALITIES,
 )
 from .downloader import Downloader
