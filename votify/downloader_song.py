@@ -161,6 +161,9 @@ class DownloaderSong(DownloaderAudio):
         if not gid_metadata:
             logger.debug("Getting GID metadata")
             gid_metadata = self.downloader.get_gid_metadata(track_id, "track")
+            if gid_metadata.get("original_video"):
+                logger.warning("Track is a music video, skipping.")
+                return
         if not stream_info:
             logger.debug("Getting stream info")
             stream_info = self.get_stream_info(gid_metadata, "track")
