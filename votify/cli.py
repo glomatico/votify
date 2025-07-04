@@ -279,6 +279,11 @@ def load_config_file(
     help="Overwrite existing files.",
 )
 @click.option(
+    "--disable-wvd",
+    is_flag=True,
+    help="Disable Widevine decryption.",
+)
+@click.option(
     "--exclude-tags",
     type=str,
     default=downloader_sig.parameters["exclude_tags"].default,
@@ -378,6 +383,7 @@ def main(
     save_cover: bool,
     save_playlist: bool,
     overwrite: bool,
+    disable_wvd: bool,
     exclude_tags: str,
     truncate: int,
     audio_quality: AudioQuality,
@@ -488,8 +494,6 @@ def main(
                     X_NOT_FOUND_STRING.format("mp4decrypt", mp4decrypt_path)
                 )
                 return
-            wvd_path = prompt_path(True, wvd_path, ".wvd file")
-            downloader.set_cdm()
         if download_podcast_videos or download_music_videos:
             if (
                 downloader_music_video.remux_mode == RemuxModeVideo.FFMPEG
@@ -516,6 +520,7 @@ def main(
                 logger.critical(
                     X_NOT_FOUND_STRING.format("Shaka Packager", packager_path)
                 )
+        if not disable_wvd:
             wvd_path = prompt_path(True, wvd_path, ".wvd file")
             downloader.set_cdm()
     error_count = 0
@@ -558,6 +563,12 @@ def main(
                 media_type = media_metadata["type"]
                 gid_metadata = downloader.get_gid_metadata(media_id, media_type)
                 if media_type == "track":
+                    if disable_wvd:
+                        logger.warning(
+                            "Widevine decryption is disabled, "
+                            "skipping Widevine protected content"
+                        )
+                        continue
                     if audio_quality in VORBIS_AUDIO_QUALITIES:
                         logger.warning(
                             "Vorbis audio quality is only supported for podcasts, "
