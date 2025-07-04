@@ -58,13 +58,10 @@ class DownloaderEpisodeVideo(DownloaderVideo):
             logger.warning("Episode has no video, skipping")
             return
         stream_info = self.get_stream_info(video_gid)
-        if (
-            stream_info.encryption_data_widevine
-            and not self.downloader.wvd_path.exists()
-        ):
+        if stream_info.encryption_data_widevine and self.downloader.cdm is None:
             logger.warning(
-                "Podcast video has Widevine encryption, but no .wvd file was found at "
-                f'"{self.downloader.wvd_path}", skipping'
+                "Podcast video has Widevine encryption, "
+                "but Widevine decryption is disabled, skipping"
             )
             return
         tags = self.downloader_episode.get_tags(
