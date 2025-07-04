@@ -1,105 +1,119 @@
 # Votify
+
 A Python CLI app for downloading songs, podcasts and videos from Spotify.
 
 **Discord Server:** https://discord.gg/aBjMEZ9tnq
 
 ## Features
-* **Songs**: Download songs up in AAC 128kbps or in AAC 256kbps with an active premium subscription.
-* **Podcasts**: Download podcasts in Vorbis or AAC.
-* **Videos**: Download podcast videos and music videos with an active premium subscription.
-* **Synced Lyrics**: Download synced lyrics in LRC.
-* **Artist Support**: Download an entire discography by providing the artist's URL.
-* **Highly Customizable**: Extensive configuration options for advanced users.
+
+- **Songs**: Download songs up in AAC 128kbps or in AAC 256kbps with an active premium subscription.
+- **Podcasts**: Download podcasts in Vorbis or AAC.
+- **Videos**: Download podcast videos and music videos with an active premium subscription.
+- **Synced Lyrics**: Download synced lyrics in LRC.
+- **Artist Support**: Download an entire discography by providing the artist's URL.
+- **Highly Customizable**: Extensive configuration options for advanced users.
 
 ## Prerequisites
-* **Python 3.9 or higher** installed on your system.
-* The **cookies file** of your Spotify browser session in Netscape format.
-    * **Firefox**: Use the [Export Cookies](https://addons.mozilla.org/addon/export-cookies-txt) extension.
-    * **Chromium-based Browsers**: Use the [Open Cookies.txt](https://chromewebstore.google.com/detail/open-cookiestxt/gdocmgbfkjnnpapoeobnolbbkoibbcif) extension.
-* **FFmpeg** on your system PATH.
-    * **Windows**: Download from [AnimMouse’s FFmpeg Builds](https://github.com/AnimMouse/ffmpeg-stable-autobuild/releases).
-    * **Linux**: Download from [John Van Sickle’s FFmpeg Builds](https://johnvansickle.com/ffmpeg/).
-* A **.wvd file**.
-    * A .wvd file contains the Widevine keys from a device and is required to decrypt music videos and songs in AAC. The easiest method of obtaining one is using KeyDive, which extracts it from an Android device. Detailed instructions can be found here: https://github.com/hyugogirubato/KeyDive. **.wvd files extracted from emulated devices may not work**.
+
+- **Python 3.9 or higher** installed on your system.
+- The **cookies file** of your Spotify browser session in Netscape format.
+  - **Firefox**: Use the [Export Cookies](https://addons.mozilla.org/addon/export-cookies-txt) extension.
+  - **Chromium-based Browsers**: Use the [Open Cookies.txt](https://chromewebstore.google.com/detail/open-cookiestxt/gdocmgbfkjnnpapoeobnolbbkoibbcif) extension.
+- **FFmpeg** on your system PATH.
+  - **Windows**: Download from [AnimMouse’s FFmpeg Builds](https://github.com/AnimMouse/ffmpeg-stable-autobuild/releases).
+  - **Linux**: Download from [John Van Sickle’s FFmpeg Builds](https://johnvansickle.com/ffmpeg/).
+- A **.wvd file**.
+  - A .wvd file contains the Widevine keys from a device and is required to decrypt music videos and songs in AAC. The easiest method of obtaining one is using KeyDive, which extracts it from an Android device. Detailed instructions can be found here: https://github.com/hyugogirubato/KeyDive. **.wvd files extracted from emulated devices may not work**.
 
 #### Notes
-* The .wvd file is not required if you plan on only downloading podcasts.
-* FFmpeg is not required if you plan on only downloading podcasts in Vorbis, but it's needed for downloading podcasts in AAC.
+
+- The .wvd file is not required if you plan on only downloading podcasts.
+- FFmpeg is not required if you plan on only downloading podcasts in Vorbis, but it's needed for downloading podcasts in AAC.
 
 ### Optional dependencies
+
 The following tools are optional but required for specific features. Add them to your system’s PATH or specify their paths using command-line arguments or the config file.
-* [MP4Box](https://gpac.io/downloads/gpac-nightly-builds/): Required when setting `mp4box` as remux mode.
-* [Shaka Packager](https://github.com/shaka-project/shaka-packager/releases/latest): Required when setting `webm` as video format and when downloading music videos.
-* [mp4decrypt](https://www.bento4.com/downloads/): Required when setting `mp4box` or `mp4decrypt` as remux mode.
-* [aria2c](https://github.com/aria2/aria2/releases): Required when setting `aria2c` as download mode.
+
+- [MP4Box](https://gpac.io/downloads/gpac-nightly-builds/): Required when setting `mp4box` as remux mode.
+- [Shaka Packager](https://github.com/shaka-project/shaka-packager/releases/latest): Required when setting `webm` as video format and when downloading music videos.
+- [mp4decrypt](https://www.bento4.com/downloads/): Required when setting `mp4box` or `mp4decrypt` as remux mode.
+- [aria2c](https://github.com/aria2/aria2/releases): Required when setting `aria2c` as download mode.
 
 ## Installation
+
 1. Install the package `votify` using pip:
-    ```bash
-    pip install votify
-    ```
+   ```bash
+   pip install votify
+   ```
 2. Set up the cookies file.
-    * Move the cookies file to the directory where you’ll run Votify and rename it to `cookies.txt`.
-    * Alternatively, specify the path to the cookies file using command-line arguments or the config file.
+   - Move the cookies file to the directory where you’ll run Votify and rename it to `cookies.txt`.
+   - Alternatively, specify the path to the cookies file using command-line arguments or the config file.
 3. Set up the .wvd file.
-    * Move the cookies file to the directory where you’ll run Votify and rename it to `device.wvd`.
-    * Alternatively, specify the path to the cookies file using command-line arguments or the config file.
+   - Move the cookies file to the directory where you’ll run Votify and rename it to `device.wvd`.
+   - Alternatively, specify the path to the cookies file using command-line arguments or the config file.
 
 ## Usage
+
 Run Votify with the following command:
+
 ```bash
 votify [OPTIONS] URLS...
 ```
 
 ### Supported URL types
-* Song
-* Album
-* Playlist
-* Podcast episode
-* Podcast series
-* Music video
-* Artist
+
+- Song
+- Album
+- Playlist
+- Podcast episode
+- Podcast series
+- Music video
+- Artist
 
 ### Examples
-* Download a song
-    ```bash
-    votify "https://open.spotify.com/track/18gqCQzqYb0zvurQPlRkpo"
-    ```
-* Download an album
-    ```bash
-    votify "https://open.spotify.com/album/0r8D5N674HbTXlR3zNxeU1"
-    ```
-* Download a podcast episode
-    ```bash
-    votify "https://open.spotify.com/episode/3kwxWnzGH8T6UY2Nq582zx"
-    ```
-* Download a podcast series
-    ```bash
-    votify "https://open.spotify.com/show/4rOoJ6Egrf8K2IrywzwOMk"
-* Download a music video
-    ```bash
-    votify "https://open.spotify.com/track/31k4hgHmrbzorLZMvMWuzq" --enable-videos
-    ```
-* List and select a related music video to download from a song
-    ```bash
-    votify "https://open.spotify.com/track/0a0n6u6j3t6m0p4k0t0k0u0" --enable-videos --download-music-videos
-    ```
-* Download a podcast video
-    ```bash
-    votify "https://open.spotify.com/episode/3kwxWnzGH8T6UY2Nq582zx" --enable-videos --download-podcast-videos
-    ```
-* Choose which albums to download from an artist
-    ```bash
-    votify "https://open.spotify.com/artist/0gxyHStUsqpMadRV0Di1Qt"
-    ```
+
+- Download a song
+  ```bash
+  votify "https://open.spotify.com/track/18gqCQzqYb0zvurQPlRkpo"
+  ```
+- Download an album
+  ```bash
+  votify "https://open.spotify.com/album/0r8D5N674HbTXlR3zNxeU1"
+  ```
+- Download a podcast episode
+  ```bash
+  votify "https://open.spotify.com/episode/3kwxWnzGH8T6UY2Nq582zx"
+  ```
+- Download a podcast series
+  ```bash
+  votify "https://open.spotify.com/show/4rOoJ6Egrf8K2IrywzwOMk"
+  ```
+- Download a music video
+  ```bash
+  votify "https://open.spotify.com/track/31k4hgHmrbzorLZMvMWuzq" --enable-videos
+  ```
+- List and select a related music video to download from a song
+  ```bash
+  votify "https://open.spotify.com/track/0a0n6u6j3t6m0p4k0t0k0u0" --enable-videos --download-music-videos
+  ```
+- Download a podcast video
+  ```bash
+  votify "https://open.spotify.com/episode/3kwxWnzGH8T6UY2Nq582zx" --enable-videos --download-podcast-videos
+  ```
+- Choose which albums to download from an artist
+  ```bash
+  votify "https://open.spotify.com/artist/0gxyHStUsqpMadRV0Di1Qt"
+  ```
 
 ### Interactive prompt controls
-* **Arrow keys**: Move selection
-* **Space**: Toggle selection
-* **Ctrl + A**: Select all
-* **Enter**: Confirm selection
+
+- **Arrow keys**: Move selection
+- **Space**: Toggle selection
+- **Ctrl + A**: Select all
+- **Enter**: Confirm selection
 
 ## Configuration
+
 Votify can be configured using the command-line arguments or the config file.
 
 The config file is created automatically when you run Votify for the first time at `~/.votify/config.json` on Linux and `%USERPROFILE%\.votify\config.json` on Windows.
@@ -152,7 +166,9 @@ Config file values can be overridden using command-line arguments.
 | `--no-config-file`, `-n` / -                                    | Do not use a config file.                                          | `false`                                        |
 
 ### Tag variables
+
 The following variables can be used in the template folder/file and/or in the `exclude_tags` list:
+
 - `album`
 - `album_artist`
 - `artist`
@@ -178,41 +194,48 @@ The following variables can be used in the template folder/file and/or in the `e
 - `track`
 - `track_total`
 - `url`
-  
+
 ### Cover sizes
-* `small`: up to 64px
-* `medium`: up to 300px
-* `large`: up to 640px
-* `extra-large`: up to 2000px
+
+- `small`: up to 64px
+- `medium`: up to 300px
+- `large`: up to 640px
+- `extra-large`: up to 2000px
 
 ### Audio qualities
-* General codecs:
-    * `aac-medium`: 128kbps
-    * `aac-high` 256kbps, requires an active premium subscription
-* Podcast only codecs:
-    * `vorbis-high`: 320kbps, requires an active premium subscription
-    * `vorbis-medium`: 160kbps
-    * `vorbis-low`: 96kbps
+
+- General codecs:
+  - `aac-medium`: 128kbps
+  - `aac-high` 256kbps, requires an active premium subscription
+- Podcast only codecs:
+  - `vorbis-high`: 320kbps, requires an active premium subscription
+  - `vorbis-medium`: 160kbps
+  - `vorbis-low`: 96kbps
 
 ### Video formats
-* `mp4`: H.264 Up to 1080p with AAC 128kbps.
-* `webm`: VP9 Up to 1080p with Opus 160kbps.
-* `ask`: Prompt to choose available video and audio codecs.
+
+- `mp4`: H.264 Up to 1080p with AAC 128kbps.
+- `webm`: VP9 Up to 1080p with Opus 160kbps.
+- `ask`: Prompt to choose available video and audio codecs.
 
 ### Download modes
-* `ytdlp`: Default download mode.
-* `aria2c`: Faster alternative to `ytdlp` only applicable to songs and podcasts.
+
+- `ytdlp`: Default download mode.
+- `aria2c`: Faster alternative to `ytdlp` only applicable to songs and podcasts.
 
 ### Video remux modes
-* `ffmpeg`
-* `mp4box`
+
+- `ffmpeg`
+- `mp4box`
 
 ### Audio remux modes
-* `ffmpeg`
-* `mp4box`
-* `mp4decrypt`
+
+- `ffmpeg`
+- `mp4box`
+- `mp4decrypt`
 
 ### Credits
-* [spotify-oggmp4-dl](https://github.com/DevLARLEY/spotify-oggmp4-dl)
-* [spsync](https://github.com/baltitenger/spsync)
-* [unplayplay](https://git.gay/uhwot/unplayplay)
+
+- [spotify-oggmp4-dl](https://github.com/DevLARLEY/spotify-oggmp4-dl)
+- [spsync](https://github.com/baltitenger/spsync)
+- [unplayplay](https://git.gay/uhwot/unplayplay)
