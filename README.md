@@ -49,8 +49,8 @@ The following tools are optional but required for specific features. Add them to
    - Move the cookies file to the directory where you'll run Votify and rename it to `cookies.txt`.
    - Alternatively, specify the path to the cookies file using command-line arguments or the config file.
 3. Set up the .wvd file.
-   - Move the cookies file to the directory where you'll run Votify and rename it to `device.wvd`.
-   - Alternatively, specify the path to the cookies file using command-line arguments or the config file.
+   - Move the .wvd file file to the directory where you'll run Votify and rename it to `device.wvd`.
+   - Alternatively, specify the path to the .wvd file using command-line arguments or the config file.
 
 ## Usage
 
