@@ -99,6 +99,7 @@ class Downloader:
         self.truncate = truncate
         self.silence = silence
         self.skip_cleanup = skip_cleanup
+        self.cdm = None
         self._set_binaries_full_path()
         self._set_exclude_tags_list()
         self._set_truncate()
