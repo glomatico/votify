@@ -28,7 +28,7 @@ A Python CLI app for downloading songs, podcasts and videos from Spotify.
 #### Notes
 
 - **Some users have reported that Spotify suspended their accounts after using Votify**. Use it at your own risk.
-- The .wvd file is not required if you plan on only downloading podcasts and can be skipped by using enabling the `disable_wvd` option.
+- The .wvd file is not required if you plan on only downloading podcasts and can be skipped by enabling the `disable_wvd` option.
 - FFmpeg is not required if you plan on only downloading podcasts in Vorbis, but it's needed for downloading podcasts in AAC.
 
 ### Optional dependencies
