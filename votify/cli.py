@@ -35,6 +35,7 @@ from .enums import (
     VideoFormat,
 )
 from .spotify_api import SpotifyApi
+from .models import BreakOnExistingException
 from .utils import color_text, prompt_path
 
 logger = logging.getLogger("votify")
@@ -284,6 +285,17 @@ def load_config_file(
     help="Overwrite existing files.",
 )
 @click.option(
+    "--download-archive",
+    type=Path,
+    default=None,
+    help="Path to download archive file to record downloaded items.",
+)
+@click.option(
+    "--break-on-existing",
+    is_flag=True,
+    help="Stop downloading when a media item that has already been downloaded is encountered.",
+)
+@click.option(
     "--exclude-tags",
     type=str,
     default=downloader_sig.parameters["exclude_tags"].default,
@@ -393,6 +405,8 @@ def main(
     video_format: VideoFormat,
     remux_mode_video: RemuxModeVideo,
     no_config_file: bool,
+    download_archive: Path,
+    break_on_existing: bool,
 ) -> None:
     colorama.just_fix_windows_console()
     logger.setLevel(log_level)
@@ -428,6 +442,8 @@ def main(
         overwrite,
         exclude_tags,
         truncate,
+        download_archive,
+        break_on_existing,
     )
     downloader_audio = DownloaderAudio(
         downloader,
@@ -607,6 +623,10 @@ def main(
                             playlist_metadata=download_queue_item.playlist_metadata,
                             playlist_track=index,
                         )
+            except BreakOnExistingException as e:
+                logger.info(f'({queue_progress}) {str(e)}')
+                logger.info("Stopping due to --break-on-existing")
+                return
             except Exception as e:
                 error_count += 1
                 logger.error(

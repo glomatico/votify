@@ -195,8 +195,11 @@ class DownloaderMusicVideo(DownloaderVideo):
             COVER_SIZE_X_KEY_MAPPING_VIDEO,
         )
         remuxed_path = None
-        if final_path.exists() and not self.downloader.overwrite:
-            logger.warning(f'Music video already exists at "{final_path}", skipping')
+        if self.downloader.check_existing_file_or_archive(final_path, music_video_id):
+            if final_path.exists():
+                logger.warning(f'Music video already exists at "{final_path}", skipping')
+            else:
+                logger.warning(f'Music video {music_video_id} already in download archive, skipping')
             return
         else:
             key_id, decryption_key = self.downloader.get_widevine_decryption_key(
@@ -253,4 +256,5 @@ class DownloaderMusicVideo(DownloaderVideo):
             tags,
             playlist_metadata,
             playlist_track,
+            music_video_id,
         )

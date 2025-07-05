@@ -83,8 +83,11 @@ class DownloaderEpisodeVideo(DownloaderVideo):
             COVER_SIZE_X_KEY_MAPPING_EPISODE,
         )
         remuxed_path = None
-        if final_path.exists() and not self.downloader.overwrite:
-            logger.warning(f'Episode already exists at "{final_path}", skipping')
+        if self.downloader.check_existing_file_or_archive(final_path, episode_id):
+            if final_path.exists():
+                logger.warning(f'Episode already exists at "{final_path}", skipping')
+            else:
+                logger.warning(f'Episode {episode_id} already in download archive, skipping')
             return
         else:
             key_id, decryption_key = (
@@ -150,4 +153,5 @@ class DownloaderEpisodeVideo(DownloaderVideo):
             tags,
             playlist_metadata,
             playlist_track,
+            episode_id,
         )
