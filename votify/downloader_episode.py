@@ -120,8 +120,11 @@ class DownloaderEpisode(DownloaderAudio):
         )
         decrypted_path = None
         remuxed_path = None
-        if final_path.exists() and not self.downloader.overwrite:
-            logger.warning(f'Track already exists at "{final_path}", skipping')
+        if self.downloader.check_existing_file_or_archive(final_path, episode_id):
+            if final_path.exists():
+                logger.warning(f'Episode already exists at "{final_path}", skipping')
+            else:
+                logger.warning(f'Episode {episode_id} already in download archive, skipping')
         else:
             decryption_key = (
                 self.DEFAULT_EPISODE_DECRYPTION_KEY.hex()
@@ -167,4 +170,5 @@ class DownloaderEpisode(DownloaderAudio):
             tags,
             playlist_metadata,
             playlist_track,
+            episode_id,
         )
