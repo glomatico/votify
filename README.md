@@ -1,6 +1,6 @@
 # Votify
 
-A Python CLI app for downloading songs, podcasts and videos from Spotify.
+Command-line app for downloading songs, podcasts and videos from Spotify.
 
 **Discord Server:** https://discord.gg/aBjMEZ9tnq
 
