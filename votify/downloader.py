@@ -69,6 +69,8 @@ class Downloader:
         overwrite: bool = False,
         exclude_tags: str = None,
         truncate: int = None,
+        download_archive: Path = None,
+        break_on_existing: bool = False,
         silence: bool = False,
         skip_cleanup: bool = False,
     ):
@@ -97,6 +99,8 @@ class Downloader:
         self.overwrite = overwrite
         self.exclude_tags = exclude_tags
         self.truncate = truncate
+        self.download_archive = download_archive
+        self.break_on_existing = break_on_existing
         self.silence = silence
         self.skip_cleanup = skip_cleanup
         self.cdm = None
@@ -104,6 +108,7 @@ class Downloader:
         self._set_exclude_tags_list()
         self._set_truncate()
         self._set_subprocess_additional_args()
+        self._load_download_archive()
 
     def _set_binaries_full_path(self):
         self.aria2c_path_full = shutil.which(self.aria2c_path)
@@ -131,6 +136,57 @@ class Downloader:
             }
         else:
             self.subprocess_additional_args = {}
+
+    def _load_download_archive(self):
+        """Load the download archive file into memory."""
+        self.downloaded_ids = set()
+        if self.download_archive and self.download_archive.exists():
+            try:
+                with self.download_archive.open('r', encoding='utf-8') as f:
+                    self.downloaded_ids = {line.strip() for line in f if line.strip()}
+            except Exception as e:
+                logger.warning(f"Failed to load download archive: {e}")
+
+    def is_downloaded(self, media_id: str) -> bool:
+        """Check if a media item has already been downloaded."""
+        return media_id in self.downloaded_ids
+
+    def add_to_archive(self, media_id: str):
+        """Add a media ID to the download archive."""
+        if not self.download_archive:
+            return
+        
+        # Only add if not already in archive
+        if media_id in self.downloaded_ids:
+            return
+        
+        # Add to in-memory set
+        self.downloaded_ids.add(media_id)
+        
+        # Append to file
+        try:
+            self.download_archive.parent.mkdir(parents=True, exist_ok=True)
+            with self.download_archive.open('a', encoding='utf-8') as f:
+                f.write(f"{media_id}\n")
+        except Exception as e:
+            logger.warning(f"Failed to write to download archive: {e}")
+
+    def check_existing_file_or_archive(self, final_path: Path, media_id: str) -> bool:
+        """Check if file exists or is in download archive. Raises BreakOnExistingError if break_on_existing is True."""
+        from .models import BreakOnExistingException
+        
+        # Check if file already exists
+        file_exists = final_path.exists() and not self.overwrite
+        
+        # Check if in download archive
+        in_archive = self.is_downloaded(media_id)
+        
+        exists = file_exists or in_archive
+        
+        if exists and self.break_on_existing:
+            raise BreakOnExistingException(f"Item {media_id} already downloaded, breaking due to --break-on-existing")
+        
+        return exists
 
     def set_cdm(self) -> None:
         self.cdm = Cdm.from_device(Device.load(self.wvd_path))
@@ -530,6 +586,7 @@ class Downloader:
         tags: dict,
         playlist_metadata: dict,
         playlist_track: int,
+        media_id: str = None,
     ):
         if self.save_cover and cover_path.exists() and not self.overwrite:
             logger.debug(f'Cover already exists at "{cover_path}", skipping')
@@ -552,6 +609,9 @@ class Downloader:
                 final_path,
                 playlist_track,
             )
+        # Add to download archive if media was successfully processed
+        if media_id and media_temp_path:
+            self.add_to_archive(media_id)
 
     def cleanup_temp_path(self):
         if self.temp_path.exists() and not self.skip_cleanup:

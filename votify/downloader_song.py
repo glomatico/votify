@@ -212,8 +212,11 @@ class DownloaderSong(DownloaderAudio):
         remuxed_path = None
         if self.lrc_only:
             pass
-        elif final_path.exists() and not self.downloader.overwrite:
-            logger.warning(f'Track already exists at "{final_path}", skipping')
+        elif self.downloader.check_existing_file_or_archive(final_path, track_id):
+            if final_path.exists():
+                logger.warning(f'Track already exists at "{final_path}", skipping')
+            else:
+                logger.warning(f'Track {track_id} already in download archive, skipping')
         else:
             if not decryption_key:
                 logger.debug("Getting decryption key")
@@ -264,4 +267,5 @@ class DownloaderSong(DownloaderAudio):
             tags,
             playlist_metadata,
             playlist_track,
+            track_id,
         )
