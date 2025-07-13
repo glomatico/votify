@@ -1,6 +1,6 @@
 [project]
 name = "votify"
-description = "A Python CLI app for downloading songs, podcasts and videos from Spotify."
+description = "A command-line app for downloading songs, podcasts and videos from Spotify."
 requires-python = ">=3.10"
 authors = [{ name = "glomatico" }]
 dependencies = [
