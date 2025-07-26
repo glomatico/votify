@@ -58,7 +58,7 @@ class DownloaderEpisodeVideo(DownloaderVideo):
             logger.warning("Episode has no video, skipping")
             return
         stream_info = self.get_stream_info(video_gid)
-        if stream_info.encryption_data_widevine and self.downloader.cdm is None:
+        if stream_info.widevine_pssh and self.downloader.cdm is None:
             logger.warning(
                 "Podcast video has Widevine encryption, "
                 "but Widevine decryption is disabled, skipping"
@@ -89,10 +89,10 @@ class DownloaderEpisodeVideo(DownloaderVideo):
         else:
             key_id, decryption_key = (
                 self.downloader.get_widevine_decryption_key(
-                    stream_info.encryption_data_widevine,
+                    stream_info.widevine_pssh,
                     "video",
                 )
-                if stream_info.encryption_data_widevine
+                if stream_info.widevine_pssh
                 else (None, None)
             )
             encrypted_path_video = self.downloader.get_file_temp_path(
@@ -126,7 +126,7 @@ class DownloaderEpisodeVideo(DownloaderVideo):
             self.download_segments(stream_info.segment_urls_video, temp_path_video)
             logger.debug(f'Downloading audio to "{temp_path_audio}"')
             self.download_segments(stream_info.segment_urls_audio, temp_path_audio)
-            if stream_info.encryption_data_widevine:
+            if stream_info.widevine_pssh:
                 logger.debug(
                     f'Decryping video/audio to "{decrypted_path_video}"/"{decrypted_path_audio}" '
                     f'and remuxing to "{remuxed_path}"'

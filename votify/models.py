@@ -39,4 +39,4 @@ class StreamInfoVideo:
     segment_urls_audio: list[str] = None
     file_type_video: str = None
     file_type_audio: str = None
-    encryption_data_widevine: str = None
+    widevine_pssh: str = None

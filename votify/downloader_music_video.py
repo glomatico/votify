@@ -200,7 +200,7 @@ class DownloaderMusicVideo(DownloaderVideo):
             return
         else:
             key_id, decryption_key = self.downloader.get_widevine_decryption_key(
-                stream_info.encryption_data_widevine,
+                stream_info.widevine_pssh,
                 "video",
             )
             encrypted_path_video = self.downloader.get_file_temp_path(
