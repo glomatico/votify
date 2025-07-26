@@ -59,7 +59,10 @@ class SpotifyApi:
         )
         sp_dc = parse_cookie("sp_dc")
         if sp_dc is None:
-            raise ValueError(f"Cookie file contain 'sp_dc' cookie.")
+            raise ValueError(
+                '"sp_dc" cookie not found in cookies. '
+                "Make sure you have exported the cookies from the Spotify homepage and are logged in."
+            )
         return cls(sp_dc=sp_dc)
 
     def _set_session(self):
