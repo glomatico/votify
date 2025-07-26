@@ -18,7 +18,7 @@ from .utils import check_response
 class SpotifyApi:
     SPOTIFY_HOME_PAGE_URL = "https://open.spotify.com/"
     SPOTIFY_COOKIE_DOMAIN = ".spotify.com"
-    CLIENT_VERSION = "1.2.46.25.g7f189073"
+    CLIENT_VERSION = "1.2.70.61.g856ccd63"
     LYRICS_API_URL = "https://spclient.wg.spotify.com/color-lyrics/v2/track/{track_id}"
     METADATA_API_URL = "https://api.spotify.com/v1/{type}/{item_id}"
     GID_METADATA_API_URL = "https://spclient.wg.spotify.com/metadata/4/{media_type}/{gid}?market=from_token"
