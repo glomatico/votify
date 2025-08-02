@@ -68,7 +68,7 @@ class DownloaderVideo:
                 manifest["contents"][0]["encryption_infos"],
                 "widevine",
             )
-            stream_info.encryption_data_widevine = encryption_info["encryption_data"]
+            stream_info.widevine_pssh = encryption_info["encryption_data"]
         video_profiles = list(
             filter(
                 lambda x: x["mime_type"].startswith("video")
