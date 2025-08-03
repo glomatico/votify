@@ -6,8 +6,8 @@ import math
 class TOTP:
     def __init__(self) -> None:
         # dumped directly from the object, after all decryptions
-        self.secret = b"1231241278344110433411995110823210132101773562453811941121083082105117"
-        self.version = 21
+        self.secret = b'6934698199123836152873265447694113111117791033370'
+        self.version = 24
         self.period = 30
         self.digits = 6
 
