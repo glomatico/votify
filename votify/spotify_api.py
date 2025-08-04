@@ -114,11 +114,30 @@ class SpotifyApi:
             },
         )
         self.session_info = session_info_response.json()
-        self.session.headers.update(
-            {
-                "authorization": f"Bearer {self.session_info['accessToken']}",
-            }
-        )
+        try:
+            self.session.headers.update(
+                {
+                    "authorization": f"Bearer {self.session_info['accessToken']}",
+                }
+            )
+        except KeyError:
+            totp, totpVer = self.totp.get_latest_key_and_version(timestamp=server_time)
+            session_info_response = self.session.get(
+                "https://open.spotify.com/api/token",
+                params={
+                    "reason": "init",
+                    "productType": "web-player",
+                    "totp": totp,
+                    "totpVer": str(totpVer),
+                    "ts": str(server_time),
+                },
+            )
+            self.session_info = session_info_response.json()
+            self.session.headers.update(
+                {
+                    "authorization": f"Bearer {self.session_info['accessToken']}",
+                }
+            )
 
     def _refresh_session_auth(self):
         timestamp_session_expire = int(
