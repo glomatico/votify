@@ -4,8 +4,8 @@ import functools
 import json
 import time
 import typing
-from http.cookiejar import CookieJar, MozillaCookieJar
-from urllib.parse import urlparse
+from http.cookiejar import MozillaCookieJar
+from urllib.parse import urlparse, parse_qs
 from pathlib import Path
 
 import base62
@@ -14,6 +14,8 @@ import requests
 from .totp import TOTP
 from .utils import check_response
 
+import logging
+logger = logging.getLogger("votify")
 
 class SpotifyApi:
     SPOTIFY_HOME_PAGE_URL = "https://open.spotify.com/"
@@ -37,6 +39,14 @@ class SpotifyApi:
         "{file_id}?version=10000000&product=9&platform=39&alt=json"
     )
     EXTEND_TRACK_COLLECTION_WAIT_TIME = 0.5
+    SERVER_TIME_URL = "https://open.spotify.com/api/server-time"
+    SESSION_TOKEN_URL = "https://open.spotify.com/api/token"
+    DEVICE_AUTH_URL = "https://accounts.spotify.com/oauth2/device/authorize"
+    DEVICE_TOKEN_URL = "https://accounts.spotify.com/api/token"
+    DEVICE_RESOLVE_URL = "https://accounts.spotify.com/pair/api/resolve"
+    DEVICE_CLIENT_ID = "65b708073fc0480ea92a077233ca87bd" # Spotify for Desktop
+    DEVICE_SCOPE = "app-remote-control,playlist-modify,playlist-modify-private,playlist-modify-public,playlist-read,playlist-read-collaborative,playlist-read-private,streaming,transfer-auth-session,ugc-image-upload,user-follow-modify,user-follow-read,user-library-modify,user-library-read,user-modify,user-modify-playback-state,user-modify-private,user-personalized,user-read-birthdate,user-read-currently-playing,user-read-email,user-read-play-history,user-read-playback-position,user-read-playback-state,user-read-private,user-read-recently-played,user-top-read"
+    DEVICE_FLOW_USER_AGENT = "Spotify/126600447 Win32_x86_64/0 (PC laptop)"
 
     def __init__(
         self,
@@ -68,57 +78,181 @@ class SpotifyApi:
     def _set_session(self):
         self.totp = TOTP()
         self.session = requests.Session()
-        self.session.headers.update(
-            {
-                "accept": "application/json",
-                "accept-language": "en-US",
-                "content-type": "application/json",
-                "origin": self.SPOTIFY_HOME_PAGE_URL,
-                "priority": "u=1, i",
-                "referer": self.SPOTIFY_HOME_PAGE_URL,
-                "sec-ch-ua": '"Not)A;Brand";v="99", "Google Chrome";v="127", "Chromium";v="127"',
-                "sec-ch-ua-mobile": "?0",
-                "sec-ch-ua-platform": '"Windows"',
-                "sec-fetch-dest": "empty",
-                "sec-fetch-mode": "cors",
-                "sec-fetch-site": "same-site",
-                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
-                "spotify-app-version": self.CLIENT_VERSION,
-                "app-platform": "WebPlayer",
-            }
-        )
-        if self.sp_dc:
-            self.session.cookies.update(
-                {
-                    "sp_dc": self.sp_dc,
-                }
-            )
+        self._setup_session_headers()
         self._set_session_info()
         self._set_user_profile()
 
+    def _setup_session_headers(self):
+        headers = {
+            "accept": "application/json",
+            "accept-language": "en-US",
+            "content-type": "application/json",
+            "origin": self.SPOTIFY_HOME_PAGE_URL,
+            "priority": "u=1, i",
+            "referer": self.SPOTIFY_HOME_PAGE_URL,
+            "sec-ch-ua": '"Not)A;Brand";v="99", "Google Chrome";v="127", "Chromium";v="127"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-site",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+            "spotify-app-version": self.CLIENT_VERSION,
+            "app-platform": "WebPlayer",
+        }
+        self.session.headers.update(headers)
+        
+        if self.sp_dc:
+            self.session.cookies.update({"sp_dc": self.sp_dc})
+
     def _set_session_info(self):
-        server_time_response = self.session.get(
-            "https://open.spotify.com/api/server-time"
-        )
-        check_response(server_time_response)
-        server_time = 1e3 * server_time_response.json()["serverTime"]
+        try:
+            self._set_session_info_with_totp()
+        except (KeyError, requests.exceptions.HTTPError):
+            self._handle_totp_failure()
+
+    def _set_session_info_with_totp(self):
+        server_time = self._get_server_time()
         totp = self.totp.generate(timestamp=server_time)
-        session_info_response = self.session.get(
-            "https://open.spotify.com/api/token",
-            params={
-                "reason": "init",
-                "productType": "web-player",
-                "totp": totp,
-                "totpVer": str(self.totp.version),
-                "ts": str(server_time),
-            },
-        )
-        self.session_info = session_info_response.json()
-        self.session.headers.update(
-            {
-                "authorization": f"Bearer {self.session_info['accessToken']}",
+        
+        params = {
+            "reason": "init",
+            "productType": "web-player",
+            "totp": totp,
+            "totpVer": str(self.totp.version),
+            "ts": str(server_time),
+        }
+        
+        session_info_response = self.session.get(self.SESSION_TOKEN_URL, params=params)
+        self._update_session_token(session_info_response.json())
+
+    def _get_server_time(self):
+        server_time_response  = self.session.get(self.SERVER_TIME_URL)
+        check_response(server_time_response)
+        return 1e3 * server_time_response.json()["serverTime"]
+
+    def _update_session_token(self, session_info):
+        self.session_info = session_info
+        self.session.headers.update({
+            "authorization": f"Bearer {self.session_info['accessToken']}",
+        })
+
+    def _handle_totp_failure(self):
+        logger.warning("Failed to obtain the access token with the current TOTP secret.")
+        token_data = self._get_token_via_device_flow()
+        
+        if not token_data or "access_token" not in token_data:
+            logger.error("Could not obtain access token by any method.")
+        
+        self.session_info = {
+            "accessToken": token_data["access_token"],
+            "accessTokenExpirationTimestampMs": (int(time.time()) + token_data["expires_in"]) * 1000,
+        }
+        
+        logger.info("Access token obtained using the desktop endpoint.")
+        self.session.headers.update({
+            "authorization": f"Bearer {self.session_info['accessToken']}",
+        })
+
+    def _get_token_via_device_flow(self):
+        auth_data = self._initiate_device_authorization()
+        device_code = auth_data["device_code"]
+        user_code = auth_data["user_code"]
+        verification_url = auth_data["verification_uri_complete"]
+        
+        flow_ctx, csrf_token = self._parse_verification_page(verification_url)
+        if not flow_ctx:
+            logger.error("Could not extract flow_ctx.")
+            return None
+
+        if not csrf_token:
+            logger.error("Could not extract CSRF token.")
+            return None
+            
+        if not self._submit_user_code(user_code, flow_ctx, csrf_token, verification_url):
+            logger.error("Device pairing was unsuccessful.")
+            return None
+            
+        return self._exchange_device_code(device_code)
+
+    def _initiate_device_authorization(self):
+        response = requests.post(
+            self.DEVICE_AUTH_URL,
+            data={'client_id': self.DEVICE_CLIENT_ID, 'scope': self.DEVICE_SCOPE},
+            headers={
+                'User-Agent': self.DEVICE_FLOW_USER_AGENT,
+                'Content-Type': 'application/x-www-form-urlencoded',
             }
         )
+        response.raise_for_status()
+        return response.json()
+
+    def _parse_verification_page(self, verification_url):
+        try:
+            response = self.session.get(verification_url, allow_redirects=True)
+            response.raise_for_status()
+
+            parsed_url = urlparse(response.url)
+            flow_ctx_full = parse_qs(parsed_url.query).get("flow_ctx", [None])[0]
+            flow_ctx = flow_ctx_full.split(":")[0] if flow_ctx_full else None
+
+            csrf_token = self._extract_csrf_token(response.text)
+            return flow_ctx, csrf_token
+            
+        except Exception as e:
+            logger.error(f"ERROR (Parsing verification page): {e}")
+            return None, None
+
+    def _extract_csrf_token(self, html_content):
+        start_marker = '<script id="__NEXT_DATA__" type="application/json"'
+        start_index = html_content.find(start_marker)
+        if start_index == -1:
+            return None
+
+        start_index = html_content.find(">", start_index) + 1
+        end_index = html_content.find("</script>", start_index)
+        json_data = json.loads(html_content[start_index:end_index])
+        return json_data.get("props", {}).get("initialToken")
+
+    def _submit_user_code(self, user_code, flow_ctx, csrf_token, referer_url):
+        try:
+            current_ts = int(time.time())
+            response = self.session.post(
+                self.DEVICE_RESOLVE_URL,
+                params={"flow_ctx": f"{flow_ctx}:{current_ts}"},
+                json={"code": user_code},
+                headers={
+                    "x-csrf-token": csrf_token,
+                    "referer": referer_url,
+                    "origin": "https://accounts.spotify.com",
+                    "content-type": "application/json",
+                },
+            )
+            response.raise_for_status()
+            return response.json().get("result") == "ok"
+        except Exception as e:
+            logger.error(f"ERROR (Submitting user code): {e}")
+            return False
+
+    def _exchange_device_code(self, device_code):
+        try:
+            response = requests.post(
+                self.DEVICE_TOKEN_URL,
+                data={
+                    "client_id": self.DEVICE_CLIENT_ID,
+                    "device_code": device_code,
+                    "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+                },
+                headers={
+                    'User-Agent': self.DEVICE_FLOW_USER_AGENT,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }
+            )
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.error(f"ERROR (Exchanging device code): {e}")
+            return None
 
     def _refresh_session_auth(self):
         timestamp_session_expire = int(
