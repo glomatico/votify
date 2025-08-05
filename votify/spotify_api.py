@@ -2,20 +2,19 @@ from __future__ import annotations
 
 import functools
 import json
+import logging
 import re
 import time
 import typing
 from http.cookiejar import MozillaCookieJar
-from urllib.parse import urlparse, parse_qs
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 import base62
 import requests
 
 from .totp import TOTP
 from .utils import check_response
-
-import logging
 
 logger = logging.getLogger("votify")
 
