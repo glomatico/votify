@@ -2,17 +2,21 @@ from __future__ import annotations
 
 import functools
 import json
+import logging
+import re
 import time
 import typing
-from http.cookiejar import CookieJar, MozillaCookieJar
-from urllib.parse import urlparse
+from http.cookiejar import MozillaCookieJar
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 import base62
 import requests
 
 from .totp import TOTP
 from .utils import check_response
+
+logger = logging.getLogger("votify")
 
 
 class SpotifyApi:
@@ -37,12 +41,22 @@ class SpotifyApi:
         "{file_id}?version=10000000&product=9&platform=39&alt=json"
     )
     EXTEND_TRACK_COLLECTION_WAIT_TIME = 0.5
+    SERVER_TIME_URL = "https://open.spotify.com/api/server-time"
+    SESSION_TOKEN_URL = "https://open.spotify.com/api/token"
+    DEVICE_AUTH_URL = "https://accounts.spotify.com/oauth2/device/authorize"
+    DEVICE_TOKEN_URL = "https://accounts.spotify.com/api/token"
+    DEVICE_RESOLVE_URL = "https://accounts.spotify.com/pair/api/resolve"
+    DEVICE_CLIENT_ID = "65b708073fc0480ea92a077233ca87bd"  # Spotify for Desktop
+    DEVICE_SCOPE = "app-remote-control,playlist-modify,playlist-modify-private,playlist-modify-public,playlist-read,playlist-read-collaborative,playlist-read-private,streaming,transfer-auth-session,ugc-image-upload,user-follow-modify,user-follow-read,user-library-modify,user-library-read,user-modify,user-modify-playback-state,user-modify-private,user-personalized,user-read-birthdate,user-read-currently-playing,user-read-email,user-read-play-history,user-read-playback-position,user-read-playback-state,user-read-private,user-read-recently-played,user-top-read"
+    DEVICE_FLOW_USER_AGENT = "Spotify/126600447 Win32_x86_64/0 (PC laptop)"
 
     def __init__(
         self,
         sp_dc: str | None = None,
-    ):
+        use_totp: bool = False,
+    ) -> None:
         self.sp_dc = sp_dc
+        self.use_totp = use_totp
         self._set_session()
 
     @classmethod
@@ -65,46 +79,53 @@ class SpotifyApi:
             )
         return cls(sp_dc=sp_dc)
 
-    def _set_session(self):
+    def _set_session(self) -> None:
         self.totp = TOTP()
         self.session = requests.Session()
+        self._setup_session_headers()
+        self._setup_authorization()
+        self._setup_user_profile()
+
+    def _setup_session_headers(self) -> None:
+        headers = {
+            "accept": "application/json",
+            "accept-language": "en-US",
+            "content-type": "application/json",
+            "origin": self.SPOTIFY_HOME_PAGE_URL,
+            "priority": "u=1, i",
+            "referer": self.SPOTIFY_HOME_PAGE_URL,
+            "sec-ch-ua": '"Not)A;Brand";v="99", "Google Chrome";v="127", "Chromium";v="127"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-site",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+            "spotify-app-version": self.CLIENT_VERSION,
+            "app-platform": "WebPlayer",
+        }
+        self.session.headers.update(headers)
+
+        if self.sp_dc:
+            self.session.cookies.update({"sp_dc": self.sp_dc})
+
+    def _get_server_time(self) -> int:
+        response = self.session.get(self.SERVER_TIME_URL)
+        check_response(response)
+        return 1e3 * response.json()["serverTime"]
+
+    def set_authorization_header(self, token: str) -> None:
         self.session.headers.update(
             {
-                "accept": "application/json",
-                "accept-language": "en-US",
-                "content-type": "application/json",
-                "origin": self.SPOTIFY_HOME_PAGE_URL,
-                "priority": "u=1, i",
-                "referer": self.SPOTIFY_HOME_PAGE_URL,
-                "sec-ch-ua": '"Not)A;Brand";v="99", "Google Chrome";v="127", "Chromium";v="127"',
-                "sec-ch-ua-mobile": "?0",
-                "sec-ch-ua-platform": '"Windows"',
-                "sec-fetch-dest": "empty",
-                "sec-fetch-mode": "cors",
-                "sec-fetch-site": "same-site",
-                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
-                "spotify-app-version": self.CLIENT_VERSION,
-                "app-platform": "WebPlayer",
+                "authorization": f"Bearer {token}",
             }
         )
-        if self.sp_dc:
-            self.session.cookies.update(
-                {
-                    "sp_dc": self.sp_dc,
-                }
-            )
-        self._set_session_info()
-        self._set_user_profile()
 
-    def _set_session_info(self):
-        server_time_response = self.session.get(
-            "https://open.spotify.com/api/server-time"
-        )
-        check_response(server_time_response)
-        server_time = 1e3 * server_time_response.json()["serverTime"]
+    def _setup_authorization_with_totp(self) -> None:
+        server_time = self._get_server_time()
         totp = self.totp.generate(timestamp=server_time)
-        session_info_response = self.session.get(
-            "https://open.spotify.com/api/token",
+        response = self.session.get(
+            self.SESSION_TOKEN_URL,
             params={
                 "reason": "init",
                 "productType": "web-player",
@@ -113,23 +134,131 @@ class SpotifyApi:
                 "ts": str(server_time),
             },
         )
-        self.session_info = session_info_response.json()
-        self.session.headers.update(
-            {
-                "authorization": f"Bearer {self.session_info['accessToken']}",
-            }
+        check_response(response)
+        authorization_info = response.json()
+        if not authorization_info.get("accessToken"):
+            raise ValueError("Failed to retrieve access token.")
+        self.set_authorization_header(authorization_info["accessToken"])
+        self.session_auth_expire_time = (
+            authorization_info["accessTokenExpirationTimestampMs"] / 1000
         )
 
-    def _refresh_session_auth(self):
-        timestamp_session_expire = int(
-            self.session_info["accessTokenExpirationTimestampMs"]
+    def _setup_authorization(self) -> None:
+        if self.use_totp:
+            self._setup_authorization_with_totp()
+        else:
+            self._setup_authorization_with_device_flow()
+
+    def _setup_authorization_with_device_flow(self) -> None:
+        token_data = self._get_token_via_device_flow()
+        self.set_authorization_header(token_data["access_token"])
+        self.session_auth_expire_time = (
+            int(time.time()) + token_data["expires_in"]
+        ) * 1000
+
+    def _get_token_via_device_flow(self) -> dict | None:
+        auth_data = self._initiate_device_authorization()
+        device_code = auth_data["device_code"]
+        user_code = auth_data["user_code"]
+        verification_url = auth_data["verification_uri_complete"]
+        flow_ctx, csrf_token = self._parse_verification_page(verification_url)
+        self._submit_user_code(user_code, flow_ctx, csrf_token, verification_url)
+        return self._exchange_device_code(device_code)
+
+    def _initiate_device_authorization(self) -> dict:
+        response = requests.post(
+            self.DEVICE_AUTH_URL,
+            data={
+                "client_id": self.DEVICE_CLIENT_ID,
+                "scope": self.DEVICE_SCOPE,
+            },
+            headers={
+                "User-Agent": self.DEVICE_FLOW_USER_AGENT,
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
         )
+        check_response(response)
+        return response.json()
+
+    def _parse_verification_page(self, verification_url: str) -> tuple[str, str]:
+        response = self.session.get(
+            verification_url,
+            allow_redirects=True,
+        )
+        check_response(response)
+
+        parsed_url = urlparse(response.url)
+        try:
+            flow_ctx_full = parse_qs(parsed_url.query)["flow_ctx"][0]
+            flow_ctx = flow_ctx_full.split(":")[0]
+        except (KeyError, IndexError):
+            raise ValueError("Failed to extract flow_ctx")
+
+        csrf_token = self._extract_csrf_token(response.text)
+
+        return flow_ctx, csrf_token
+
+    def _extract_csrf_token(self, html_content: str) -> str | None:
+        pattern = (
+            r'<script id="__NEXT_DATA__" type="application/json"[^>]*>(.*?)</script>'
+        )
+        match = re.search(pattern, html_content, re.DOTALL)
+        try:
+            json_data = json.loads(match.group(1))
+            return json_data["props"]["initialToken"]
+        except (AttributeError, json.JSONDecodeError, KeyError):
+            raise ValueError("Failed to extract CSRF token")
+
+    def _submit_user_code(
+        self,
+        user_code: str,
+        flow_ctx: str,
+        csrf_token: str,
+        referer_url: str,
+    ) -> None:
+        current_ts = int(time.time())
+        response = self.session.post(
+            self.DEVICE_RESOLVE_URL,
+            params={"flow_ctx": f"{flow_ctx}:{current_ts}"},
+            json={"code": user_code},
+            headers={
+                "x-csrf-token": csrf_token,
+                "referer": referer_url,
+                "origin": "https://accounts.spotify.com",
+                "content-type": "application/json",
+            },
+        )
+        check_response(response)
+        try:
+            submit_result = response.json()
+            assert submit_result.get("result") == "ok"
+        except (json.JSONDecodeError, AssertionError):
+            raise ValueError("Failed to submit user code")
+
+    def _exchange_device_code(self, device_code: str) -> dict:
+        response = requests.post(
+            self.DEVICE_TOKEN_URL,
+            data={
+                "client_id": self.DEVICE_CLIENT_ID,
+                "device_code": device_code,
+                "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+            },
+            headers={
+                "User-Agent": self.DEVICE_FLOW_USER_AGENT,
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+        )
+        check_response(response)
+        return response.json()
+
+    def _refresh_session_auth(self) -> None:
+        timestamp_session_expire = int(self.session_auth_expire_time)
         timestamp_now = time.time() * 1000
         if timestamp_now < timestamp_session_expire:
             return
-        self._set_session_info()
+        self._setup_authorization()
 
-    def _set_user_profile(self):
+    def _setup_user_profile(self) -> None:
         response = self.session.get(self.METADATA_API_URL.format(type="me", item_id=""))
         check_response(response)
         self.user_profile = response.json()
