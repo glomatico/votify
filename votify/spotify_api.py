@@ -53,7 +53,7 @@ class SpotifyApi:
     def __init__(
         self,
         sp_dc: str | None = None,
-        use_totp: bool = False,
+        use_totp: bool = True,
     ) -> None:
         self.sp_dc = sp_dc
         self.use_totp = use_totp
@@ -123,15 +123,16 @@ class SpotifyApi:
 
     def _setup_authorization_with_totp(self) -> None:
         server_time = self._get_server_time()
-        totp = self.totp.generate(timestamp=server_time)
+        totp = self.totp.generate()
+        totpServer = self.totp.generate(timestamp=server_time)
         response = self.session.get(
             self.SESSION_TOKEN_URL,
             params={
                 "reason": "init",
                 "productType": "web-player",
                 "totp": totp,
+                "totpServer": totpServer,
                 "totpVer": str(self.totp.version),
-                "ts": str(server_time),
             },
         )
         check_response(response)
