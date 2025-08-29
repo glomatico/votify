@@ -1,17 +1,22 @@
 import hashlib
 import hmac
 import math
+import time
+from typing import Optional
 
 # thanks to https://github.com/glomatico/votify/pull/42#issuecomment-2727036757
 class TOTP:
     def __init__(self) -> None:
         # dumped directly from the object, after all decryptions
-        self.secret = b"120887534115119493370126558380647147717911891615550"
-        self.version = 25
+        self.secret = b"587110910437125581069094371158251108736873797144"
+        self.version = 37
         self.period = 30
         self.digits = 6
 
-    def generate(self, timestamp: int) -> str:
+    def generate(self, timestamp: Optional[int] = None) -> str:
+        if timestamp is None:
+            timestamp = int(time.time() * 1000)
+
         counter = math.floor(timestamp / 1000 / self.period)
         counter_bytes = counter.to_bytes(8, byteorder="big")
 
