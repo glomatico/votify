@@ -117,7 +117,7 @@ votify [OPTIONS] URLS...
 
 Votify can be configured using the command-line arguments or the config file.
 
-The config file is created automatically when you run Votify for the first time at `~/.votify/config.json` on Linux and `%USERPROFILE%\.votify\config.json` on Windows.
+The config file is created automatically when you run Votify for the first time at `~/.votify/config.ini` on Linux and `%USERPROFILE%\.votify\config.ini` on Windows.
 
 Config file values can be overridden using command-line arguments.
 
@@ -129,7 +129,7 @@ Config file values can be overridden using command-line arguments.
 | `--download-podcast-videos` / `download_podcast_videos`         | Attempt to download the video version of podcasts.                 | `false`                                        |
 | `--force-premium`, `-f` / `force_premium`                       | Force to detect the account as premium.                            | `false`                                        |
 | `--read-urls-as-txt`, `-r` / -                                  | Interpret URLs as paths to text files containing URLs.             | `false`                                        |
-| `--config-path` / -                                             | Path to config file.                                               | `<home>/.spotify-web-downloader/config.json`   |
+| `--config-path` / -                                             | Path to config file.                                               | `<home>/.votify/config.ini `                   |
 | `--log-level` / `log_level`                                     | Log level.                                                         | `INFO`                                         |
 | `--no-exceptions` / `no_exceptions`                             | Don't print exceptions.                                            | `false`                                        |
 | `--cookies-path` / `cookies_path`                               | Path to cookies file.                                              | `cookies.txt`                                  |
