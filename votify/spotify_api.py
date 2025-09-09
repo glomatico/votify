@@ -53,10 +53,10 @@ class SpotifyApi:
     def __init__(
         self,
         sp_dc: str | None = None,
-        use_totp: bool = False,
+        use_device_flow: bool = False,
     ) -> None:
         self.sp_dc = sp_dc
-        self.use_totp = use_totp
+        self.use_device_flow = use_device_flow
         self._set_session()
 
     @classmethod
@@ -144,10 +144,10 @@ class SpotifyApi:
         )
 
     def _setup_authorization(self) -> None:
-        if self.use_totp:
-            self._setup_authorization_with_totp()
-        else:
+        if self.use_device_flow:
             self._setup_authorization_with_device_flow()
+        else:
+            self._setup_authorization_with_totp()
 
     def _setup_authorization_with_device_flow(self) -> None:
         token_data = self._get_token_via_device_flow()
