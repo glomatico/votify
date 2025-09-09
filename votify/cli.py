@@ -399,9 +399,12 @@ def main(
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(CustomLoggerFormatter())
     logger.addHandler(stream_handler)
+
     cookies_path = prompt_path(True, cookies_path, "Cookies file")
+
     logger.info("Starting Votify")
     spotify_api = SpotifyApi.from_cookies_file(cookies_path)
+
     downloader = Downloader(
         spotify_api,
         output_path,
@@ -429,32 +432,39 @@ def main(
         exclude_tags,
         truncate,
     )
+
     downloader_audio = DownloaderAudio(
         downloader,
         audio_quality,
         download_mode,
         remux_mode_audio,
     )
+
     downloader_song = DownloaderSong(
         downloader_audio,
         lrc_only,
         no_lrc,
     )
+
     downloader_episode = DownloaderEpisode(
         downloader_audio,
     )
+
     downloader_video = DownloaderVideo(
         downloader,
         video_format,
         remux_mode_video,
     )
+
     downloader_episode_video = DownloaderEpisodeVideo(
         downloader_video,
         downloader_episode,
     )
+
     downloader_music_video = DownloaderMusicVideo(
         downloader_video,
     )
+
     is_premium = (
         True if force_premium else spotify_api.user_profile["product"] == "premium"
     )
@@ -462,21 +472,25 @@ def main(
         if download_mode == DownloadMode.ARIA2C and not downloader.aria2c_path_full:
             logger.critical(X_NOT_FOUND_STRING.format("aria2c", aria2c_path))
             return
+
         if not is_premium and audio_quality in PREMIUM_AUDIO_QUALITIES:
             logger.critical("Cannot download at chosen quality with a free account")
             return
+
         if audio_quality in AAC_AUDIO_QUALITIES:
             if (
                 remux_mode_audio == RemuxModeAudio.FFMPEG
                 and not downloader.ffmpeg_path_full
             ):
                 logger.critical(X_NOT_FOUND_STRING.format("FFmpeg", ffmpeg_path))
+
             if (
                 remux_mode_audio == RemuxModeAudio.MP4BOX
                 and not downloader.mp4box_path_full
             ):
                 logger.critical(X_NOT_FOUND_STRING.format("MP4Box", mp4box_path))
                 return
+
             if (
                 remux_mode_audio
                 in (
@@ -489,6 +503,7 @@ def main(
                     X_NOT_FOUND_STRING.format("mp4decrypt", mp4decrypt_path)
                 )
                 return
+
         if download_podcast_videos or download_music_videos:
             if (
                 downloader_music_video.remux_mode == RemuxModeVideo.FFMPEG
@@ -496,35 +511,38 @@ def main(
             ):
                 logger.critical(X_NOT_FOUND_STRING.format("FFmpeg", ffmpeg_path))
                 return
+
             if (
                 downloader_music_video.remux_mode == RemuxModeVideo.MP4BOX
                 and not downloader.mp4box_path_full
             ):
                 logger.critical(X_NOT_FOUND_STRING.format("MP4Box", mp4box_path))
                 return
+
         if download_music_videos:
-            if not is_premium:
-                logger.critical("Cannot download music videos with a free account")
-                return
             if not downloader.mp4decrypt_path_full and video_format == VideoFormat.MP4:
                 logger.critical(
                     X_NOT_FOUND_STRING.format("mp4decrypt", mp4decrypt_path)
                 )
                 return
+
             if not downloader.packager_path_full and video_format == VideoFormat.WEBM:
                 logger.critical(
                     X_NOT_FOUND_STRING.format("Shaka Packager", packager_path)
                 )
+
         if not disable_wvd:
             wvd_path = prompt_path(True, wvd_path, ".wvd file")
             downloader.set_cdm()
-    error_count = 0
+
     if read_urls_as_txt:
         _urls = []
         for url in urls:
             if Path(url).exists():
                 _urls.extend(Path(url).read_text(encoding="utf-8").splitlines())
         urls = _urls
+
+    error_count = 0
     for url_index, url in enumerate(urls, start=1):
         url_progress = color_text(f"URL {url_index}/{len(urls)}", colorama.Style.DIM)
         logger.info(f'({url_progress}) Checking "{url}"')
