@@ -2,13 +2,13 @@
 
 A command-line app for downloading songs, podcasts and videos from Spotify.
 
-**Discord Server:** https://discord.gg/aBjMEZ9tnq
+**Join our Discord Server:** <https://discord.gg/aBjMEZ9tnq>
 
 ## Features
 
 - **Songs**: Download songs up in AAC 128kbps or in AAC 256kbps with an active premium subscription.
 - **Podcasts**: Download podcasts in Vorbis or AAC.
-- **Videos**: Download podcast videos and music videos with an active premium subscription.
+- **Videos**: Download podcast videos and music videos.
 - **Synced Lyrics**: Download synced lyrics in LRC.
 - **Artist Support**: Download an entire discography by providing the artist's URL.
 - **Highly Customizable**: Extensive configuration options for advanced users.
@@ -16,12 +16,12 @@ A command-line app for downloading songs, podcasts and videos from Spotify.
 ## Prerequisites
 
 - **Python 3.10 or higher** installed on your system.
-- The **cookies file** of your Spotify browser session in Netscape format.
-  - **Firefox**: Use the [Export Cookies](https://addons.mozilla.org/addon/export-cookies-txt) extension.
-  - **Chromium-based Browsers**: Use the [Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc) extension.
-- **FFmpeg** on your system PATH.
-  - **Windows**: Download from [AnimMouse's FFmpeg Builds](https://github.com/AnimMouse/ffmpeg-stable-autobuild/releases).
-  - **Linux**: Download from [John Van Sickle's FFmpeg Builds](https://johnvansickle.com/ffmpeg/).
+- The **cookies file** of your Spotify browser session in Netscape format. Use one of the following extensions at the Spotify homepage while logged in to export the cookies:
+  - **Firefox**: [Export Cookies](https://addons.mozilla.org/addon/export-cookies-txt).
+  - **Chromium-based Browsers**: [Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc).
+- **FFmpeg** on your system PATH. Use one of the recommended builds:
+  - **Windows**: [AnimMouse's FFmpeg Builds](https://github.com/AnimMouse/ffmpeg-stable-autobuild/releases).
+  - **Linux**: [John Van Sickle's FFmpeg Builds](https://johnvansickle.com/ffmpeg/).
 - A **.wvd file**.
   - A .wvd file contains the Widevine keys from a device and is required to decrypt music videos and songs in AAC. The easiest method of obtaining one is using KeyDive, which extracts it from an Android device. Detailed instructions can be found here: https://github.com/hyugogirubato/KeyDive. **.wvd files extracted from emulated devices may not work**.
 
