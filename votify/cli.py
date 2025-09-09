@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 import inspect
-import json
 import logging
 import time
-from enum import Enum
+import typing
 from pathlib import Path
 
 import click
 import colorama
 
 from . import __version__
+from .config_file import ConfigFile
 from .constants import (
     AAC_AUDIO_QUALITIES,
     EXCLUDED_CONFIG_FILE_PARAMS,
@@ -46,23 +46,35 @@ downloader_song_sig = inspect.signature(DownloaderSong.__init__)
 downloader_video_sig = inspect.signature(DownloaderVideo.__init__)
 
 
-def get_param_string(param: click.Parameter) -> str:
-    if isinstance(param.default, Enum):
-        return param.default.value
-    elif isinstance(param.default, Path):
-        return str(param.default)
-    else:
-        return param.default
+class Csv(click.ParamType):
+    name = "csv"
 
+    def __init__(
+        self,
+        subtype: typing.Any,
+    ) -> None:
+        self.subtype = subtype
 
-def write_default_config_file(ctx: click.Context) -> None:
-    ctx.params["config_path"].parent.mkdir(parents=True, exist_ok=True)
-    config_file = {
-        param.name: get_param_string(param)
-        for param in ctx.command.params
-        if param.name not in EXCLUDED_CONFIG_FILE_PARAMS
-    }
-    ctx.params["config_path"].write_text(json.dumps(config_file, indent=4))
+    def convert(
+        self,
+        value: str | typing.Any,
+        param: click.Parameter,
+        ctx: click.Context,
+    ) -> list[typing.Any]:
+        if not isinstance(value, str):
+            return value
+        items = [v.strip() for v in value.split(",") if v.strip()]
+        result = []
+        for item in items:
+            try:
+                result.append(self.subtype(item))
+            except ValueError as e:
+                self.fail(
+                    f"'{item}' is not a valid value for {self.subtype.__name__}",
+                    param,
+                    ctx,
+                )
+        return result
 
 
 def load_config_file(
@@ -72,16 +84,27 @@ def load_config_file(
 ) -> click.Context:
     if no_config_file:
         return ctx
-    if not ctx.params["config_path"].exists():
-        write_default_config_file(ctx)
-    config_file = dict(json.loads(ctx.params["config_path"].read_text()))
-    for param in ctx.command.params:
-        if (
-            config_file.get(param.name) is not None
-            and not ctx.get_parameter_source(param.name)
-            == click.core.ParameterSource.COMMANDLINE
-        ):
-            ctx.params[param.name] = param.type_cast_value(ctx, config_file[param.name])
+
+    filtered_params = [
+        param
+        for param in ctx.command.params
+        if param.name not in EXCLUDED_CONFIG_FILE_PARAMS
+    ]
+
+    config_file = ConfigFile(ctx.params["config_path"])
+    config_file.add_params_default_to_config(
+        filtered_params,
+    )
+    parsed_params = config_file.parse_params_from_config(
+        [
+            param
+            for param in filtered_params
+            if ctx.get_parameter_source(param.name)
+            != click.core.ParameterSource.COMMANDLINE
+        ]
+    )
+    ctx.params.update(parsed_params)
+
     return ctx
 
 
@@ -132,7 +155,7 @@ def load_config_file(
 @click.option(
     "--config-path",
     type=Path,
-    default=Path.home() / ".votify" / "config.json",
+    default=Path.home() / ".votify" / "config.ini",
     help="Path to config file.",
 )
 @click.option(
@@ -285,7 +308,7 @@ def load_config_file(
 )
 @click.option(
     "--exclude-tags",
-    type=str,
+    type=Csv(str),
     default=downloader_sig.parameters["exclude_tags"].default,
     help="Comma-separated tags to exclude.",
 )
