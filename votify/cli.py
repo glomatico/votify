@@ -407,7 +407,7 @@ def main(
     save_cover: bool,
     save_playlist: bool,
     overwrite: bool,
-    exclude_tags: str,
+    exclude_tags: list[str],
     truncate: int,
     audio_quality: AudioQuality,
     remux_mode_audio: RemuxModeAudio,
