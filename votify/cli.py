@@ -170,6 +170,12 @@ def load_config_file(
     help="Don't print exceptions.",
 )
 @click.option(
+    "--max-retries",
+    type=int,
+    default=0,
+    help="Maximum retry attempts for failed downloads due to exceptions."
+)
+@click.option(
     "--cookies-path",
     type=Path,
     default=Path("./cookies.txt"),
@@ -383,6 +389,7 @@ def main(
     config_path: Path,
     log_level: str,
     no_exceptions: bool,
+    max_retries: int,
     cookies_path: Path,
     output_path: Path,
     temp_path: Path,
@@ -585,7 +592,10 @@ def main(
                 exc_info=no_exceptions,
             )
             continue
-        for index, download_queue_item in enumerate(download_queue, start=1):
+        retry_count = 0
+        index = 1
+        while index <= len(download_queue):
+            download_queue_item = download_queue[index - 1]
             queue_progress = color_text(
                 f"Track {index}/{len(download_queue)} from URL {url_index}/{len(urls)}",
                 colorama.Style.DIM,
@@ -648,12 +658,21 @@ def main(
                             playlist_metadata=download_queue_item.playlist_metadata,
                             playlist_track=index,
                         )
+                retry_count = 0
+                index += 1
             except Exception as e:
                 error_count += 1
                 logger.error(
                     f'({queue_progress}) Failed to download "{media_metadata["name"]}"',
                     exc_info=not no_exceptions,
                 )
+                if retry_count < max_retries:
+                    retry_count += 1
+                    logger.info(
+                        f'({queue_progress}) Queued retry {retry_count}/{max_retries} of "{media_metadata["name"]}"'
+                    )
+                else:
+                    index += 1
             finally:
                 if wait_interval > 0 and index != len(download_queue):
                     logger.debug(

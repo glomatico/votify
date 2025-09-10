@@ -132,6 +132,7 @@ Config file values can be overridden using command-line arguments.
 | `--config-path` / -                                             | Path to config file.                                               | `<home>/.votify/config.ini `                   |
 | `--log-level` / `log_level`                                     | Log level.                                                         | `INFO`                                         |
 | `--no-exceptions` / `no_exceptions`                             | Don't print exceptions.                                            | `false`                                        |
+| `--max-retries` / `max_retries`                                 | Maximum retry attempts for failed downloads due to exceptions.     | `0`                                            |
 | `--cookies-path` / `cookies_path`                               | Path to cookies file.                                              | `cookies.txt`                                  |
 | `--output-path`, `-o` / `output_path`                           | Path to output directory.                                          | `Spotify`                                      |
 | `--temp-path` / `temp_path`                                     | Path to temporary directory.                                       | `temp`                                         |
