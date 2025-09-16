@@ -5,6 +5,11 @@ from dataclasses import dataclass
 from .enums import AudioQuality
 
 
+class BreakOnExistingException(Exception):
+    """Exception raised when break-on-existing is triggered."""
+    pass
+
+
 @dataclass
 class Lyrics:
     synced: str = None

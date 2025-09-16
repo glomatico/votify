@@ -105,6 +105,10 @@ votify [OPTIONS] URLS...
   ```bash
   votify "https://open.spotify.com/artist/0gxyHStUsqpMadRV0Di1Qt"
   ```
+- Incremental sync of a regularly updated podcast or playlist
+  ```bash
+  votify --download-archive archive.txt --break-on-existing "https://open.spotify.com/show/4rOoJ6Egrf8K2IrywzwOMk"
+  ```
 
 ### Interactive prompt controls
 
@@ -155,6 +159,8 @@ Config file values can be overridden using command-line arguments.
 | `--save-cover` / `save_cover`                                   | Save cover as a separate file.                                     | `false`                                        |
 | `--save-playlist` / `save_playlist`                             | Save a M3U8 playlist file when downloading a playlist.             | `false`                                        |
 | `--overwrite` / `overwrite`                                     | Overwrite existing files.                                          | `false`                                        |
+| `--download-archive` / `download_archive`                       | Path to download archive file to record downloaded items.          | `null`                                         |
+| `--break-on-existing` / `break_on_existing`                     | Stop downloading when a media item that has already been downloaded is encountered. | `false`                                        |
 | `--exclude-tags` / `exclude_tags`                               | Comma-separated tags to exclude.                                   | `null`                                         |
 | `--truncate` / `truncate`                                       | Maximum length of the file/folder names.                           | `null`                                         |
 | `--audio-quality`, `-a` / `audio_quality`                       | Audio quality for songs and podcasts.                              | `aac-medium`                                   |
@@ -234,6 +240,24 @@ The following variables can be used in the template folder/file and/or in the `e
 - `ffmpeg`
 - `mp4box`
 - `mp4decrypt`
+
+### Download Archive
+
+Votify supports download archives to avoid re-downloading the same content, similar to _yt-dlp_'s functionality.
+
+#### How it works
+
+- When `--download-archive` is specified, Votify records the Spotify ID of each successfully downloaded item in the specified archive file;
+- Before downloading, Votify checks if the item already exists as a file or is recorded in the archive;
+- If either condition is true, the item is skipped.
+
+#### Break on existing
+
+The `--break-on-existing` option stops the download process when encountering an already-downloaded item. This is useful for downloading new episodes of a podcast or new songs in a playlist without ploughing through the entire list.
+
+```bash
+votify --download-archive archive.txt --break-on-existing "https://open.spotify.com/show/4rOoJ6Egrf8K2IrywzwOMk"
+```
 
 ### Credits
 
