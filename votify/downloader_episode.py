@@ -42,6 +42,8 @@ class DownloaderEpisode(DownloaderAudio):
                 for index in range(1, len(show_metadata["episodes"]["items"]) + 1)
                 if show_metadata["episodes"]["items"][
                     len(show_metadata["episodes"]["items"]) - index
+                ] is not None and show_metadata["episodes"]["items"][
+                    len(show_metadata["episodes"]["items"]) - index
                 ]["id"]
                 == episode_metadata["id"]
             ),
