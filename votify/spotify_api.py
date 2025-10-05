@@ -109,7 +109,8 @@ class SpotifyApi:
         check_response(response)
         return 1e3 * response.json()["serverTime"]
 
-    def set_authorization_header(self, token: str, client_token: str) -> None:
+    def set_token_headers(self, token: str, client_token: str | None = None) -> None:
+
         self.session.headers.update(
             {
                 "authorization": f"Bearer {token}",
@@ -152,7 +153,7 @@ class SpotifyApi:
         if not client_token.get("granted_token"):
             raise ValueError("Failed to retrieve granted token.")
         
-        self.set_authorization_header(authorization_info["accessToken"], client_token["granted_token"]["token"])
+        self.set_token_headers(authorization_info["accessToken"], client_token["granted_token"]["token"])
         self.session_auth_expire_time = (
             authorization_info["accessTokenExpirationTimestampMs"] / 1000
         )   
@@ -166,7 +167,7 @@ class SpotifyApi:
     def _setup_authorization_with_device_flow(self) -> None:
         device_flow = SpotifyDeviceFlow(self.sp_dc)
         token_data = device_flow.get_token()
-        self.set_authorization_header(token_data["access_token"])
+        self.set_token_headers(token_data["access_token"])
         self.session_auth_expire_time = (
             int(time.time()) + token_data["expires_in"]
         ) * 1000
