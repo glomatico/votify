@@ -8,7 +8,7 @@ import requests
 
 # thanks to https://github.com/glomatico/votify/pull/42#issuecomment-2727036757
 class TOTP:
-    SPOTIFY_SECRETS_JSON = "https://raw.githubusercontent.com/Thereallo1026/spotify-secrets/refs/heads/main/secrets/secretDict.json"
+    SPOTIFY_SECRETS_JSON = "https://code.thetadev.de/ThetaDev/spotify-secrets/raw/branch/main/secrets/secretDict.json"
     PERIOD = 30
     DIGITS = 6
 
