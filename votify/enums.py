@@ -7,6 +7,7 @@ class AudioQuality(Enum):
     VORBIS_LOW = "vorbis-low"
     AAC_MEDIUM = "aac-medium"
     AAC_HIGH = "aac-high"
+        FLAC_LOSSLESS = "flac-lossless"
 
 
 class VideoFormat(Enum):

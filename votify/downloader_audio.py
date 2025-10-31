@@ -11,6 +11,7 @@ from .constants import (
     AAC_AUDIO_QUALITIES,
     AUDIO_QUALITY_X_FORMAT_ID_MAPPING,
     VORBIS_AUDIO_QUALITIES,
+        FLAC_AUDIO_QUALITIES,
 )
 from .downloader import Downloader
 from .enums import AudioQuality, DownloadMode, RemuxModeAudio
@@ -38,6 +39,8 @@ class DownloaderAudio:
         self,
     ) -> str:
         if self.audio_quality in AAC_AUDIO_QUALITIES:
+                    elif self.audio_quality in FLAC_AUDIO_QUALITIES:
+                                    return ".flac"
             return ".m4a"
         else:
             return ".ogg"
@@ -49,8 +52,9 @@ class DownloaderAudio:
         if self.audio_quality in AAC_AUDIO_QUALITIES:
             qualities = AAC_AUDIO_QUALITIES
         else:
-            qualities = VORBIS_AUDIO_QUALITIES
-        start_index = qualities.index(self.audio_quality)
+                    elif self.audio_quality in FLAC_AUDIO_QUALITIES:
+                                    qualities = FLAC_AUDIO_QUALITIES
+        else:        start_index = qualities.index(self.audio_quality)
         for quality in qualities[start_index:]:
             for audio_file in audio_files:
                 if audio_file["format"] == AUDIO_QUALITY_X_FORMAT_ID_MAPPING[quality]:

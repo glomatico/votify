@@ -53,18 +53,21 @@ AUDIO_QUALITY_X_FORMAT_ID_MAPPING = {
     AudioQuality.VORBIS_LOW: "OGG_VORBIS_96",
     AudioQuality.AAC_HIGH: "MP4_256",
     AudioQuality.AAC_MEDIUM: "MP4_128",
+        AudioQuality.FLAC_LOSSLESS: "FLAC_LOSSLESS_24BIT",
 }
 
 VORBIS_AUDIO_QUALITIES = (
     AudioQuality.VORBIS_HIGH,
     AudioQuality.VORBIS_MEDIUM,
     AudioQuality.VORBIS_LOW,
+
+    FLAC_AUDIO_QUALITIES = (AudioQuality.FLAC_LOSSLESS,)
 )
 AAC_AUDIO_QUALITIES = (AudioQuality.AAC_HIGH, AudioQuality.AAC_MEDIUM)
 
 X_NOT_FOUND_STRING = "{} not found at {}"
 
-PREMIUM_AUDIO_QUALITIES = (AudioQuality.VORBIS_HIGH, AudioQuality.AAC_HIGH)
+PREMIUM_AUDIO_QUALITIES = (AudioQuality.VORBIS_HIGH, AudioQuality.AAC_HIGH, AudioQuality.FLAC_LOSSLESS)
 
 MEDIA_TYPE_MP4_MAPPING = {
     "Song": 1,
