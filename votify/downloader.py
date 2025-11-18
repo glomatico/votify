@@ -365,14 +365,49 @@ class Downloader:
         playlist_file_lines[playlist_track - 1] = final_path_relative.as_posix() + "\n"
         with playlist_file_path.open("w", encoding="utf8") as playlist_file:
             playlist_file.writelines(playlist_file_lines)
-
+            
     def get_gid_metadata(
         self,
         media_id: str,
         media_type: str,
     ) -> dict:
         gid = self.spotify_api.media_id_to_gid(media_id)
-        return self.spotify_api.get_gid_metadata(gid, media_type)
+        metadata = self.spotify_api.get_gid_metadata(gid, media_type)
+
+        target_key = "file" if media_type == "track" else "audio"
+
+        existing_entries = metadata.get(target_key, [])
+        if any(e.get("format") in ("MP4_256", "MP4_128") for e in existing_entries):
+            return metadata
+
+        playback_info = self.spotify_api.get_track_playback_info(media_id, media_type)
+        if not playback_info:
+            return metadata
+
+        media_key = f"spotify:{media_type}:{media_id}"
+        file_ids_mp4 = (
+            playback_info.get("media", {})
+            .get(media_key, {})
+            .get("item", {})
+            .get("manifest", {})
+            .get("file_ids_mp4", [])
+        )
+        if not file_ids_mp4:
+            return metadata
+
+        metadata.setdefault(target_key, [])
+
+        for item in file_ids_mp4:
+            file_id = item.get("file_id")
+            bitrate = item.get("bitrate")
+
+            fmt = {256000: "MP4_256", 128000: "MP4_128"}.get(bitrate)
+            if file_id and fmt:
+                entry = {"file_id": file_id, "format": fmt}
+                if entry not in metadata[target_key]:
+                    metadata[target_key].append(entry)
+
+        return metadata
 
     def get_playplay_decryption_key(self, file_id: str) -> bytes:
         raise NotImplementedError()
