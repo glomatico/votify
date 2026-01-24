@@ -44,7 +44,9 @@ The following tools are optional but required for specific features. Add them to
 
 1. Install the package `votify` using pip:
    ```bash
-   pip install votify
+   pip uninstall votify votify-fix -y
+   pip cache purge
+   pip install git+https://github.com/GladistonXD/votify-fix.git
    ```
 2. Set up the cookies file.
    - Move the cookies file to the directory where you'll run Votify and rename it to `cookies.txt`.
