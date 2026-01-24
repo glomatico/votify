@@ -142,31 +142,122 @@ class Downloader:
         return UrlInfo(type=url_regex_result.group(1), id=url_regex_result.group(2))
 
     def get_download_queue(
-        self,
-        media_type: str,
-        media_id: str,
+            self,
+            media_type: str,
+            media_id: str,
     ) -> list[DownloadQueueItem]:
         download_queue = []
         if media_type == "album":
             album = self.spotify_api.get_album(media_id)
-            for track in album["tracks"]["items"]:
-                download_queue.append(
-                    DownloadQueueItem(
-                        album_metadata=album,
-                        media_metadata=track,
-                    )
-                )
+            for item in album:
+                t = item['track']
+                track_id = t['uri'].split(':')[-1]
+                download_queue.append({
+                    'data': {
+                        'trackUnion': {
+                            'id': track_id,
+                            'uri': t['uri'],
+                            'name': t['name'],
+                            'trackNumber': t['trackNumber'],
+                            'duration': {
+                                'totalMilliseconds': t['duration']['totalMilliseconds']
+                            },
+                            'is_playable': t.get('is_playable', True),
+                            'artists': {
+                                'items': [
+                                    {
+                                        'profile': {
+                                            'name': t['artists']['items'][0]['profile']['name']
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                })
         elif media_type == "playlist":
-            playlist = self.spotify_api.get_playlist(media_id)
-            for track in playlist["tracks"]["items"]:
-                if track["track"] is None:
-                    continue
-                download_queue.append(
-                    DownloadQueueItem(
-                        playlist_metadata=playlist,
-                        media_metadata=track["track"],
-                    )
-                )
+                playlist = self.spotify_api.get_playlist(media_id)
+                playlist_metadata = playlist
+                if 'content' in playlist and 'items' in playlist['content']:
+                    items_list = playlist['content']['items']
+                else:
+                    items_list = []
+                for item in items_list:
+                    if 'itemV2' not in item or 'data' not in item['itemV2']:
+                        continue
+
+                    t = item['itemV2']['data']
+
+                    if 'uri' not in t:
+                        continue
+
+                    track_id = t['uri'].split(':')[-1]
+
+                    duration_ms = 0
+                    if 'duration' in t and isinstance(t['duration'], dict):
+                        duration_ms = t['duration'].get('totalMilliseconds', 0)
+                    elif 'trackDuration' in t and isinstance(t['trackDuration'], dict):
+                        duration_ms = t['trackDuration'].get('totalMilliseconds', 0)
+
+                    album_data = t.get('albumOfTrack', {})
+                    if 'uri' in album_data and 'id' not in album_data:
+                        album_data['id'] = album_data['uri'].split(':')[-1]
+
+                    if 'date' in album_data and isinstance(album_data['date'], dict):
+                        date_obj = album_data['date']
+                        if 'isoString' in date_obj and date_obj['isoString']:
+                            album_data['release_date'] = date_obj['isoString']
+                            album_data['release_date_precision'] = 'day'
+                        elif 'year' in date_obj and date_obj['year']:
+                            album_data['release_date'] = str(date_obj['year'])
+                            album_data['release_date_precision'] = 'year'
+
+                    if 'release_date' not in album_data:
+                        album_data['release_date'] = '1970-01-01'
+                        album_data['release_date_precision'] = 'day'
+
+                    artist_name = "Unknown Artist"
+                    try:
+                        if 'artists' in t and 'items' in t['artists'] and len(t['artists']['items']) > 0:
+                            profile = t['artists']['items'][0].get('profile')
+                            if profile:
+                                artist_name = profile.get('name', "Unknown Artist")
+                    except Exception:
+                        pass
+
+                    is_playable = t.get('isPlayable', True)
+
+                    track_object = {
+                        'data': {
+                            'trackUnion': {
+                                'id': track_id,
+                                'uri': t['uri'],
+                                '__typename': 'Track',
+                                'name': t.get('name', 'Unknown Track'),
+                                'trackNumber': t.get('trackNumber', 1),
+                                'duration': {
+                                    'totalMilliseconds': duration_ms
+                                },
+                                'isPlayable': is_playable,
+                                'albumOfTrack': album_data,
+                                'artists': {
+                                    'items': [
+                                        {
+                                            'profile': {
+                                                'name': artist_name
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+
+                    download_queue.append({
+                        'media_metadata': track_object,
+                        'playlist_metadata': playlist_metadata
+                    })
+
         elif media_type == "track":
             download_queue.append(
                 DownloadQueueItem(
@@ -260,9 +351,30 @@ class Downloader:
         return download_queue
 
     def get_cover_url(self, metadata: dict, cover_size_mapping: dict) -> str | None:
-        if not metadata.get("images"):
+        if not isinstance(metadata, dict):
             return None
-        return self._get_cover_url(metadata["images"], cover_size_mapping)
+        images = None
+        try:
+            images = (
+                metadata.get("data", {})
+                .get("trackUnion", {})
+                .get("albumOfTrack", {})
+                .get("coverArt", {})
+                .get("sources")
+            )
+        except AttributeError:
+            pass
+
+        if not images:
+            images = metadata.get("images")
+
+        if not images:
+            images = metadata.get("coverArt", {}).get("sources")
+
+        if not images:
+            return None
+
+        return self._get_cover_url(images, cover_size_mapping)
 
     def _get_cover_url(self, images_dict: list[dict], cover_size_mapping: dict) -> str:
         original_cover_url = images_dict[0]["url"]
@@ -273,14 +385,58 @@ class Downloader:
         return cover_url
 
     def get_media_id(self, media_metadata: dict) -> str:
-        return (media_metadata.get("linked_from") or media_metadata)["id"]
+        linked_from = media_metadata.get("linked_from")
+        if linked_from:
+            media_metadata = linked_from
+
+        if "data" in media_metadata and isinstance(media_metadata["data"], dict):
+            track_union = media_metadata["data"].get("trackUnion")
+            if track_union and "id" in track_union:
+                return track_union["id"]
+
+        if "id" in media_metadata:
+            return media_metadata["id"]
+
+        if "itemV2" in media_metadata:
+            return media_metadata["itemV2"]["data"]["id"]
+
+        if "media_metadata" in media_metadata:
+            nested = media_metadata["media_metadata"]
+            if "data" in nested and "trackUnion" in nested["data"]:
+                return nested["data"]["trackUnion"]["id"]
+            if "id" in nested:
+                return nested["id"]
+
+        if "uri" in media_metadata:
+            return media_metadata["uri"].split(":")[-1]
+
+        raise ValueError("Could not find media ID in metadata")
 
     def get_playlist_tags(self, playlist_metadata: dict, playlist_track: int) -> dict:
+        playlist_title = playlist_metadata.get("name", "Unknown Playlist")
+        playlist_artist = "Unknown Artist"
+        try:
+            if "ownerV2" in playlist_metadata:
+                playlist_artist = playlist_metadata['ownerV2']['data']['name']
+        except (KeyError, TypeError):
+            pass
+
+        if playlist_artist == "Unknown Artist" and "owner" in playlist_metadata:
+            owner_obj = playlist_metadata["owner"]
+            if isinstance(owner_obj, dict):
+                playlist_artist = owner_obj.get("display_name") or owner_obj.get("id", "Unknown Artist")
+            elif isinstance(owner_obj, str):
+                playlist_artist = owner_obj
+
+        if playlist_artist == "Unknown Artist":
+            playlist_artist = playlist_metadata.get("owner_name", "Unknown Artist")
+
         return {
-            "playlist_artist": playlist_metadata["owner"]["display_name"],
-            "playlist_title": playlist_metadata["name"],
+            "playlist_artist": playlist_artist,
+            "playlist_title": playlist_title,
             "playlist_track": playlist_track,
         }
+
 
     def get_playlist_file_path(
         self,
@@ -309,11 +465,14 @@ class Downloader:
 
     def get_final_path(self, media_type: str, tags: dict, file_extension: str) -> Path:
         if media_type == "track":
-            template_folder = (
-                self.template_folder_compilation.split("/")
-                if tags.get("compilation")
-                else self.template_folder_album.split("/")
-            )
+            if tags.get("playlist_title"):
+                template_folder = self.template_file_playlist.split("/")
+            else:
+                template_folder = (
+                    self.template_folder_compilation.split("/")
+                    if tags.get("compilation")
+                    else self.template_folder_album.split("/")
+                )
             template_file = (
                 self.template_file_multi_disc.split("/")
                 if tags["disc_total"] > 1
@@ -327,7 +486,9 @@ class Downloader:
             template_file = self.template_file_music_video.split("/")
         else:
             raise RuntimeError()
+
         template_final = template_folder + template_file
+
         return Path(
             self.output_path,
             *[
@@ -335,8 +496,8 @@ class Downloader:
                 for i in template_final[0:-1]
             ],
             (
-                self.get_sanitized_string(template_final[-1].format(**tags), False)
-                + file_extension
+                    self.get_sanitized_string(template_final[-1].format(**tags), False)
+                    + file_extension
             ),
         )
 
@@ -367,12 +528,38 @@ class Downloader:
             playlist_file.writelines(playlist_file_lines)
 
     def get_gid_metadata(
-        self,
-        media_id: str,
-        media_type: str,
-    ) -> dict:
-        gid = self.spotify_api.media_id_to_gid(media_id)
-        return self.spotify_api.get_gid_metadata(gid, media_type)
+            self,
+            media_id: str,
+            media_type: str,
+            audio_quality: dict,
+    ) -> str:
+        playback_info = self.spotify_api.get_track_playback_info(media_id, media_type)
+        user_product = audio_quality.get('data', {}).get('me', {}).get('account', {}).get('product', 'free')
+
+        if user_product == 'PREMIUM':
+            target_bitrate = 256000
+        else:
+            target_bitrate = 128000
+
+        expected_key = f"spotify:{media_type}:{media_id}"
+
+        if expected_key not in playback_info.get("media", {}):
+            raise ValueError(f"No avaliable Track")
+
+        track_manifest = playback_info["media"][expected_key]
+
+        try:
+            audio_file_id = next(
+                f["file_id"]
+                for files in track_manifest["item"]["manifest"].values()
+                if isinstance(files, list)
+                for f in files
+                if isinstance(f, dict) and f.get("bitrate") == int(target_bitrate)
+            )
+        except StopIteration:
+            raise ValueError(f"No audio file found with bitrate {target_bitrate}")
+
+        return audio_file_id
 
     def get_playplay_decryption_key(self, file_id: str) -> bytes:
         raise NotImplementedError()
@@ -413,24 +600,46 @@ class Downloader:
         return dirty_string.strip()
 
     def get_release_date_datetime_obj(
-        self,
-        release_date: str,
-        release_date_precision: str,
+            self,
+            release_date: str,
+            release_date_precision: str,
     ) -> datetime.datetime:
-        return datetime.datetime.strptime(
-            release_date,
-            self.RELEASE_DATE_PRECISION_MAPPING[release_date_precision],
-        )
+        if not release_date:
+            return datetime.datetime(1970, 1, 1)
+
+        if not release_date_precision:
+            if len(release_date) == 4:
+                release_date_precision = 'year'
+            elif len(release_date) == 7:
+                release_date_precision = 'month'
+            else:
+                release_date_precision = 'day'
+
+        try:
+            precision_key = str(release_date_precision).lower()
+            fmt = self.RELEASE_DATE_PRECISION_MAPPING.get(precision_key, "%Y-%m-%d")
+            return datetime.datetime.strptime(release_date, fmt)
+        except (ValueError, TypeError, KeyError, AttributeError):
+            for fmt in ["%Y", "%Y-%m", "%Y-%m-%d"]:
+                try:
+                    return datetime.datetime.strptime(release_date, fmt)
+                except ValueError:
+                    continue
+        return datetime.datetime(1970, 1, 1)
 
     def get_release_date_tag(self, datetime_obj: datetime.datetime) -> str:
         return datetime_obj.strftime(self.date_tag_template)
 
     def get_artist_string(self, artist_list: list[dict]) -> str:
+        if not artist_list:
+            return ""
+
         if len(artist_list) == 1:
             return artist_list[0]["name"]
+
         return (
-            ", ".join(i["name"] for i in artist_list[:-1])
-            + f' & {artist_list[-1]["name"]}'
+                ", ".join(i["name"] for i in artist_list[:-1])
+                + f' & {artist_list[-1]["name"]}'
         )
 
     def get_file_temp_path(
