@@ -24,10 +24,11 @@ class SpotifyApi:
     SPOTIFY_COOKIE_DOMAIN = ".spotify.com"
     CLIENT_VERSION = "1.2.70.61.g856ccd63"
     LYRICS_API_URL = "https://spclient.wg.spotify.com/color-lyrics/v2/track/{track_id}"
-    METADATA_API_URL = "https://api.spotify.com/v1/{type}/{item_id}"
+    METADATA_API_URL = "https://api-partner.spotify.com/pathfinder/v2/query"
     GID_METADATA_API_URL = "https://spclient.wg.spotify.com/metadata/4/{media_type}/{gid}?market=from_token"
     PATHFINDER_API_URL = "https://api-partner.spotify.com/pathfinder/v1/query"
     VIDEO_MANIFEST_API_URL = "https://gue1-spclient.spotify.com/manifests/v7/json/sources/{gid}/options/supports_drm"
+    TRACK_PLAYBACK_API_URL = "https://gue1-spclient.spotify.com/track-playback/v1/media/spotify:{type}:{id}"
     PLAYPLAY_LICENSE_API_URL = (
         "https://gew4-spclient.spotify.com/playplay/v1/key/{file_id}"
     )
@@ -43,6 +44,7 @@ class SpotifyApi:
     EXTEND_TRACK_COLLECTION_WAIT_TIME = 0.5
     SERVER_TIME_URL = "https://open.spotify.com/api/server-time"
     SESSION_TOKEN_URL = "https://open.spotify.com/api/token"
+    CLIENT_TOKEN_URL = "https://clienttoken.spotify.com/v1/clienttoken"
 
     def __init__(
         self,
@@ -108,10 +110,12 @@ class SpotifyApi:
         check_response(response)
         return 1e3 * response.json()["serverTime"]
 
-    def set_authorization_header(self, token: str) -> None:
+    def set_token_headers(self, token: str, client_token: str | None = None) -> None:
+
         self.session.headers.update(
             {
                 "authorization": f"Bearer {token}",
+                "client-token": client_token
             }
         )
 
@@ -124,18 +128,36 @@ class SpotifyApi:
                 "reason": "init",
                 "productType": "web-player",
                 "totp": totp,
+                "totpServer": totp,
                 "totpVer": str(self.totp.version),
-                "ts": str(server_time),
             },
         )
         check_response(response)
         authorization_info = response.json()
         if not authorization_info.get("accessToken"):
             raise ValueError("Failed to retrieve access token.")
-        self.set_authorization_header(authorization_info["accessToken"])
+        
+        response = self.session.post(self.CLIENT_TOKEN_URL,
+                json = {
+                    'client_data': {
+                        'client_version': self.CLIENT_VERSION,
+                        'client_id': authorization_info['clientId'],
+                        'js_sdk_data': {}
+                    }
+                },
+                headers = {
+                    'Accept': 'application/json',
+                }
+        )
+        check_response(response)
+        client_token = response.json()
+        if not client_token.get("granted_token"):
+            raise ValueError("Failed to retrieve granted token.")
+        
+        self.set_token_headers(authorization_info["accessToken"], client_token["granted_token"]["token"])
         self.session_auth_expire_time = (
             authorization_info["accessTokenExpirationTimestampMs"] / 1000
-        )
+        )   
 
     def _setup_authorization(self) -> None:
         if self.use_device_flow:
@@ -146,20 +168,34 @@ class SpotifyApi:
     def _setup_authorization_with_device_flow(self) -> None:
         device_flow = SpotifyDeviceFlow(self.sp_dc)
         token_data = device_flow.get_token()
-        self.set_authorization_header(token_data["access_token"])
+        self.set_token_headers(token_data["access_token"])
         self.session_auth_expire_time = (
             int(time.time()) + token_data["expires_in"]
         ) * 1000
 
     def _refresh_session_auth(self) -> None:
         timestamp_session_expire = int(self.session_auth_expire_time)
-        timestamp_now = time.time() * 1000
+        timestamp_now = time.time()
         if timestamp_now < timestamp_session_expire:
             return
         self._setup_authorization()
 
     def _setup_user_profile(self) -> None:
-        response = self.session.get(self.METADATA_API_URL.format(type="me", item_id=""))
+        payload = {
+            "variables": {},
+            "operationName": "accountAttributes",
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": "24aaa3057b69fa91492de26841ad199bd0b330ca95817b7a4d6715150de01827"
+                }
+            }
+        }
+
+        response = self.session.post(
+            self.METADATA_API_URL,
+            json=payload,
+        )
         check_response(response)
         self.user_profile = response.json()
 
@@ -177,10 +213,19 @@ class SpotifyApi:
         media_type: str,
     ) -> dict:
         self._refresh_session_auth()
-        response = self.session.get(
-            self.GID_METADATA_API_URL.format(gid=gid, media_type=media_type)
-        )
+        response = self.session.get(self.GID_METADATA_API_URL.format(gid=gid, media_type=media_type))
         check_response(response)
+        return response.json()
+
+    def get_track_playback_info(
+        self,
+        media_id: str,
+        media_type: str
+    ) -> dict | None:
+        self._refresh_session_auth()
+        
+        params = {"manifestFileFormat": ["file_ids_mp4"]}
+        response = self.session.get(f'https://gue1-spclient.spotify.com/track-playback/v1/media/spotify:track:{media_id}?manifestFileFormat=file_ids_mp4')
         return response.json()
 
     def get_lyrics(self, track_id: str) -> dict | None:
@@ -193,8 +238,22 @@ class SpotifyApi:
 
     def get_track(self, track_id: str) -> dict:
         self._refresh_session_auth()
-        response = self.session.get(
-            self.METADATA_API_URL.format(type="tracks", item_id=track_id)
+        payload = {
+            "variables": {
+                "uri": f"spotify:track:{track_id}"
+            },
+            "operationName": "getTrack",
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": "612585ae06ba435ad26369870deaae23b5c8800a256cd8a57e08eddc25a37294"
+                }
+            }
+        }
+
+        response = self.session.post(
+            self.METADATA_API_URL,
+            json=payload,
         )
         check_response(response)
         return response.json()
@@ -212,51 +271,60 @@ class SpotifyApi:
             time.sleep(self.EXTEND_TRACK_COLLECTION_WAIT_TIME)
 
     @functools.lru_cache()
+
     def get_album(
         self,
         album_id: str,
         extend: bool = True,
     ) -> dict:
-        self._refresh_session_auth()
-        response = self.session.get(
-            self.METADATA_API_URL.format(type="albums", item_id=album_id)
+        payload = {
+            "variables": {
+                "uri": f"spotify:album:{album_id}", "locale": "intl-pt", "offset": 0, "limit": 5000
+            },
+            "operationName": "getAlbum",
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": "b9bfabef66ed756e5e13f68a942deb60bd4125ec1f1be8cc42769dc0259b4b10"
+                }
+            }
+        }
+
+        response = self.session.post(
+            self.METADATA_API_URL,
+            json=payload,
         )
-        check_response(response)
-        album = response.json()
-        if extend:
-            album["tracks"]["items"].extend(
-                [
-                    item
-                    for extended_collection in self.extended_media_collection(
-                        album["tracks"]["next"],
-                    )
-                    for item in extended_collection["items"]
-                ]
-            )
-        return album
+
+        return response.json()['data']['albumUnion']['tracksV2']['items']
+
 
     def get_playlist(
         self,
         playlist_id: str,
         extend: bool = True,
     ) -> dict:
-        self._refresh_session_auth()
-        response = self.session.get(
-            self.METADATA_API_URL.format(type="playlists", item_id=playlist_id)
+        payload = {
+            "variables": {
+                "uri": f"spotify:playlist:{playlist_id}",
+                "offset": 0,
+                "limit": 5000,
+                "enableWatchFeedEntrypoint": True
+            },
+            "operationName": "fetchPlaylist",
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": "bb67e0af06e8d6f52b531f97468ee4acd44cd0f82b988e15c2ea47b1148efc77"
+                }
+            }
+        }
+
+        response = self.session.post(
+            self.METADATA_API_URL,
+            json=payload,
         )
-        check_response(response)
-        playlist = response.json()
-        if extend:
-            playlist["tracks"]["items"].extend(
-                [
-                    item
-                    for extended_collection in self.extended_media_collection(
-                        playlist["tracks"]["next"],
-                    )
-                    for item in extended_collection["items"]
-                ]
-            )
-        return playlist
+        return response.json()['data']['playlistV2']
+
 
     def get_track_credits(self, track_id: str) -> dict:
         self._refresh_session_auth()
