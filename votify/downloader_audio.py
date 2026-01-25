@@ -67,7 +67,7 @@ class DownloaderAudio:
         if media_type == "track":
             audio_files = gid_metadata
         elif media_type == "episode":
-            audio_files = gid_metadata.get("audio")
+            audio_files = gid_metadata
         else:
             raise RuntimeError()
         audio_files = audio_files or gid_metadata.get("alternative")
