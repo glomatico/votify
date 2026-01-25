@@ -223,9 +223,8 @@ class SpotifyApi:
         media_type: str
     ) -> dict | None:
         self._refresh_session_auth()
-        
         params = {"manifestFileFormat": ["file_ids_mp4"]}
-        response = self.session.get(f'https://gue1-spclient.spotify.com/track-playback/v1/media/spotify:track:{media_id}?manifestFileFormat=file_ids_mp4')
+        response = self.session.get(f'https://gue1-spclient.spotify.com/track-playback/v1/media/spotify:{media_type}:{media_id}?manifestFileFormat=file_ids_mp4')
         return response.json()
 
     def get_lyrics(self, track_id: str) -> dict | None:
@@ -303,6 +302,7 @@ class SpotifyApi:
         playlist_id: str,
         extend: bool = True,
     ) -> dict:
+        self._refresh_session_auth()
         payload = {
             "variables": {
                 "uri": f"spotify:playlist:{playlist_id}",
@@ -336,20 +336,49 @@ class SpotifyApi:
 
     def get_episode(self, episode_id: str) -> dict:
         self._refresh_session_auth()
-        response = self.session.get(
-            self.METADATA_API_URL.format(type="episodes", item_id=episode_id)
+        payload = {
+            "variables": {
+                "uri": f"spotify:episode:{episode_id}"
+            },
+            "operationName": "getEpisodeOrChapter",
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": "8a62dbdeb7bd79605d7d68b01bcdf83f08bc6c6287ee1665ba012c748a4cf1f3"
+                }
+            }
+        }
+
+        response = self.session.post(
+            self.METADATA_API_URL,
+            json=payload,
         )
         check_response(response)
-        return response.json()
+        return response.json()['data']['episodeUnionV2']
 
     def get_show(self, show_id: str, extend: bool = True) -> dict:
         self._refresh_session_auth()
-        response = self.session.get(
-            self.METADATA_API_URL.format(type="shows", item_id=show_id)
+        payload = {
+            "variables": {
+                "uri": f"spotify:show:{show_id}",
+                "offset": 0,
+                "limit": 5000
+            },
+            "operationName": "queryPodcastEpisodes",
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": "8e2826c5993383566cc08bf9f5d3301b69513c3f6acb8d706286855e57bf44b2"
+                }
+            }
+        }
+        response = self.session.post(
+            self.METADATA_API_URL,
+            json=payload,
         )
         check_response(response)
         show = response.json()
-        if extend:
+        '''if extend:
             show["episodes"]["items"].extend(
                 [
                     item
@@ -358,8 +387,8 @@ class SpotifyApi:
                     )
                     for item in extended_collection["items"]
                 ]
-            )
-        return show
+            )'''
+        return show["data"]['podcastUnionV2']
 
     def get_artist_albums(
         self,
