@@ -601,7 +601,6 @@ def main(
                 f"Track {index}/{len(download_queue)} from URL {url_index}/{len(urls)}",
                 colorama.Style.DIM,
             )
-
             media_metadata = None
             if isinstance(download_queue_item, dict):
                 media_metadata = download_queue_item.get("media_metadata", download_queue_item)
@@ -620,7 +619,10 @@ def main(
             try:
                 track_name = media_metadata["data"]["trackUnion"]["name"]
             except (KeyError, TypeError):
-                track_name = clean_track_metadata.get("name", "Unknown Track")
+                try:
+                    track_name = media_metadata["data"]["episodeUnionV2"]["name"]
+                except (KeyError, TypeError):
+                    track_name = clean_track_metadata.get("name", "Unknown Track")
 
             is_playable = True
 
@@ -659,18 +661,30 @@ def main(
                 media_metadata_for_download = media_metadata
 
                 media_type = "track"
-                try:
-                    type_from_meta = media_metadata['data']['trackUnion']['__typename']
-                    media_type = type_from_meta.lower()
-                except (KeyError, TypeError, AttributeError):
-                    if isinstance(media_metadata, dict) and 'episode' in media_metadata:
-                        media_type = "episode"
-                        media_metadata_for_download = None
-                    else:
-                        media_type = "track"
-                        media_metadata_for_download = None
 
-                gid_metadata = downloader.get_gid_metadata(media_id, media_type, spotify_api.user_profile)
+                target_uri = ""
+                try:
+                    target_uri = media_metadata['data']['trackUnion']['uri']
+                except (KeyError, TypeError):
+                    target_uri = clean_track_metadata.get('uri', '')
+
+                if "episode" in target_uri:
+                    media_type = "episode"
+                elif "track" in target_uri:
+                    media_type = "track"
+
+                else:
+                    try:
+                        type_from_meta = media_metadata['data']['trackUnion']['__typename']
+                        media_type = type_from_meta.lower()
+                    except (KeyError, TypeError, AttributeError):
+                        if isinstance(media_metadata, dict):
+                            if media_metadata.get('type') == 'episode' or 'episode' in media_metadata:
+                                media_type = "episode"
+                                if 'episode' in media_metadata:
+                                    media_metadata_for_download = None
+
+                gid_metadata = downloader.get_gid_metadata(media_id, media_type, spotify_api.user_profile, track_name)
 
                 def get_meta(item, key):
                     val = getattr(item, key, None)
@@ -730,18 +744,14 @@ def main(
                             show_metadata=safe_show_metadata,
                             gid_metadata=gid_metadata,
                             playlist_metadata=safe_playlist_metadata,
+                            product_name=spotify_api.user_profile,
                             playlist_track=index,
                         )
-            #except ValueError:
-            #    error_count += 1
-            #    continue
 
             except Exception as e:
                 error_count += 1
-                logger.error(
-                    f'({queue_progress}) Failed to download "{track_name}"',
-                    exc_info=not no_exceptions,
-                )
+                logger.error(f'({queue_progress}) Failed to download "{track_name}"', exc_info=False)
+                #logger.error(f'({queue_progress}) Failed to download "{track_name}"', exc_info=not no_exceptions)
             finally:
                 if wait_interval > 0 and index != len(download_queue):
                     logger.debug(
