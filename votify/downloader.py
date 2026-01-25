@@ -265,18 +265,159 @@ class Downloader:
                 )
             )
         elif media_type == "episode":
-            download_queue.append(
-                DownloadQueueItem(
-                    media_metadata=self.spotify_api.get_episode(media_id),
-                )
-            )
+            episode = self.spotify_api.get_episode(media_id)
+
+            podcast_name = "Unknown Podcast"
+            podcast_uri = ""
+            podcast_cover = ""
+
+            if 'podcastV2' in episode and 'data' in episode['podcastV2']:
+                p_data = episode['podcastV2']['data']
+                podcast_name = p_data.get('name', 'Unknown Podcast')
+                podcast_uri = p_data.get('uri', '')
+                if 'coverArt' in p_data and 'sources' in p_data['coverArt']:
+                    podcast_cover = p_data['coverArt']['sources'][0]['url']
+
+            release_date = ""
+            precision = ""
+            if 'releaseDate' in episode and episode['releaseDate']:
+                release_date = episode['releaseDate'].get('isoString')
+                precision = episode['releaseDate'].get('isoString')
+
+            cover_url = podcast_cover
+            try:
+                if 'coverArt' in episode and 'sources' in episode['coverArt']:
+                    sources = episode['coverArt']['sources']
+                    cover_url = max(sources, key=lambda x: x.get('width', 0))['url']
+            except Exception:
+                pass
+
+            download_queue.append({
+                'data': {
+                    'trackUnion': {
+                        'id': episode['id'],
+                        'uri': episode['uri'],
+                        'name': episode['name'],
+                        'description': episode.get('description', ''),
+                        'trackNumber': 1,
+                        'duration': {
+                            'totalMilliseconds': episode['duration']['totalMilliseconds']
+                        },
+                        'is_playable': episode.get('playability', {}).get('playable', True),
+
+                        'release_date': release_date,
+                        'release_date_precision': precision,
+
+                        'cover_url': cover_url,
+
+                        'artists': {
+                            'items': [
+                                {
+                                    'profile': {
+                                        'name': podcast_name
+                                    }
+                                }
+                            ]
+                        },
+
+                        'albumOfTrack': {
+                            'uri': podcast_uri,
+                            'name': podcast_name,
+                            'coverArt': {
+                                'sources': [{'url': cover_url}]
+                            },
+                            'id': podcast_uri.split(':')[-1] if ':' in podcast_uri else None,
+                            'release_date': release_date
+                        }
+                    }
+                },
+                'show_metadata': {
+                    'name': podcast_name,
+                    'publisher': 'Unknown',
+                    'uri': podcast_uri
+                }
+            })
+
+
         elif media_type == "show":
             show = self.spotify_api.get_show(media_id)
-            for episode in show["episodes"]["items"]:
+            items_list = []
+            if 'episodesV2' in show and 'items' in show['episodesV2']:
+                items_list = show['episodesV2']['items']
+            elif 'episodes' in show and 'items' in show['episodes']:
+                items_list = show['episodes']['items']
+            total_items = len(items_list)
+            for index, item in enumerate(items_list):
+                episode_raw = None
+                if 'entity' in item and 'data' in item['entity']:
+                    episode_raw = item['entity']['data']
+                elif 'data' in item:
+                    episode_raw = item['data']
+                else:
+                    episode_raw = item
+                if not episode_raw or not isinstance(episode_raw, dict):
+                    continue
+                podcast_name = "Unknown Podcast"
+                podcast_uri = ""
+                if 'podcastV2' in episode_raw and 'data' in episode_raw['podcastV2']:
+                    p_data = episode_raw['podcastV2']['data']
+                    podcast_name = p_data.get('name', 'Unknown Podcast')
+                    podcast_uri = p_data.get('uri', '')
+                elif show.get('name'):
+                    podcast_name = show.get('name')
+                    podcast_uri = show.get('uri')
+                cover_url = None
+                if 'coverArt' in episode_raw and episode_raw['coverArt'].get('sources'):
+                    try:
+                        sources = episode_raw['coverArt']['sources']
+                        cover_url = max(sources, key=lambda x: x.get('width', 0))['url']
+                    except Exception:
+                        pass
+                release_date = ""
+                precision = "day"
+                if 'releaseDate' in episode_raw and isinstance(episode_raw['releaseDate'], dict):
+                    release_date = episode_raw['releaseDate'].get('isoString')
+                    if 'T' in release_date:
+                        release_date = release_date.split('T')[0]
+                    precision = episode_raw['releaseDate'].get('precision', 'day')
+                elif 'release_date' in episode_raw:
+                    release_date = episode_raw['release_date']
+                current_track_number = total_items - index
+                formatted_episode = {
+                    'data': {
+                        'trackUnion': {
+                            'id': episode_raw.get('id'),
+                            'uri': episode_raw.get('uri'),
+                            'name': episode_raw.get('name'),
+                            'description': episode_raw.get('description', ''),
+                            'trackNumber': current_track_number,
+                            'duration': {
+                                'totalMilliseconds': episode_raw.get('duration', {}).get('totalMilliseconds', 0)
+                            },
+                            'is_playable': episode_raw.get('playability', {}).get('playable', True),
+                            'release_date': release_date,
+                            'release_date_precision': precision,
+                            'cover_url': cover_url,
+                            'artists': {'items': [{'profile': {'name': podcast_name}}]},
+                            'albumOfTrack': {
+                                'uri': podcast_uri,
+                                'name': podcast_name,
+                                'coverArt': {'sources': [{'url': cover_url}]},
+                                'id': podcast_uri.split(':')[-1] if ':' in podcast_uri else None,
+                                'release_date': release_date
+                            }
+                        }
+                    }
+                }
+                current_show_metadata = {
+                    'name': podcast_name,
+                    'publisher': 'Unknown',
+                    'uri': podcast_uri
+                }
                 download_queue.append(
                     DownloadQueueItem(
-                        show_metadata=show,
-                        media_metadata=episode,
+                        show_metadata=current_show_metadata,
+                        media_metadata=formatted_episode,
                     )
                 )
         return download_queue
@@ -532,21 +673,37 @@ class Downloader:
             media_id: str,
             media_type: str,
             audio_quality: dict,
+            track_name: str,
     ) -> str:
         playback_info = self.spotify_api.get_track_playback_info(media_id, media_type)
         user_product = audio_quality.get('data', {}).get('me', {}).get('account', {}).get('product', 'free')
 
-        if user_product == 'PREMIUM':
-            target_bitrate = 256000
-        else:
-            target_bitrate = 128000
+        target_bitrate = 256000 if user_product == 'PREMIUM' else 128000
+
+        media_items = playback_info.get("media", {})
+        if not media_items:
+            raise ValueError("No available Track (Empty response)")
 
         expected_key = f"spotify:{media_type}:{media_id}"
 
-        if expected_key not in playback_info.get("media", {}):
-            raise ValueError(f"No avaliable Track")
+        track_manifest = media_items.get(expected_key)
 
-        track_manifest = playback_info["media"][expected_key]
+        if not track_manifest:
+            track_manifest = list(media_items.values())[0]
+
+        metadata = track_manifest.get("item", {}).get("metadata", {})
+        server_name = metadata.get("name")
+
+        if not server_name:
+            raise ValueError(f"Track Unavailable: No name returned")
+
+        req_clean = track_name.lower().strip()
+        srv_clean = server_name.lower().strip()
+
+        if (req_clean in srv_clean) or (srv_clean in req_clean):
+            track_manifest = track_manifest
+        else:
+            raise ValueError(f"Track Unavailable: No name returned")
 
         try:
             audio_file_id = next(
