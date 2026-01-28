@@ -9,7 +9,7 @@ import shutil
 import subprocess
 from io import BytesIO
 from pathlib import Path
-
+from .utils import prompt_path
 import requests
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
@@ -75,7 +75,12 @@ class Downloader:
         self.spotify_api = spotify_api
         self.output_path = output_path
         self.temp_path = temp_path
-        self.wvd_path = wvd_path
+        self.wvd_path = prompt_path(
+            is_file=True,
+            initial_path=wvd_path,
+            description="device.wvd",
+            optional=True
+        )
         self.aria2c_path = aria2c_path
         self.ffmpeg_path = ffmpeg_path
         self.mp4box_path = mp4box_path
@@ -133,7 +138,10 @@ class Downloader:
             self.subprocess_additional_args = {}
 
     def set_cdm(self) -> None:
-        self.cdm = Cdm.from_device(Device.load(self.wvd_path))
+        if self.wvd_path.exists():
+            self.cdm = Cdm.from_device(Device.load(self.wvd_path))
+        else:
+            self.cmd = None
 
     def get_url_info(self, url: str) -> UrlInfo:
         url_regex_result = re.search(self.URL_RE, url)
@@ -727,18 +735,26 @@ class Downloader:
         media_type: str,
     ) -> tuple[str, str]:
         try:
-            pssh = PSSH(pssh)
-            cdm_session = self.cdm.open()
-            challenge = self.cdm.get_license_challenge(cdm_session, pssh)
-            license = self.spotify_api.get_widevine_license(challenge, media_type)
-            self.cdm.parse_license(cdm_session, license)
-            keys = next(
-                i for i in self.cdm.get_keys(cdm_session) if i.type == "CONTENT"
-            )
-            decryption_key = keys.key.hex()
-            key_id = keys.kid.hex
+            if self.cdm == None:
+                cmd = self.spotify_api.wvd_cdrm(pssh)
+                key_id, decryption_key = cmd.split(':')
+            else:
+                pssh = PSSH(pssh)
+                cdm_session = self.cdm.open()
+                challenge = self.cdm.get_license_challenge(cdm_session, pssh)
+                license = self.spotify_api.get_widevine_license(challenge, media_type)
+                self.cdm.parse_license(cdm_session, license)
+                keys = next(
+                    i for i in self.cdm.get_keys(cdm_session) if i.type == "CONTENT"
+                )
+                decryption_key = keys.key.hex()
+                key_id = keys.kid.hex
+
         finally:
-            self.cdm.close(cdm_session)
+            try:
+                self.cdm.close(cdm_session)
+            except:
+                pass
         return key_id, decryption_key
 
     def get_sanitized_string(self, dirty_string: str, is_folder: bool) -> str:
