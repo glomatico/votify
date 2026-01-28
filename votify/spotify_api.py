@@ -235,6 +235,16 @@ class SpotifyApi:
         check_response(response)
         return response.json()
 
+    def wvd_cdrm(self, pssh):
+        cmd = self.session.post('https://cdrm-project.com/api/decrypt',
+        headers={'Content-Type': 'application/json'},
+        json={
+              'pssh': pssh,
+              'licurl': 'https://gue1-spclient.spotify.com/widevine-license/v1/audio/license',
+              'headers': str(self.session.headers)
+        }).json()
+        return cmd['message']
+
     def get_track(self, track_id: str) -> dict:
         self._refresh_session_auth()
         payload = {
