@@ -557,7 +557,7 @@ def main(
                 )
 
         if not disable_wvd:
-            wvd_path = prompt_path(True, wvd_path, ".wvd file")
+            wvd_path = prompt_path(True, wvd_path, ".wvd file", optional=True)
             downloader.set_cdm()
 
     if read_urls_as_txt:
