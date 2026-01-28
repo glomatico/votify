@@ -22,9 +22,9 @@ def _raise_response_exception(response: requests.Response):
     )
 
 
-def prompt_path(is_file: bool, initial_path: Path, description: str) -> Path:
+def prompt_path(is_file: bool, initial_path: Path, description: str, optional: bool = False) -> Path:
     path_validator = click.Path(
-        exists=True,
+        exists=not optional,
         file_okay=is_file,
         dir_okay=not is_file,
         path_type=Path,
