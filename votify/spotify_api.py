@@ -248,7 +248,7 @@ class SpotifyApi:
             json={
                   'pssh': pssh,
                   'licurl': self.WIDEVINE_LICENSE_API_URL.format(type=media_type),
-                  'headers': json.dumps(self.session.headers)
+                  'headers': str(self.session.headers)
             }).json()
         return cmd['message']
 
