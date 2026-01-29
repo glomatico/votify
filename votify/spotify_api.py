@@ -477,6 +477,9 @@ class SpotifyApi:
             self.WIDEVINE_LICENSE_API_URL.format(type=media_type),
             challenge,
         )
+        if response.status_code == 403:
+            logger.error(f"The device.wvd file is invalid or banned.")
+            logger.warning(f'Delete the device.wvd file to use the alternate key.')
         check_response(response)
         return response.content
 
