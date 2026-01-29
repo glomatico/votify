@@ -260,7 +260,11 @@ class DownloaderSong(DownloaderAudio):
             return
 
         if stream_info.quality != self.audio_quality:
-            logger.warning(f"Quality has been changed to {stream_info.quality}")
+            if stream_info.quality == 128000:
+                info = '128 kb/s'
+            else:
+                info = '256 kb/s'
+            logger.info(f"The current bit rate is {info}")
 
         if gid_metadata:
             logger.debug("Getting lyrics")
