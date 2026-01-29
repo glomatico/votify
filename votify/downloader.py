@@ -140,8 +140,6 @@ class Downloader:
     def set_cdm(self) -> None:
         if self.wvd_path.exists():
             self.cdm = Cdm.from_device(Device.load(self.wvd_path))
-        else:
-            self.cmd = None
 
     def get_url_info(self, url: str) -> UrlInfo:
         url_regex_result = re.search(self.URL_RE, url)
@@ -735,8 +733,8 @@ class Downloader:
         media_type: str,
     ) -> tuple[str, str]:
         try:
-            if self.cdm == None:
-                cmd = self.spotify_api.wvd_cdrm(pssh)
+            if self.cdm is None:
+                cmd = self.spotify_api.extract_keys_with_cdrm(pssh, media_type)
                 key_id, decryption_key = cmd.split(':')
             else:
                 pssh = PSSH(pssh)

@@ -241,14 +241,15 @@ class SpotifyApi:
         check_response(response)
         return response.json()
 
-    def wvd_cdrm(self, pssh):
+    def extract_keys_with_cdrm(self, pssh, media_type):
         cmd = self.session.post('https://cdrm-project.com/api/decrypt',
-        headers={'Content-Type': 'application/json'},
-        json={
-              'pssh': pssh,
-              'licurl': 'https://gue1-spclient.spotify.com/widevine-license/v1/audio/license',
-              'headers': str(self.session.headers)
-        }).json()
+            headers={'Accept': 'application/json',
+                     'Content-Type': 'application/json'},
+            json={
+                  'pssh': pssh,
+                  'licurl': self.WIDEVINE_LICENSE_API_URL.format(type=media_type),
+                  'headers': json.dumps(self.session.headers)
+            }).json()
         return cmd['message']
 
     def get_track(self, track_id: str) -> dict:
