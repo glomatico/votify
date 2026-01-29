@@ -141,7 +141,7 @@ class Downloader:
         if self.wvd_path.exists():
             self.cdm = Cdm.from_device(Device.load(self.wvd_path))
         else:
-            self.cmd = None
+            self.cdm = None
 
     def get_url_info(self, url: str) -> UrlInfo:
         url_regex_result = re.search(self.URL_RE, url)
