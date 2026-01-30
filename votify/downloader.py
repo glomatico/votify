@@ -59,7 +59,7 @@ class Downloader:
         template_file_multi_disc: str = "{disc}-{track:02d} {title}",
         template_folder_episode: str = "Podcasts/{album}",
         template_file_episode: str = "{track:02d} {title}",
-        template_folder_music_video: str = "{artist}/Unknown Album",
+        template_folder_music_video: str = "{artist}/{album}",
         template_file_music_video: str = "{title}",
         template_file_playlist: str = "Playlists/{playlist_artist}/{playlist_title}",
         date_tag_template: str = "%Y-%m-%dT%H:%M:%SZ",
@@ -680,49 +680,66 @@ class Downloader:
             media_type: str,
             audio_quality: dict,
             track_name: str,
+            download_music_video: str,
+            download_podcast_videos: str,
     ) -> str:
         playback_info = self.spotify_api.get_track_playback_info(media_id, media_type)
         user_product = audio_quality.get('data', {}).get('me', {}).get('account', {}).get('product', 'free')
 
-        target_bitrate = 256000 if user_product == 'PREMIUM' else 128000
+        if media_type == 'episode':
+            target_bitrate = 128000
+        else:
+            target_bitrate = 256000 if user_product == 'PREMIUM' else 128000
 
         media_items = playback_info.get("media", {})
-        if not media_items:
-            raise ValueError("No available Track (Empty response)")
-
-        expected_key = f"spotify:{media_type}:{media_id}"
-
-        track_manifest = media_items.get(expected_key)
-
-        if not track_manifest:
-            track_manifest = list(media_items.values())[0]
-
-        metadata = track_manifest.get("item", {}).get("metadata", {})
-        server_name = metadata.get("name")
-
-        if not server_name:
-            raise ValueError(f"Track Unavailable: No name returned")
-
-        req_clean = track_name.lower().strip()
-        srv_clean = server_name.lower().strip()
-
-        if (req_clean in srv_clean) or (srv_clean in req_clean):
-            track_manifest = track_manifest
+        if download_music_video == True or download_podcast_videos == True:
+            for track_key, track_data in media_items.items():
+                manifest = track_data['item']['manifest']
+                if 'manifest_ids_video' in manifest:
+                    video_file_id = manifest['manifest_ids_video'][0]['file_id']
+                else:
+                    logger.error("There is no video for this media.")
+                    return
+            return video_file_id
         else:
-            raise ValueError(f"Track Unavailable: No name returned")
+            if not media_items:
+                raise ValueError("No available Track (Empty response)")
 
-        try:
-            audio_file_id = next(
-                f["file_id"]
-                for files in track_manifest["item"]["manifest"].values()
-                if isinstance(files, list)
-                for f in files
-                if isinstance(f, dict) and f.get("bitrate") == int(target_bitrate)
-            )
-        except StopIteration:
-            raise ValueError(f"No audio file found with bitrate {target_bitrate}")
+            expected_key = f"spotify:{media_type}:{media_id}"
 
-        return audio_file_id
+            track_manifest = media_items.get(expected_key)
+
+            if not track_manifest:
+                track_manifest = list(media_items.values())[0]
+
+            metadata = track_manifest.get("item", {}).get("metadata", {})
+            server_name = metadata.get("name")
+
+            if not server_name:
+                raise ValueError(f"Track Unavailable: No name returned")
+
+            req_clean = track_name.lower().strip()
+            srv_clean = server_name.lower().strip()
+
+            if (req_clean in srv_clean) or (srv_clean in req_clean):
+                track_manifest = track_manifest
+            else:
+                raise ValueError(f"Track Unavailable: No name returned")
+
+            try:
+                audio_file_id = next(
+                    f["file_id"]
+                    for files in track_manifest["item"]["manifest"].values()
+                    if isinstance(files, list)
+                    for f in files
+                    if isinstance(f, dict) and f.get("bitrate") == int(target_bitrate)
+                )
+            except StopIteration:
+                raise ValueError(f"No audio file found with bitrate {target_bitrate}")
+
+            return audio_file_id
+
+
 
     def get_playplay_decryption_key(self, file_id: str) -> bytes:
         raise NotImplementedError()
