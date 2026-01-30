@@ -47,16 +47,24 @@ class SpotifyApi:
     CLIENT_TOKEN_URL = "https://clienttoken.spotify.com/v1/clienttoken"
 
     def __init__(
-        self,
+        self, *,
+        secrets_url: str,
         sp_dc: str | None = None,
         use_device_flow: bool = False,
     ) -> None:
+        self.session = requests.Session()
+
+        secrets = self.session.get(secrets_url)
+        check_response(secrets)
+        totp_version, secrets_ciphertext = max(secrets.json().items(), key=lambda item: int(item[0]))
+
+        self.totp = TOTP(version=totp_version, ciphertext=secrets_ciphertext)
         self.sp_dc = sp_dc
         self.use_device_flow = use_device_flow
         self._set_session()
 
     @classmethod
-    def from_cookies_file(cls, cookies_path: Path) -> SpotifyApi:
+    def from_cookies_file(cls, cookies_path: Path, **kwargs) -> SpotifyApi:
         cookies = MozillaCookieJar(cookies_path)
         cookies.load(ignore_discard=True, ignore_expires=True)
         parse_cookie = lambda name: next(
@@ -73,11 +81,9 @@ class SpotifyApi:
                 '"sp_dc" cookie not found in cookies. '
                 "Make sure you have exported the cookies from the Spotify homepage and are logged in."
             )
-        return cls(sp_dc=sp_dc)
+        return cls(sp_dc=sp_dc, **kwargs)
 
     def _set_session(self) -> None:
-        self.totp = TOTP()
-        self.session = requests.Session()
         self._setup_session_headers()
         self._setup_authorization()
         self._setup_user_profile()
@@ -235,14 +241,15 @@ class SpotifyApi:
         check_response(response)
         return response.json()
 
-    def wvd_cdrm(self, pssh):
+    def extract_keys_with_cdrm(self, pssh, media_type):
         cmd = self.session.post('https://cdrm-project.com/api/decrypt',
-        headers={'Content-Type': 'application/json'},
-        json={
-              'pssh': pssh,
-              'licurl': 'https://gue1-spclient.spotify.com/widevine-license/v1/audio/license',
-              'headers': str(self.session.headers)
-        }).json()
+            headers={'Accept': 'application/json',
+                     'Content-Type': 'application/json'},
+            json={
+                  'pssh': pssh,
+                  'licurl': self.WIDEVINE_LICENSE_API_URL.format(type=media_type),
+                  'headers': str(self.session.headers)
+            }).json()
         return cmd['message']
 
     def get_track(self, track_id: str) -> dict:

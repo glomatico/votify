@@ -228,6 +228,12 @@ def load_config_file(
     help="Path to Shaka Packager binary.",
 )
 @click.option(
+    "--spotify-secrets-url",
+    type=str,
+    default="https://code.thetadev.de/ThetaDev/spotify-secrets/raw/branch/main/secrets/secretDict.json",
+    help="Spotify secrets for TOTP generation"
+)
+@click.option(
     "--template-folder-album",
     type=str,
     default=downloader_sig.parameters["template_folder_album"].default,
@@ -395,6 +401,7 @@ def main(
     mp4box_path: str,
     mp4decrypt_path: str,
     packager_path: str,
+    spotify_secrets_url: str,
     template_folder_album: str,
     template_folder_compilation: str,
     template_file_single_disc: str,
@@ -428,7 +435,7 @@ def main(
     cookies_path = prompt_path(True, cookies_path, "Cookies file")
 
     logger.info("Starting Votify")
-    spotify_api = SpotifyApi.from_cookies_file(cookies_path)
+    spotify_api = SpotifyApi.from_cookies_file(cookies_path, secrets_url=spotify_secrets_url)
 
     downloader = Downloader(
         spotify_api,
