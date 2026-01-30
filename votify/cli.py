@@ -79,6 +79,9 @@ class Csv(click.ParamType):
         return result
 
 
+
+
+
 def load_config_file(
     ctx: click.Context,
     param: click.Parameter,
@@ -109,6 +112,32 @@ def load_config_file(
 
     return ctx
 
+
+def check_and_fix_config():
+    config_path = Path.home() / ".votify" / "config.ini"
+    if config_path.exists():
+        try:
+            content = config_path.read_text(encoding='utf-8')
+            if "template_folder_music_video" in content and "Unknown Album" in content:
+                lines = content.splitlines()
+                new_lines = []
+                updated = False
+
+                for line in lines:
+                    if "template_folder_music_video" in line and "Unknown Album" in line:
+                        new_lines.append("template_folder_music_video = {artist}/{album}")
+                        updated = True
+                    else:
+                        new_lines.append(line)
+                if updated:
+                    new_content = "\n".join(new_lines)
+                    config_path.write_text(new_content, encoding='utf-8')
+        except Exception as e:
+            pass
+try:
+    check_and_fix_config()
+except:
+    pass
 
 @click.command()
 @click.help_option("-h", "--help")
@@ -380,6 +409,8 @@ def load_config_file(
     callback=load_config_file,
     help="Do not use a config file.",
 )
+
+
 def main(
     urls: list[str],
     wait_interval: float,
@@ -691,7 +722,7 @@ def main(
                                 if 'episode' in media_metadata:
                                     media_metadata_for_download = None
 
-                gid_metadata = downloader.get_gid_metadata(media_id, media_type, spotify_api.user_profile, track_name)
+                gid_metadata = downloader.get_gid_metadata(media_id, media_type, spotify_api.user_profile, track_name, download_music_videos, download_podcast_videos)
 
                 def get_meta(item, key):
                     val = getattr(item, key, None)
@@ -713,7 +744,6 @@ def main(
                     if audio_quality in VORBIS_AUDIO_QUALITIES:
                         logger.warning("Vorbis audio quality is only supported for podcasts.")
                         continue
-
                     if download_music_videos:
                         downloader_music_video.download(
                             music_video_id=media_id,
