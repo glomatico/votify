@@ -27,8 +27,8 @@ class SpotifyApi:
     METADATA_API_URL = "https://api-partner.spotify.com/pathfinder/v2/query"
     GID_METADATA_API_URL = "https://spclient.wg.spotify.com/metadata/4/{media_type}/{gid}?market=from_token"
     PATHFINDER_API_URL = "https://api-partner.spotify.com/pathfinder/v1/query"
-    VIDEO_MANIFEST_API_URL = "https://gue1-spclient.spotify.com/manifests/v7/json/sources/{gid}/options/supports_drm"
-    TRACK_PLAYBACK_API_URL = "https://gue1-spclient.spotify.com/track-playback/v1/media/spotify:{type}:{id}"
+    VIDEO_MANIFEST_API_URL = "https://gue1-spclient.spotify.com/manifests/v9/json/sources/{gid}/options/supports_drm"
+    TRACK_PLAYBACK_API_URL = "https://gue1-spclient.spotify.com/track-playback/v1/media/spotify:{media_type}:{media_id}"
     PLAYPLAY_LICENSE_API_URL = (
         "https://gew4-spclient.spotify.com/playplay/v1/key/{file_id}"
     )
@@ -229,8 +229,19 @@ class SpotifyApi:
         media_type: str
     ) -> dict | None:
         self._refresh_session_auth()
-        params = {"manifestFileFormat": ["file_ids_mp4"]}
-        response = self.session.get(f'https://gue1-spclient.spotify.com/track-playback/v1/media/spotify:{media_type}:{media_id}?manifestFileFormat=file_ids_mp4')
+        params = {
+            "manifestFileFormat": [
+                "file_ids_mp4",
+                "manifest_ids_video"
+            ]
+        }
+        response = self.session.get(
+            self.TRACK_PLAYBACK_API_URL.format(
+                media_type=media_type,
+                media_id=media_id
+            ),
+            params=params
+        )
         return response.json()
 
     def get_lyrics(self, track_id: str) -> dict | None:
