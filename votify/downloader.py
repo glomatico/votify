@@ -692,14 +692,20 @@ class Downloader:
             target_bitrate = 256000 if user_product == 'PREMIUM' else 128000
 
         media_items = playback_info.get("media", {})
-        if download_music_video == True or download_podcast_videos == True:
-            for track_key, track_data in media_items.items():
-                manifest = track_data['item']['manifest']
-                if 'manifest_ids_video' in manifest:
-                    video_file_id = manifest['manifest_ids_video'][0]['file_id']
-                else:
-                    logger.error("There is no video for this media.")
-                    return
+        if download_music_video or download_podcast_videos:
+            video_file_id = next(
+                (
+                    data['item']['manifest']['manifest_ids_video'][0]['file_id']
+                    for data in playback_info['media'].values()
+                    if 'item' in data
+                       and 'manifest' in data['item']
+                       and 'manifest_ids_video' in data['item']['manifest']
+                ),
+                None
+            )
+            if video_file_id is None:
+                logger.error("There is no video for this media.")
+                return
             return video_file_id
         else:
             if not media_items:
