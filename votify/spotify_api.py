@@ -418,28 +418,170 @@ class SpotifyApi:
             )'''
         return show["data"]['podcastUnionV2']
 
-    def get_artist_albums(
+    def get_artist_albums_selection(
         self,
         artist_id: str,
         extend: bool = True,
     ) -> dict:
         self._refresh_session_auth()
-        response = self.session.get(
-            self.METADATA_API_URL.format(type="artists", item_id=artist_id) + "/albums"
-        )
+        payload = {
+            "variables": {
+                "uri": f"spotify:artist:{artist_id}",
+                "offset": 0,
+                "limit": 5000,
+                "order": "DATE_DESC"
+            },
+            "operationName": "queryArtistDiscographyAlbums",
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": "5e07d323febb57b4a56a42abbf781490e58764aa45feb6e3dc0591564fc56599"
+                }
+            }
+        }
+        response = self.session.post(self.METADATA_API_URL, json=payload)
         check_response(response)
-        artist_albums = response.json()
-        if extend:
-            artist_albums["items"].extend(
-                [
-                    item
-                    for extended_collection in self.extended_media_collection(
-                        artist_albums["next"],
-                    )
-                    for item in extended_collection["items"]
-                ]
-            )
-        return artist_albums
+        artist_albums = response.json()['data']['artistUnion']['discography']['albums']
+        return self._select_and_queue(artist_albums, "Albuns")
+
+    def get_artist_singles_selection(
+        self,
+        artist_id: str,
+        extend: bool = True,
+    ) -> dict:
+        self._refresh_session_auth()
+        payload = {
+            "variables": {
+                "uri": f"spotify:artist:{artist_id}",
+                "offset": 0,
+                "limit": 5000,
+                "order": "DATE_DESC"
+            },
+            "operationName": "queryArtistDiscographySingles",
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": "5e07d323febb57b4a56a42abbf781490e58764aa45feb6e3dc0591564fc56599"
+                }
+            }
+        }
+        response = self.session.post(self.METADATA_API_URL, json=payload)
+        check_response(response)
+        artist_albums = response.json()['data']['artistUnion']['discography']['singles']
+        return self._select_and_queue(artist_albums, "Singles")
+
+    def get_artist_compilations_selection(
+        self,
+        artist_id: str,
+        extend: bool = True,
+    ) -> dict:
+        self._refresh_session_auth()
+        payload = {
+            "variables": {
+                "uri": f"spotify:artist:{artist_id}",
+                "offset": 0,
+                "limit": 5000,
+                "order": "DATE_DESC"
+            },
+            "operationName": "queryArtistDiscographyCompilations",
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": "5e07d323febb57b4a56a42abbf781490e58764aa45feb6e3dc0591564fc56599"
+                }
+            }
+        }
+        response = self.session.post(self.METADATA_API_URL, json=payload)
+        check_response(response)
+        artist_albums = response.json()['data']['artistUnion']['discography']['compilations']
+        return self._select_and_queue(artist_albums, "Compilations")
+
+    def get_artist_collaborations_selection(
+        self,
+        artist_id: str,
+        extend: bool = True,
+    ) -> dict:
+        self._refresh_session_auth()
+        payload = {
+            "variables": {
+                "uri": f"spotify:artist:{artist_id}",
+                "offset": 0,
+                "limit": 5000,
+                "order": "DATE_DESC"
+            },
+            "operationName": "queryArtistAppearsOn",
+            "extensions": {
+                "persistedQuery": {
+                    "version": 1,
+                    "sha256Hash": "9a4bb7a20d6720fe52d7b47bc001cfa91940ddf5e7113761460b4a288d18a4c1"
+                }
+            }
+        }
+        response = self.session.post(self.METADATA_API_URL, json=payload)
+        check_response(response)
+        artist_albums = response.json()['data']['artistUnion']['relatedContent']['appearsOn']
+        return self._select_and_queue(artist_albums, "Collaborations")
+
+    def _select_and_queue(self, data_input: any, category_name: str) -> list[str]:
+        raw_items = []
+        if isinstance(data_input, dict) and 'items' in data_input:
+            raw_items = data_input['items']
+        elif isinstance(data_input, list):
+            raw_items = data_input
+
+        if not raw_items:
+            print(f"No {category_name} found for this artist.")
+            return []
+
+        clean_list = []
+        for entry in raw_items:
+            try:
+                if 'releases' in entry and 'items' in entry['releases']:
+                    album_data = entry['releases']['items'][0]
+                    clean_obj = {
+                        'name': album_data.get('name', 'Unknown'),
+                        'id': album_data.get('id'),
+                        'year': str(album_data.get('date', {}).get('year', '????')),
+                        'total_tracks': album_data.get('tracks', {}).get('totalCount', 0)
+                    }
+                    clean_list.append(clean_obj)
+                elif 'name' in entry:
+                    clean_list.append({
+                        'name': entry.get('name'),
+                        'id': entry.get('id'),
+                        'year': entry.get('release_date', '????')[:4],
+                        'total_tracks': entry.get('total_tracks', 0)
+                    })
+            except Exception:
+                continue
+
+        if not clean_list:
+            print(f"Could not parse items for {category_name}.")
+            return []
+
+        print(f"\n--- Select {category_name} ---")
+        print("Index | Tracks | Year | Name")
+        for index, album in enumerate(clean_list):
+            display_str = f"{album['total_tracks']:03d} | {album['year']} | {album['name']}"
+            print(f"[{index + 1}] {display_str}")
+
+        print("\nType numbers separated by space (e.g. '1 3') or 'all'.")
+        user_input = input("Selection: ").strip().lower()
+
+        selected_ids = []
+
+        if user_input == 'all':
+            selected_ids = [album['id'] for album in clean_list]
+        else:
+            parts = user_input.replace(',', ' ').split()
+            for part in parts:
+                if part.isdigit():
+                    idx = int(part) - 1
+                    if 0 <= idx < len(clean_list):
+                        selected_ids.append(clean_list[idx]['id'])
+
+        return selected_ids
+
 
     def get_video_manifest(
         self,
