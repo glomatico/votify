@@ -433,69 +433,41 @@ class Downloader:
         artist_albums: list[dict],
         album_type: str,
     ) -> list[dict]:
-        return [album for album in artist_albums if album["album_type"] == album_type]
+        return [album for album in artist_albums if album == album_type]
 
-    def get_download_queue_from_artist(
-        self,
-        artist_id: str,
-    ) -> list[DownloadQueueItem]:
+
+    def get_download_queue_from_artist(self, artist_id: str) -> list[DownloadQueueItem]:
         download_queue = []
-        artist_albums = self.spotify_api.get_artist_albums(artist_id)
-        artist_albums_all = {}
-        for album_type in ["album", "single", "compilation", "appears_on"]:
-            artist_albums_all[album_type] = self._filter_artist_albums(
-                artist_albums["items"],
-                album_type,
-            )
-        selected_album_type = inquirer.select(
-            message=f"Select which album type to download for artist:",
+
+        selected_option = inquirer.select(
+            message="Select which album type to download for artist:",
             choices=[
-                Choice(
-                    name="Albums",
-                    value="album",
-                ),
-                Choice(
-                    name="Singles",
-                    value="single",
-                ),
-                Choice(
-                    name="Compilations",
-                    value="compilation",
-                ),
-                Choice(
-                    name="Collaborations",
-                    value="appears_on",
-                ),
+                Choice(name="Albuns", value="album"),
+                Choice(name="Singles", value="single"),
+                Choice(name="Compilations", value="compilation"),
+                Choice(name="Collaborations", value="appears_on"),
             ],
-            validate=lambda result: artist_albums_all.get(result),
-            invalid_message="The artist doesn't have any albums of this type",
         ).execute()
-        choices = [
-            Choice(
-                name=" | ".join(
-                    [
-                        f"{album['total_tracks']:03d}",
-                        album["release_date"][:4],
-                        album["name"],
-                    ],
-                ),
-                value=album["id"],
-            )
-            for album in artist_albums_all[selected_album_type]
-        ]
-        selected = inquirer.select(
-            message="Select which albums to download: (Total tracks | Release year | Album name)",
-            choices=choices,
-            multiselect=True,
-        ).execute()
-        for album_id in selected:
-            download_queue.extend(
-                self.get_download_queue(
-                    "album",
-                    album_id,
+
+        selected_ids = []
+        if selected_option == "album":
+            selected_ids = self.spotify_api.get_artist_albums_selection(artist_id)
+        elif selected_option == "single":
+            selected_ids = self.spotify_api.get_artist_singles_selection(artist_id)
+        elif selected_option == "compilation":
+            selected_ids = self.spotify_api.get_artist_compilations_selection(artist_id)
+        elif selected_option == "appears_on":
+            selected_ids = self.spotify_api.get_artist_collaborations_selection(artist_id)
+
+        if selected_ids:
+            print(f"Processing {len(selected_ids)} items...")
+            for album_id in selected_ids:
+                download_queue.extend(
+                    self.get_download_queue("album", album_id)
                 )
-            )
+
         return download_queue
+
 
     def get_cover_url(self, metadata: dict, cover_size_mapping: dict) -> str | None:
         if not isinstance(metadata, dict):
