@@ -795,5 +795,7 @@ def main(
                         f"Waiting for {wait_interval} second(s) before continuing"
                     )
                     time.sleep(wait_interval)
+            if len(download_queue) > 1 and index != len(download_queue):
+                time.sleep(15)
 
         logger.info(f"Done ({error_count} error(s))")
