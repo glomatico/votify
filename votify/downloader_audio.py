@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import time
 from pathlib import Path
 
 from Crypto.Cipher import AES
@@ -92,16 +93,25 @@ class DownloaderAudio:
 
         return stream_info
 
+
     def get_decryption_key(self, stream_info: StreamInfoAudio) -> str:
-        if self.audio_quality in AAC_AUDIO_QUALITIES:
-            _, decryption_key = self.downloader.get_widevine_decryption_key(
-                stream_info.widevine_pssh,
-                "audio",
-            )
-        else:
-            decryption_key = self.downloader.get_playplay_decryption_key(
-                stream_info.file_id
-            )
+        decryption_key = None
+        for attempt in range(10):
+            try:
+                if self.audio_quality in AAC_AUDIO_QUALITIES:
+                    _, decryption_key = self.downloader.get_widevine_decryption_key(
+                        stream_info.widevine_pssh,
+                        "audio",
+                    )
+                else:
+                    decryption_key = self.downloader.get_playplay_decryption_key(
+                        stream_info.file_id
+                    )
+                if decryption_key:
+                    return decryption_key
+
+            except Exception as e:
+                time.sleep(attempt + 10)
         return decryption_key
 
     def download_stream_url(self, input_path: Path, stream_url: str):
