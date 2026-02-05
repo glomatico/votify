@@ -12,6 +12,10 @@ from pathlib import Path
 import base62
 import requests
 
+import secrets
+import websocket
+import threading
+
 from .device_flow import SpotifyDeviceFlow
 from .totp import TOTP
 from .utils import check_response
@@ -229,6 +233,171 @@ class SpotifyApi:
         media_type: str
     ) -> dict | None:
         self._refresh_session_auth()
+
+        TRACK_ID = media_id
+        if not hasattr(self, 'cached_device_id'):
+            self.cached_device_id = secrets.token_hex(20)
+
+        DEVICE_ID = self.cached_device_id
+
+        ACCESS_TOKEN = self.session.headers["Authorization"].replace("Bearer ", "")
+        WS_URL = f"wss://dealer.spotify.com/?access_token={ACCESS_TOKEN}"
+        URL_REGISTRO = "https://spclient.wg.spotify.com/track-playback/v1/devices"
+        URL_COMMAND = f"https://spclient.wg.spotify.com/connect-state/v1/player/command/from/{DEVICE_ID}/to/{DEVICE_ID}"
+        URL = f"https://gue1-spclient.spotify.com/track-playback/v1/devices/{DEVICE_ID}/state"
+
+        class Context:
+            conn_id = None
+            machine_id = None
+            state_id = None
+            stop_event = threading.Event()
+
+        ctx = Context()
+
+        def find_key(data, target):
+            if isinstance(data, dict):
+                for k, v in data.items():
+                    if k == target: return v
+                    res = find_key(v, target)
+                    if res: return res
+            elif isinstance(data, list):
+                for item in data:
+                    res = find_key(item, target)
+                    if res: return res
+            return None
+
+        def on_message(ws, message):
+            try:
+                data = json.loads(message)
+                if "headers" in data and "Spotify-Connection-Id" in data["headers"]:
+                    ctx.conn_id = data["headers"]["Spotify-Connection-Id"]
+
+                new_mid = find_key(data, "state_machine_id")
+                if new_mid:
+                    if new_mid != ctx.machine_id:
+                        ctx.machine_id = new_mid
+
+                    new_sid = find_key(data, "state_id")
+                    if new_sid and new_sid != ctx.state_id:
+                        ctx.state_id = new_sid
+            except:
+                pass
+
+        def start_socket():
+            ws = websocket.WebSocketApp(WS_URL, on_message=on_message)
+            ws.run_forever()
+
+        def keep_alive_loop():
+            seq_num = 1
+            last_mid = None
+            attempt_count = 0
+            wait_ids_count = 0
+
+            while not ctx.stop_event.is_set():
+                if ctx.machine_id and ctx.state_id and ctx.conn_id:
+                    wait_ids_count = 0
+
+                    if ctx.machine_id != last_mid:
+                        seq_num = 1
+                        last_mid = ctx.machine_id
+
+                    payload = {
+                        "seq_num": 0,
+                        "state_ref": {
+                            "state_machine_id": ctx.machine_id,
+                            "state_id": ctx.state_id,
+                            "paused": False,
+                        },
+                        "sub_state": {
+                            "playback_speed": 1,
+                            "position": 1258,
+                            "duration": 199954,
+                            "media_type": "AUDIO",
+                            "bitrate": 128000,
+                            "audio_quality": "HIGH",
+                            "format": 10,
+                            "is_video_on": False,
+                        },
+                        "previous_position": 1258,
+                        "debug_source": "started_playing",
+                    }
+
+                    try:
+                        r = self.session.put(
+                            URL,
+                            data=json.dumps(payload, separators=(",", ":"))
+                        )
+
+                        if r.status_code == 200:
+                            ctx.stop_event.set()
+                            break
+                        else:
+                            attempt_count += 1
+
+                    except Exception as e:
+                        attempt_count += 1
+
+                    if attempt_count >= 3:
+                        ctx.stop_event.set()
+                        break
+
+                    seq_num += 1
+                    time.sleep(3)
+
+                else:
+                    wait_ids_count += 1
+                    time.sleep(0.5)
+
+                    if wait_ids_count > 20:
+                        ctx.stop_event.set()
+                        break
+
+        t_ws = threading.Thread(target=start_socket, daemon=True)
+        t_ws.start()
+
+        while not ctx.conn_id:
+            time.sleep(0.1)
+
+        self.session.headers.update({
+            "x-spotify-connection-id": ctx.conn_id
+        })
+
+        reg_payload = {
+            "device": {
+                "brand": "spotify",
+                "capabilities": {"change_volume": True, "enable_play_token": True, "supports_file_media_type": True,
+                    "manifest_formats": ["file_ids_mp4", "file_ids_mp4_dual"], "audio_podcasts": True,
+                    "video_playback": True},
+                "device_id": DEVICE_ID, "device_type": "computer", "metadata": {}, "model": "web_player",
+                "name": "Python Final", "platform_identifier": "web_player windows 10;chrome 124.0.0.0;desktop",
+                "is_group": False
+            },
+            "connection_id": ctx.conn_id, "client_version": "harmony:4.62.1-5dc29b8a7", "volume": 65535
+        }
+        self.session.post(URL_REGISTRO, json=reg_payload)
+
+        t_put = threading.Thread(target=keep_alive_loop, daemon=True)
+        t_put.start()
+
+        track_uri = f"spotify:track:{TRACK_ID}"
+        cmd_payload = {
+            "command": {
+                "context": {"uri": track_uri, "url": f"context://{track_uri}", "metadata": {}},
+                "play_origin": {"feature_identifier": "harmony", "feature_version": "4.26.0"},
+                "options": {"license": "premium", "skip_to": {"track_uri": track_uri}, "player_options_override": {}},
+                "endpoint": "play"
+            }
+        }
+        self.session.post(URL_COMMAND, json=cmd_payload)
+
+        try:
+            while not ctx.stop_event.is_set():
+                time.sleep(1)
+        except KeyboardInterrupt:
+            ctx.stop_event.set()
+
+        ##################################################
+
         params = {
             "manifestFileFormat": [
                 "file_ids_mp4",
