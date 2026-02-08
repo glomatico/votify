@@ -14,13 +14,13 @@ class TOTP:
 
     @staticmethod
     def derive(ciphertext: Collection[int]) -> bytes:
-        return ''.join(
+        return "".join(
             str(byte ^ ((i % 33) + 9)) for i, byte in enumerate(ciphertext)
-        ).encode('ascii')
+        ).encode("ascii")
 
     def generate(self, timestamp: int) -> str:
         counter = int(timestamp) // 1000 // self.PERIOD
-        counter_bytes = counter.to_bytes(8)
+        counter_bytes = counter.to_bytes(8, "big")
 
         h = hmac.new(self.secret, counter_bytes, hashlib.sha1)
         hmac_result = h.digest()
