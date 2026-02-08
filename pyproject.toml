@@ -1,29 +1,26 @@
 [project]
 name = "votify"
+version = "1.6"
 description = "A command-line app for downloading songs, podcasts and videos from Spotify."
-requires-python = ">=3.10"
-authors = [{ name = "glomatico" }]
-dependencies = [
-    "click",
-    "colorama",
-    "inquirerpy",
-    "mutagen",
-    "pillow",
-    "protobuf",
-    "pybase62",
-    "pycryptodome",
-    "pywidevine",
-    "yt-dlp",
-]
 readme = "README.md"
-dynamic = ["version"]
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = [
+    "click>=8.3.1",
+    "colorama>=0.4.6",
+    "inquirerpy>=0.3.4",
+    "mutagen>=1.47.0",
+    "pillow>=12.1.0",
+    "protobuf>=6.33.5",
+    "pybase62>=1.0.0",
+    "pycryptodome>=3.23.0",
+    "pywidevine>=1.9.0",
+    "websocket-client>=1.9.0",
+    "yt-dlp>=2026.2.4",
+]
 
 [project.urls]
 repository = "https://github.com/glomatico/votify"
-
-[build-system]
-requires = ["flit_core"]
-build-backend = "flit_core.buildapi"
 
 [project.scripts]
 votify = "votify.cli:main"
