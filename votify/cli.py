@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import traceback
+
 import inspect
 import logging
 import time
@@ -77,6 +79,9 @@ class Csv(click.ParamType):
         return result
 
 
+
+
+
 def load_config_file(
     ctx: click.Context,
     param: click.Parameter,
@@ -107,6 +112,32 @@ def load_config_file(
 
     return ctx
 
+
+def check_and_fix_config():
+    config_path = Path.home() / ".votify" / "config.ini"
+    if config_path.exists():
+        try:
+            content = config_path.read_text(encoding='utf-8')
+            if "template_folder_music_video" in content and "Unknown Album" in content:
+                lines = content.splitlines()
+                new_lines = []
+                updated = False
+
+                for line in lines:
+                    if "template_folder_music_video" in line and "Unknown Album" in line:
+                        new_lines.append("template_folder_music_video = {artist}/{album}")
+                        updated = True
+                    else:
+                        new_lines.append(line)
+                if updated:
+                    new_content = "\n".join(new_lines)
+                    config_path.write_text(new_content, encoding='utf-8')
+        except Exception as e:
+            pass
+try:
+    check_and_fix_config()
+except:
+    pass
 
 @click.command()
 @click.help_option("-h", "--help")
@@ -224,6 +255,12 @@ def load_config_file(
     type=str,
     default=downloader_sig.parameters["packager_path"].default,
     help="Path to Shaka Packager binary.",
+)
+@click.option(
+    "--spotify-secrets-url",
+    type=str,
+    default="https://code.thetadev.de/ThetaDev/spotify-secrets/raw/branch/main/secrets/secretDict.json",
+    help="Spotify secrets for TOTP generation"
 )
 @click.option(
     "--template-folder-album",
@@ -372,6 +409,8 @@ def load_config_file(
     callback=load_config_file,
     help="Do not use a config file.",
 )
+
+
 def main(
     urls: list[str],
     wait_interval: float,
@@ -393,6 +432,7 @@ def main(
     mp4box_path: str,
     mp4decrypt_path: str,
     packager_path: str,
+    spotify_secrets_url: str,
     template_folder_album: str,
     template_folder_compilation: str,
     template_file_single_disc: str,
@@ -426,7 +466,7 @@ def main(
     cookies_path = prompt_path(True, cookies_path, "Cookies file")
 
     logger.info("Starting Votify")
-    spotify_api = SpotifyApi.from_cookies_file(cookies_path)
+    spotify_api = SpotifyApi.from_cookies_file(cookies_path, secrets_url=spotify_secrets_url)
 
     downloader = Downloader(
         spotify_api,
@@ -489,7 +529,7 @@ def main(
     )
 
     is_premium = (
-        True if force_premium else spotify_api.user_profile["product"] == "premium"
+        True if force_premium else spotify_api.user_profile['data']['me']['account']['product'] == "premium"
     )
     if not lrc_only:
         if download_mode == DownloadMode.ARIA2C and not downloader.aria2c_path_full:
@@ -555,7 +595,7 @@ def main(
                 )
 
         if not disable_wvd:
-            wvd_path = prompt_path(True, wvd_path, ".wvd file")
+            wvd_path = prompt_path(True, wvd_path, ".wvd file", optional=True)
             downloader.set_cdm()
 
     if read_urls_as_txt:
@@ -566,11 +606,19 @@ def main(
         urls = _urls
 
     error_count = 0
+
+    global_playlist_metadata = None
+
     for url_index, url in enumerate(urls, start=1):
         url_progress = color_text(f"URL {url_index}/{len(urls)}", colorama.Style.DIM)
         logger.info(f'({url_progress}) Checking "{url}"')
         try:
             url_info = downloader.get_url_info(url)
+
+            if url_info.type == 'playlist':
+                if hasattr(url_info, 'name') and url_info.name:
+                    global_playlist_metadata = {'name': url_info.name, 'owner_name': getattr(url_info, 'owner', 'Unknown')}
+
             if url_info.type == "artist":
                 download_queue = downloader.get_download_queue_from_artist(url_info.id)
             else:
@@ -582,82 +630,170 @@ def main(
             error_count += 1
             logger.error(
                 f'({url_progress}) Failed to check "{url}"',
-                exc_info=no_exceptions,
+                exc_info=not no_exceptions,
             )
             continue
+
         for index, download_queue_item in enumerate(download_queue, start=1):
             queue_progress = color_text(
                 f"Track {index}/{len(download_queue)} from URL {url_index}/{len(urls)}",
                 colorama.Style.DIM,
             )
-            media_metadata = download_queue_item.media_metadata
+            media_metadata = None
+            if isinstance(download_queue_item, dict):
+                media_metadata = download_queue_item.get("media_metadata", download_queue_item)
+            else:
+                media_metadata = getattr(download_queue_item, "media_metadata", download_queue_item)
+
+            if not isinstance(media_metadata, dict):
+                media_metadata = getattr(media_metadata, "__dict__", {})
+
+            if isinstance(media_metadata, dict) and 'track' in media_metadata and isinstance(media_metadata['track'],dict):
+                clean_track_metadata = media_metadata['track']
+            else:
+                clean_track_metadata = media_metadata
+
+            track_name = "Unknown Track"
             try:
-                logger.info(
-                    f'({queue_progress}) Downloading "{media_metadata["name"]}"'
-                )
-                media_id = downloader.get_media_id(media_metadata)
-                media_type = media_metadata["type"]
-                gid_metadata = downloader.get_gid_metadata(media_id, media_type)
+                track_name = media_metadata["data"]["trackUnion"]["name"]
+            except (KeyError, TypeError):
+                try:
+                    track_name = media_metadata["data"]["episodeUnionV2"]["name"]
+                except (KeyError, TypeError):
+                    track_name = clean_track_metadata.get("name", "Unknown Track")
+
+            is_playable = True
+
+            if isinstance(clean_track_metadata, dict):
+
+                if clean_track_metadata.get('isPlayable') is False:
+                    is_playable = False
+                elif clean_track_metadata.get('is_playable') is False:
+                    is_playable = False
+                elif clean_track_metadata.get('playable') is False:
+                    is_playable = False
+
+                elif 'data' in clean_track_metadata:
+                    try:
+                        union = clean_track_metadata['data']['trackUnion']
+                        if union.get('isPlayable') is False or union.get('playable') is False:
+                            is_playable = False
+                    except:
+                        pass
+
+            if not is_playable:
+                logger.warning(f'({queue_progress}) Skipping "{track_name}": Track unavailable/unplayable.')
+                continue
+
+            try:
+                logger.info(f'({queue_progress}) Downloading "{track_name}"')
+
+                try:
+                    media_id = downloader.get_media_id(clean_track_metadata)
+                except ValueError:
+                    if isinstance(download_queue_item, dict) and 'id' in download_queue_item:
+                        media_id = download_queue_item['id']
+                    else:
+                        raise
+
+                media_metadata_for_download = media_metadata
+
+                media_type = "track"
+
+                target_uri = ""
+                try:
+                    target_uri = media_metadata['data']['trackUnion']['uri']
+                except (KeyError, TypeError):
+                    target_uri = clean_track_metadata.get('uri', '')
+
+                if "episode" in target_uri:
+                    media_type = "episode"
+                elif "track" in target_uri:
+                    media_type = "track"
+
+                else:
+                    try:
+                        type_from_meta = media_metadata['data']['trackUnion']['__typename']
+                        media_type = type_from_meta.lower()
+                    except (KeyError, TypeError, AttributeError):
+                        if isinstance(media_metadata, dict):
+                            if media_metadata.get('type') == 'episode' or 'episode' in media_metadata:
+                                media_type = "episode"
+                                if 'episode' in media_metadata:
+                                    media_metadata_for_download = None
+
+                gid_metadata = downloader.get_gid_metadata(media_id, media_type, spotify_api.user_profile, track_name, download_music_videos, download_podcast_videos)
+
+                def get_meta(item, key):
+                    val = getattr(item, key, None)
+                    if val is None and isinstance(item, dict):
+                        val = item.get(key)
+                    return val
+
+                safe_album_metadata = get_meta(download_queue_item, "album_metadata")
+                safe_playlist_metadata = get_meta(download_queue_item, "playlist_metadata")
+                safe_show_metadata = get_meta(download_queue_item, "show_metadata")
+
+                if not safe_playlist_metadata and global_playlist_metadata:
+                    safe_playlist_metadata = global_playlist_metadata
+
                 if media_type == "track":
                     if disable_wvd:
-                        logger.warning(
-                            "Widevine decryption is disabled, "
-                            "skipping Widevine protected content"
-                        )
+                        logger.warning("Widevine decryption is disabled, skipping.")
                         continue
                     if audio_quality in VORBIS_AUDIO_QUALITIES:
-                        logger.warning(
-                            "Vorbis audio quality is only supported for podcasts, "
-                            "skipping"
-                        )
+                        logger.warning("Vorbis audio quality is only supported for podcasts.")
                         continue
                     if download_music_videos:
                         downloader_music_video.download(
                             music_video_id=media_id,
-                            music_video_metadata=media_metadata,
-                            album_metadata=download_queue_item.album_metadata,
+                            music_video_metadata=media_metadata_for_download,
+                            album_metadata=safe_album_metadata,
                             gid_metadata=gid_metadata,
-                            playlist_metadata=download_queue_item.playlist_metadata,
+                            playlist_metadata=safe_playlist_metadata,
                             playlist_track=index,
                         )
                     else:
                         downloader_song.download(
                             track_id=media_id,
-                            track_metadata=media_metadata,
-                            album_metadata=download_queue_item.album_metadata,
+                            track_metadata=media_metadata_for_download,
+                            album_metadata=safe_album_metadata,
                             gid_metadata=gid_metadata,
-                            playlist_metadata=download_queue_item.playlist_metadata,
+                            playlist_metadata=safe_playlist_metadata,
+                            product_name=spotify_api.user_profile,
                             playlist_track=index,
                         )
+
                 elif media_type == "episode":
                     if download_podcast_videos:
                         downloader_episode_video.download(
                             episode_id=media_id,
-                            episode_metadata=media_metadata,
-                            show_metadata=download_queue_item.show_metadata,
+                            episode_metadata=media_metadata_for_download,
+                            show_metadata=safe_show_metadata,
                             gid_metadata=gid_metadata,
-                            playlist_metadata=download_queue_item.playlist_metadata,
+                            playlist_metadata=safe_playlist_metadata,
                             playlist_track=index,
                         )
                     else:
                         downloader_episode.download(
                             episode_id=media_id,
-                            episode_metadata=media_metadata,
-                            show_metadata=download_queue_item.show_metadata,
+                            episode_metadata=media_metadata_for_download,
+                            show_metadata=safe_show_metadata,
                             gid_metadata=gid_metadata,
-                            playlist_metadata=download_queue_item.playlist_metadata,
+                            playlist_metadata=safe_playlist_metadata,
+                            product_name=spotify_api.user_profile,
                             playlist_track=index,
                         )
+
             except Exception as e:
                 error_count += 1
-                logger.error(
-                    f'({queue_progress}) Failed to download "{media_metadata["name"]}"',
-                    exc_info=not no_exceptions,
-                )
+                logger.error(f'({queue_progress}) Failed to download "{track_name}"', exc_info=False)
+                #logger.error(f'({queue_progress}) Failed to download "{track_name}"', exc_info=not no_exceptions)
             finally:
                 if wait_interval > 0 and index != len(download_queue):
                     logger.debug(
                         f"Waiting for {wait_interval} second(s) before continuing"
                     )
                     time.sleep(wait_interval)
+
         logger.info(f"Done ({error_count} error(s))")

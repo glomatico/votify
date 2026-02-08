@@ -1,41 +1,26 @@
-from __future__ import annotations
-
 import hashlib
 import hmac
-import math
-import requests
+
+from typing import Collection
 
 
-# thanks to https://github.com/glomatico/votify/pull/42#issuecomment-2727036757
 class TOTP:
-    SPOTIFY_SECRETS_JSON = "https://raw.githubusercontent.com/Thereallo1026/spotify-secrets/refs/heads/main/secrets/secretDict.json"
     PERIOD = 30
     DIGITS = 6
 
-    def __init__(self) -> None:
-        self._setup()
-
-    def _setup(self) -> None:
-        version, secret_cipher_bytes = self.get_latest_secret()
+    def __init__(self, *, version: int, ciphertext: Collection[int]) -> None:
         self.version = version
-        self.secret = self.derive_secret_number(secret_cipher_bytes).encode()
+        self.secret = self.derive(ciphertext)
 
-    def derive_secret_number(self, secret_cipher_bytes: list[int]) -> str:
-        transformed = [
-            byte ^ ((i % 33) + 9) for i, byte in enumerate(secret_cipher_bytes)
-        ]
-        return "".join(str(n) for n in transformed)
-
-    def get_latest_secret(self) -> tuple[int, list[int]]:
-        response = requests.get(self.SPOTIFY_SECRETS_JSON)
-        response.raise_for_status()
-        secrets = response.json()
-        latest_version = max(int(v) for v in secrets.keys())
-        return latest_version, secrets[str(latest_version)]
+    @staticmethod
+    def derive(ciphertext: Collection[int]) -> bytes:
+        return ''.join(
+            str(byte ^ ((i % 33) + 9)) for i, byte in enumerate(ciphertext)
+        ).encode('ascii')
 
     def generate(self, timestamp: int) -> str:
-        counter = math.floor(timestamp / 1000 / self.PERIOD)
-        counter_bytes = counter.to_bytes(8, byteorder="big")
+        counter = int(timestamp) // 1000 // self.PERIOD
+        counter_bytes = counter.to_bytes(8)
 
         h = hmac.new(self.secret, counter_bytes, hashlib.sha1)
         hmac_result = h.digest()

@@ -19,9 +19,9 @@ class DownloaderEpisodeVideo(DownloaderVideo):
         self.downloader_episode = downloader_episode
 
     def get_video_gid(self, gid_metadata: dict) -> str | None:
-        if not gid_metadata.get("video"):
+        if not gid_metadata:
             return None
-        return gid_metadata["video"][0]["file_id"]
+        return gid_metadata
 
     def download(
         self,
@@ -65,7 +65,7 @@ class DownloaderEpisodeVideo(DownloaderVideo):
             )
             return
         tags = self.downloader_episode.get_tags(
-            episode_metadata,
+            episode_metadata['data']['trackUnion'],
             show_metadata,
         )
         file_extension = self.get_file_extension(

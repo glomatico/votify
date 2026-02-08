@@ -22,13 +22,13 @@ A command-line app for downloading songs, podcasts and videos from Spotify.
 - **FFmpeg** on your system PATH. Use one of the recommended builds:
   - **Windows**: [AnimMouse's FFmpeg Builds](https://github.com/AnimMouse/ffmpeg-stable-autobuild/releases).
   - **Linux**: [John Van Sickle's FFmpeg Builds](https://johnvansickle.com/ffmpeg/).
-- A **.wvd file**.
-  - A .wvd file contains the Widevine keys from a device and is required to decrypt music videos and songs in AAC. The easiest method of obtaining one is using KeyDive, which extracts it from an Android device. Detailed instructions can be found here: https://github.com/hyugogirubato/KeyDive. **.wvd files extracted from emulated devices may not work**.
+- **(Optional)** A **.wvd file**.
+  - A `.wvd` file contains the Widevine keys from a device and is required to decrypt music videos and songs in AAC. The easiest method of obtaining one is using KeyDive, which extracts it from an Android device. Detailed instructions can be found here: https://github.com/hyugogirubato/KeyDive. **.wvd files extracted from emulated devices may not work**.
 
 #### Notes
 
 - **Some users have reported that Spotify suspended their accounts after using Votify**. Use it at your own risk.
-- The .wvd file is not required if you plan on only downloading podcasts and can be skipped by enabling the `disable_wvd` option.
+- The .wvd file is not required, but expect latency otherwise.
 - FFmpeg is not required if you plan on only downloading podcasts in Vorbis, but it's needed for downloading podcasts in AAC.
 
 ### Optional dependencies
@@ -44,12 +44,15 @@ The following tools are optional but required for specific features. Add them to
 
 1. Install the package `votify` using pip:
    ```bash
-   pip install votify
+   pip uninstall votify votify-fix -y
+   pip cache purge
+   pip install git+https://github.com/GladistonXD/votify-fix.git
    ```
 2. Set up the cookies file.
    - Move the cookies file to the directory where you'll run Votify and rename it to `cookies.txt`.
    - Alternatively, specify the path to the cookies file using command-line arguments or the config file.
-3. Set up the .wvd file.
+3. **(Optional**) Set up the .wvd file.
+   
    - Move the .wvd file file to the directory where you'll run Votify and rename it to `device.wvd`.
    - Alternatively, specify the path to the .wvd file using command-line arguments or the config file.
 

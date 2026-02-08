@@ -19,58 +19,92 @@ class DownloaderMusicVideo(DownloaderVideo):
         self.__dict__.update(downloader_video.__dict__)
 
     def get_video_gid(self, gid_metadata: dict) -> str | None:
-        if not gid_metadata.get("original_video"):
+        if not gid_metadata:
             return None
-        return gid_metadata["original_video"][0]["gid"]
+        return gid_metadata
 
     def get_tags(
-        self,
-        track_metadata: dict,
-        album_metadata: dict,
-        track_credits: dict,
+            self,
+            track_metadata: dict,
+            album_metadata: dict,
+            track_credits: dict,
     ) -> dict:
-        external_ids = track_metadata.get("external_ids")
-        external_urls = (track_metadata.get("linked_from") or track_metadata)[
-            "external_urls"
-        ]
+        track_data = track_metadata.get('data', {}).get('trackUnion', {})
+        if not track_data:
+            track_data = track_metadata
+
+        album_info = track_data.get('albumOfTrack', {})
+
+        spotify_url = track_data.get('sharingInfo', {}).get('shareUrl')
+        if not spotify_url and 'id' in track_data:
+            spotify_url = f"https://open.spotify.com/track/{track_data['id']}"
+
+        release_date_iso = album_info.get("date", {}).get("isoString")
+        precision_raw = album_info.get("date", {}).get("precision")
+
+        precision = precision_raw.lower() if precision_raw else "day"
+
+        release_date_str = release_date_iso.split("T")[0] if release_date_iso else None
+
         release_date_datetime_obj = self.downloader.get_release_date_datetime_obj(
-            album_metadata["release_date"],
-            album_metadata["release_date_precision"],
+            release_date_str,
+            precision,
         )
-        producers = next(
-            role
-            for role in track_credits["roleCredits"]
-            if role["roleTitle"] == "Producers"
-        )["artists"]
-        composers = next(
-            role
-            for role in track_credits["roleCredits"]
-            if role["roleTitle"] == "Writers"
-        )["artists"]
+
+        try:
+            main_artists = next(
+                role
+                for role in track_credits.get("roleCredits", [])
+                if role["roleTitle"] == "Performers"
+            )["artists"]
+            artist_string = self.downloader.get_artist_string(main_artists)
+        except (StopIteration, KeyError):
+            artist_string = "Unknown Artist"
+
+        def get_credits_by_role(role_name):
+            try:
+                return next(
+                    role
+                    for role in track_credits.get("roleCredits", [])
+                    if role["roleTitle"] == role_name
+                )["artists"]
+            except (StopIteration, KeyError):
+                return None
+
+        producers = get_credits_by_role("Producers")
+        composers = get_credits_by_role("Writers")
+
+        copyright_text = None
+        copyrights_list = album_info.get('copyright', {}).get('items', [])
+        if copyrights_list:
+            copyright_obj = next((i for i in copyrights_list if i.get("type") == "P"), copyrights_list[0])
+            copyright_text = copyright_obj.get('text')
+
+        album_name = album_info.get("name")
+        if not album_name and isinstance(album_metadata, dict):
+            album_name = album_metadata.get("name")
         tags = {
-            "artist": self.downloader.get_artist_string(track_metadata["artists"]),
+            "album": album_name or "Unknown Album",
+            "artist": artist_string,
             "composer": (
                 self.downloader.get_artist_string(composers) if composers else None
             ),
-            "copyright": next(
-                (i["text"] for i in album_metadata["copyrights"] if i["type"] == "P"),
-                None,
-            ),
-            "isrc": external_ids.get("isrc") if external_ids is not None else None,
-            "label": album_metadata.get("label"),
+            "copyright": copyright_text,
+            "isrc": None,
+            "label": None,
             "media_type": "Music video",
             "producer": (
                 self.downloader.get_artist_string(producers) if producers else None
             ),
-            "rating": "Explicit" if track_metadata.get("explicit") else "Unknown",
-            "title": track_metadata["name"],
+            "rating": "Explicit" if track_data.get("contentRating", {}).get("label") == "EXPLICIT" else "Clean",
+            "title": track_data.get("name"),
             "release_date": self.downloader.get_release_date_tag(
                 release_date_datetime_obj
             ),
             "release_year": str(release_date_datetime_obj.year),
-            "url": external_urls["spotify"],
+            "url": spotify_url,
         }
-        tags["release_year"] = str(release_date_datetime_obj.year)
+
         return tags
 
     def get_music_video_id_from_song_id(
@@ -146,12 +180,13 @@ class DownloaderMusicVideo(DownloaderVideo):
         if not album_metadata:
             logger.debug("Getting album metadata")
             album_metadata = self.downloader.spotify_api.get_album(
-                music_video_metadata["album"]["id"]
+                music_video_metadata['data']['trackUnion']['albumOfTrack']["id"]
             )
         if not gid_metadata:
             logger.debug("Getting GID metadata")
             gid_metadata = self.downloader.get_gid_metadata(music_video_id, "track")
         video_gid = self.get_video_gid(gid_metadata)
+
         if not video_gid:
             logger.debug("Getting equivalent music video ID from song ID")
             music_video_id = self.get_music_video_id_from_song_id(

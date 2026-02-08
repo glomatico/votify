@@ -8,3 +8,4 @@ pybase62
 pycryptodome
 pywidevine
 yt-dlp
+websocket-client

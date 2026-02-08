@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import time
 from pathlib import Path
 
 from Crypto.Cipher import AES
@@ -60,44 +61,57 @@ class DownloaderAudio:
     def get_stream_info(
         self,
         gid_metadata: dict,
+        product_name: dict,
         media_type: str,
     ) -> StreamInfoAudio:
         stream_info = StreamInfoAudio()
         if media_type == "track":
-            audio_files = gid_metadata.get("file")
+            audio_files = gid_metadata
         elif media_type == "episode":
-            audio_files = gid_metadata.get("audio")
+            audio_files = gid_metadata
         else:
             raise RuntimeError()
         audio_files = audio_files or gid_metadata.get("alternative")
         if not audio_files:
             return stream_info
-        if audio_files[0].get("gid"):
-            audio_files = audio_files[0]["file"]
-        quality, audio_file = self.get_audio_file(audio_files)
-        if not audio_file:
-            return stream_info
-        file_id = audio_file["file_id"]
+        if audio_files:
+            audio_files = audio_files
+        file_id = audio_files
         stream_url = self.downloader.spotify_api.get_stream_urls(file_id)["cdnurl"][0]
         stream_info.stream_url = stream_url
         stream_info.file_id = file_id
+        product = product_name['data']['me']['account']['product']
+        if 'FREE' == product:
+            quality = 128000
+        else:
+            quality = 256000
         stream_info.quality = quality
         if self.audio_quality in AAC_AUDIO_QUALITIES:
             seek_table = self.downloader.spotify_api.get_seek_table(file_id)
             pssh = seek_table["pssh"]
             stream_info.widevine_pssh = pssh
+
         return stream_info
 
+
     def get_decryption_key(self, stream_info: StreamInfoAudio) -> str:
-        if self.audio_quality in AAC_AUDIO_QUALITIES:
-            _, decryption_key = self.downloader.get_widevine_decryption_key(
-                stream_info.widevine_pssh,
-                "audio",
-            )
-        else:
-            decryption_key = self.downloader.get_playplay_decryption_key(
-                stream_info.file_id
-            )
+        decryption_key = None
+        for attempt in range(10):
+            try:
+                if self.audio_quality in AAC_AUDIO_QUALITIES:
+                    _, decryption_key = self.downloader.get_widevine_decryption_key(
+                        stream_info.widevine_pssh,
+                        "audio",
+                    )
+                else:
+                    decryption_key = self.downloader.get_playplay_decryption_key(
+                        stream_info.file_id
+                    )
+                if decryption_key:
+                    return decryption_key
+
+            except Exception as e:
+                time.sleep(attempt + 10)
         return decryption_key
 
     def download_stream_url(self, input_path: Path, stream_url: str):
