@@ -526,6 +526,16 @@ class SpotifyApi:
 
     async def get_gid_metadata(
         self,
+        media_id: str,
+        media_type: str,
+    ) -> dict:
+        return await self.get_gid_metadata(
+            gid=self.media_id_to_gid(media_id),
+            media_type=media_type,
+        )
+
+    async def _get_gid_metadata(
+        self,
         gid: str,
         media_type: str,
     ) -> dict:
