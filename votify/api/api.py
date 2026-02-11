@@ -601,7 +601,7 @@ class SpotifyApi:
 
         response = await self.client.post(
             WIDEVINE_LICENSE_API_URL.format(type=media_type),
-            data=challenge,
+            content=challenge,
         )
         widevine_license = response.content
 
