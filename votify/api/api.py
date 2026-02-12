@@ -20,7 +20,7 @@ from .constants import (
     SESSION_TOKEN_URL,
     AUDIO_STREAM_URLS_API_URL,
     TRACK_CREDITS_API_URL,
-    TRACK_PLAYBACK_API_URL,
+    PLAYBACK_INFO_API_URL,
     VIDEO_MANIFEST_API_URL,
     WIDEVINE_LICENSE_API_URL,
 )
@@ -494,7 +494,7 @@ class SpotifyApi:
 
         return seek_table
 
-    async def get_track_playback_info(
+    async def get_playback_info(
         self,
         media_id: str,
         media_type: str,
@@ -503,7 +503,7 @@ class SpotifyApi:
         await self._refresh_authorization_if_needed()
 
         response = await self.client.get(
-            TRACK_PLAYBACK_API_URL.format(
+            PLAYBACK_INFO_API_URL.format(
                 media_id=media_id,
                 media_type=media_type,
             ),
@@ -511,18 +511,18 @@ class SpotifyApi:
                 "manifestFileFormat": file_formats,
             },
         )
-        track_playback_info = safe_json(response)
+        playback_info = safe_json(response)
 
-        if response.status_code != 200 or not track_playback_info:
+        if response.status_code != 200 or not playback_info:
             raise VotifyRequestException(
-                name="Track playback info",
+                name="Playback info",
                 response_status_code=response.status_code,
                 response_text=response.text,
             )
 
-        logger.debug(f"Received track playback info: {track_playback_info}")
+        logger.debug(f"Received track playback info: {playback_info}")
 
-        return track_playback_info
+        return playback_info
 
     async def get_gid_metadata(
         self,
