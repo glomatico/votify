@@ -46,14 +46,14 @@ The following tools are optional but required for specific features. Add them to
    ```bash
    pip uninstall votify votify-fix -y
    pip cache purge
-   pip install git+https://github.com/GladistonXD/votify-fix.git
+   pip install git+https://github.com/glomatico/votify.git
    ```
 2. Set up the cookies file.
    - Move the cookies file to the directory where you'll run Votify and rename it to `cookies.txt`.
    - Alternatively, specify the path to the cookies file using command-line arguments or the config file.
 3. **(Optional**) Set up the .wvd file.
    
-   - Move the .wvd file file to the directory where you'll run Votify and rename it to `device.wvd`.
+   - Move the .wvd file to the directory where you'll run Votify and rename it to `device.wvd`.
    - Alternatively, specify the path to the .wvd file using command-line arguments or the config file.
 
 ## Usage
@@ -225,7 +225,7 @@ The following variables can be used in the template folder/file and/or in the `e
 ### Download modes
 
 - `ytdlp`: Default download mode.
-- `aria2c`: Faster alternative to `ytdlp` only applicable to songs and podcasts.
+- `aria2c`: Faster alternative to `ytdlp`, only applicable to songs and podcasts.
 
 ### Video remux modes
 
