@@ -17,7 +17,7 @@ from mutagen.flac import Picture
 from mutagen.mp4 import MP4, MP4Cover, MP4FreeForm
 from mutagen.oggvorbis import OggVorbis, OggVorbisHeaderError
 from PIL import Image
-from pywidevine import PSSH, Cdm, Device
+from pywidevine import PSSH, Cdm, Device, RemoteCdm
 
 from .constants import (
     MEDIA_TYPE_MP4_MAPPING,
@@ -729,8 +729,25 @@ class Downloader:
     ) -> tuple[str, str]:
         try:
             if self.cdm is None:
-                cmd = self.spotify_api.extract_keys_with_cdrm(pssh, media_type)
-                key_id, decryption_key = cmd.split(':')
+                config = {
+                    "device_type": "ANDROID",
+                    "system_id": 22590,
+                    "security_level": 3,
+                    "host": "https://cdrm-project.com/remotecdm/widevine",
+                    "secret": "CDRM",
+                    "device_name": "public"
+                }
+                self.cdm = RemoteCdm(**config)
+                pssh = PSSH(pssh)
+                cdm_session = self.cdm.open()
+                challenge = self.cdm.get_license_challenge(cdm_session, pssh)
+                license_msg = self.spotify_api.get_widevine_license(challenge, media_type)
+                self.cdm.parse_license(cdm_session, license_msg)
+                keys = next(
+                    i for i in self.cdm.get_keys(cdm_session) if i.type == "CONTENT"
+                )
+                decryption_key = keys.key.hex()
+                key_id = keys.kid.hex()
             else:
                 pssh = PSSH(pssh)
                 cdm_session = self.cdm.open()
