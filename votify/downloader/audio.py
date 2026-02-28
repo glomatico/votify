@@ -225,12 +225,6 @@ class SpotifyAudioDownloader(SpotifyBaseDownloader):
             "decrypted",
             "." + item.media.stream_info.audio_track.file_format,
         )
-        staged_path = self.get_temp_path(
-            item.media.media_id,
-            item.uuid_,
-            "staged",
-            ".m4a",
-        )
         await self.download_stream(
             encrypted_path,
             item.media.stream_info.audio_track.stream_url,
@@ -238,11 +232,11 @@ class SpotifyAudioDownloader(SpotifyBaseDownloader):
         await self.stage(
             encrypted_path,
             decrypted_path,
-            staged_path,
+            item.staged_path,
             item.media.decryption_key.decryption_key,
         )
         await self.apply_tags(
-            staged_path,
+            item.staged_path,
             item.media.tags,
             item.media.cover_url,
         )
@@ -250,7 +244,7 @@ class SpotifyAudioDownloader(SpotifyBaseDownloader):
     def get_staged_file_extension(self, file_format: str) -> str:
         if file_format == "mp4":
             return ".m4a"
-        return ".ogg"
+        return "." + file_format
 
     def parse_item(self, media: SpotifyMedia) -> DownloadItem:
         item = DownloadItem(media=media)
