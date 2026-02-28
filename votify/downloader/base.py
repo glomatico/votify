@@ -9,12 +9,12 @@ from pathlib import Path
 
 import httpx
 from async_lru import alru_cache
-from ..interface.enums import MediaType
-from mutagen.flac import Picture
+from mutagen.flac import FLAC, Picture
 from mutagen.mp4 import MP4, MP4Cover
 from mutagen.oggvorbis import OggVorbis, OggVorbisHeaderError
 from PIL import Image
 
+from ..interface.enums import MediaType
 from ..interface.interface import SpotifyInterface
 from ..interface.types import MediaTags, PlaylistTags
 from ..utils import CustomStringFormatter
@@ -316,6 +316,13 @@ class SpotifyBaseDownloader:
                 cover_bytes,
                 exclude_tags,
             )
+        elif input_path.lower().endswith(".flac"):
+            self._apply_flac_tags(
+                input_path,
+                filtered_tags,
+                cover_bytes,
+                exclude_tags,
+            )
 
     def _apply_ogg_tags(
         self,
@@ -372,6 +379,31 @@ class SpotifyBaseDownloader:
             ]
 
         mp4.save()
+
+    def _apply_flac_tags(
+        self,
+        input_path: str,
+        tags: MediaTags,
+        cover_bytes: bytes | None,
+        exclude_tags: list[str],
+    ) -> None:
+        flac = FLAC(input_path)
+        flac.clear()
+        skip_tagging = "all" in exclude_tags
+
+        if not skip_tagging:
+            flac_tags = tags.as_vorbis_tags(self.date_tag_template)
+            flac.update(flac_tags)
+
+        if not skip_tagging and "cover" not in exclude_tags and cover_bytes:
+            picture = Picture()
+            picture.mime = "image/jpeg"
+            picture.data = cover_bytes
+            picture.type = 3
+            picture.width, picture.height = Image.open(BytesIO(cover_bytes)).size
+            flac.add_picture(picture)
+
+        flac.save()
 
     @staticmethod
     async def run_async_command(*args: str, silent: bool = False) -> None:
