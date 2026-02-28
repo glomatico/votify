@@ -42,6 +42,7 @@ class SpotifyApi:
         return (
             getattr(self, "user_profile", {})
             .get("data", {})
+            .get("me", {})
             .get("account", {})
             .get("product")
             == "PREMIUM"
