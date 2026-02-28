@@ -3,10 +3,10 @@ from __future__ import annotations
 from enum import Enum
 
 from .constants import (
-    AAC_AUDIO_QUALITIES,
     FORMAT_ID_MAP,
     MEDIA_RATING_STR_MAP,
     MEDIA_TYPE_STR_MAP,
+    MP4_AUDIO_QUALITIES,
     PREMIUM_AUDIO_QUALITIES,
 )
 
@@ -51,6 +51,7 @@ class AudioQuality(Enum):
     VORBIS_LOW = "vorbis-low"
     AAC_MEDIUM = "aac-medium"
     AAC_HIGH = "aac-high"
+    FLAC = "flac"
 
     @property
     def premium(self) -> bool:
@@ -58,7 +59,7 @@ class AudioQuality(Enum):
 
     @property
     def mp4(self) -> bool:
-        return self.value in AAC_AUDIO_QUALITIES
+        return self.value in MP4_AUDIO_QUALITIES
 
     @property
     def format_id(self) -> str | None:
@@ -71,6 +72,8 @@ class AudioQuality(Enum):
                 return AudioQuality.VORBIS_MEDIUM
             elif self.value == "vorbis-medium":
                 return AudioQuality.VORBIS_LOW
+            elif self.value == "flac":
+                return AudioQuality.AAC_HIGH
         else:
             if self.value == "aac-high":
                 return AudioQuality.AAC_MEDIUM

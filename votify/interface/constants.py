@@ -44,8 +44,9 @@ DEFAULT_EPISODE_DECRYPTION_KEY = (
 FORMAT_ID_MAP = {
     "aac-high": "11",
     "aac-medium": "10",
+    "flac": "17",
 }
 
-AAC_AUDIO_QUALITIES = {"aac-high", "aac-medium"}
+MP4_AUDIO_QUALITIES = {"aac-high", "aac-medium", "flac"}
 VORBIS_AUDIO_QUALITIES = {"vorbis-high", "vorbis-medium", "vorbis-low"}
 PREMIUM_AUDIO_QUALITIES = {"aac-high", "vorbis-high"}
