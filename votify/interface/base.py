@@ -105,10 +105,19 @@ class SpotifyBaseInterface:
     def is_video(self, playback_info: dict) -> bool:
         return bool(playback_info["manifest"].get("manifest_ids_video"))
 
-    async def get_playback_info(self, media_id: str, media_type: str) -> dict | None:
+    async def get_playback_info(
+        self,
+        media_id: str,
+        media_type: str,
+        flac: bool = False,
+    ) -> dict | None:
         playback_info_response = await self.api.get_playback_info(
             media_id=media_id,
             media_type=media_type,
+            file_formats=[
+                "manifest_ids_video",
+                "file_ids_mp4flac" if flac else "file_ids_mp4",
+            ],
         )
 
         playback_info_key = next(iter(playback_info_response.get("media", {})), None)

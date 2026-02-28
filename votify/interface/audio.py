@@ -51,7 +51,7 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
             audio_track=StreamInfo(
                 stream_url=stream_url,
                 widevine_pssh=pssh,
-                file_format="mp4",
+                file_format="flac" if audio_quality == AudioQuality.FLAC else "mp4",
             ),
         )
 
@@ -67,12 +67,15 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
         playback_info: dict,
         format_id: str,
     ) -> str | None:
+        manifest_key = (
+            "file_ids_mp4flac"
+            if self.audio_quality == AudioQuality.FLAC
+            else "file_ids_mp4"
+        )
         file_id = next(
             (
                 file_info["file_id"]
-                for file_info in playback_info.get("manifest", {}).get(
-                    "file_ids_mp4", []
-                )
+                for file_info in playback_info.get("manifest", {}).get(manifest_key, [])
                 if file_info["format"] == format_id
             ),
             None,
@@ -95,7 +98,7 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
         file_id: str,
     ) -> str:
         seek_table_response = await self.api.get_seek_table(file_id)
-        pssh = seek_table_response["pssh"]
+        pssh = seek_table_response["pssh_widevine"]
 
         logger.debug(f"Received PSSH: {pssh}")
 

@@ -5,7 +5,7 @@ from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 
 from .audio import SpotifyAudioInterface
-from .enums import ArtistMediaOption
+from .enums import ArtistMediaOption, AudioQuality
 from .episode import SpotifyEpisodeInterface
 from .episode_video import SpotifyEpisodeVideoInterface
 from .exceptions import (
@@ -61,6 +61,7 @@ class SpotifyInterface:
         playback_info = await self.base.get_playback_info(
             media_id=track_id,
             media_type="track",
+            flac=self.song.audio_quality == AudioQuality.FLAC,
         )
         assert playback_info, "Playback info should be available for playable track"
 
