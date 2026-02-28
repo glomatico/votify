@@ -49,4 +49,4 @@ FORMAT_ID_MAP = {
 
 MP4_AUDIO_QUALITIES = {"aac-high", "aac-medium", "flac"}
 VORBIS_AUDIO_QUALITIES = {"vorbis-high", "vorbis-medium", "vorbis-low"}
-PREMIUM_AUDIO_QUALITIES = {"aac-high", "vorbis-high"}
+PREMIUM_AUDIO_QUALITIES = {"aac-high", "vorbis-high", "flac"}
