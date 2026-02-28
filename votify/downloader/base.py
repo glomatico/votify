@@ -309,7 +309,7 @@ class SpotifyBaseDownloader:
                 cover_bytes,
                 exclude_tags,
             )
-        else:
+        elif input_path.lower().endswith((".mp4", ".m4a")):
             self._apply_mp4_tags(
                 input_path,
                 filtered_tags,
