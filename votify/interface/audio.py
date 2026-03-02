@@ -98,7 +98,7 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
         file_id: str,
     ) -> str:
         seek_table_response = await self.api.get_seek_table(file_id)
-        pssh = seek_table_response["pssh_widevine"]
+        pssh = seek_table_response.get("pssh", seek_table_response.get("widevine_pssh"))
 
         logger.debug(f"Received PSSH: {pssh}")
 
