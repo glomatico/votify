@@ -75,6 +75,7 @@ async def main(config: CliConfig):
         cover_size=config.cover_size,
         prefer_video=config.prefer_video,
         no_drm=config.no_drm,
+        skip_stream_info=config.synced_lyrics_only,
         wvd_path=wvd_path,
     )
     video_interface = SpotifyVideoInterface(
@@ -90,7 +91,6 @@ async def main(config: CliConfig):
     episode_interface = SpotifyEpisodeInterface(audio_interface)
     music_video_interface = SpotifyMusicVideoInterface(video_interface)
     episode_video_interface = SpotifyEpisodeVideoInterface(video_interface)
-
     interface = SpotifyInterface(
         base=audio_interface,
         song=song_interface,
