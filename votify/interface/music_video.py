@@ -89,11 +89,12 @@ class SpotifyMusicVideoInterface(SpotifyVideoInterface):
             album_data["coverArt"]["sources"][0]["url"]
         )
 
-        media.stream_info = await self.get_stream_info(playback_info)
+        if not self.skip_stream_info:
+            media.stream_info = await self.get_stream_info(playback_info)
 
-        media.decryption_key = await self.get_widevine_decryption_key(
-            media.stream_info.audio_track.widevine_pssh
-        )
+            media.decryption_key = await self.get_widevine_decryption_key(
+                media.stream_info.audio_track.widevine_pssh
+            )
 
         logger.debug(f"Parsed music video media: {media}")
 

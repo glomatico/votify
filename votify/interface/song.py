@@ -64,15 +64,16 @@ class SpotifySongInterface(SpotifyAudioInterface):
             media.album_metadata["coverArt"]["sources"][0]["url"]
         )
 
-        try:
-            media.stream_info = await self.get_stream_info(playback_info, False)
-        except VotifyMediaAudioQualityNotAvailableException as e:
-            e.media_metadata = track_data
-            raise
+        if not self.skip_stream_info:
+            try:
+                media.stream_info = await self.get_stream_info(playback_info, False)
+            except VotifyMediaAudioQualityNotAvailableException as e:
+                e.media_metadata = track_data
+                raise
 
-        media.decryption_key = await self.get_widevine_decryption_key(
-            media.stream_info.audio_track.widevine_pssh
-        )
+            media.decryption_key = await self.get_widevine_decryption_key(
+                media.stream_info.audio_track.widevine_pssh
+            )
 
         logger.debug(f"Processed song media: {media}")
 

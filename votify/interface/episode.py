@@ -48,15 +48,16 @@ class SpotifyEpisodeInterface(SpotifyAudioInterface):
             episode_data["coverArt"]["sources"][0]["url"]
         )
 
-        try:
-            media.stream_info = await self.get_stream_info(playback_info, True)
-        except VotifyMediaAudioQualityNotAvailableException as e:
-            e.media_metadata = episode_data
-            raise
+        if not self.skip_stream_info:
+            try:
+                media.stream_info = await self.get_stream_info(playback_info, True)
+            except VotifyMediaAudioQualityNotAvailableException as e:
+                e.media_metadata = episode_data
+                raise
 
-        media.decryption_key = DecryptionKey(
-            decryption_key=DEFAULT_EPISODE_DECRYPTION_KEY,
-        )
+            media.decryption_key = DecryptionKey(
+                decryption_key=DEFAULT_EPISODE_DECRYPTION_KEY,
+            )
 
         logger.debug(f"Parsed episode media: {media}")
 

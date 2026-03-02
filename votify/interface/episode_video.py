@@ -48,14 +48,15 @@ class SpotifyEpisodeVideoInterface(SpotifyVideoInterface):
             episode_data["coverArt"]["sources"][0]["url"]
         )
 
-        media.stream_info = await self.get_stream_info(playback_info)
+        if not self.skip_stream_info:
+            media.stream_info = await self.get_stream_info(playback_info)
 
-        if media.stream_info.audio_track.widevine_pssh:
-            if self.no_drm:
-                raise VotifyDrmDisabledException(media.media_id, episode_data)
-            media.decryption_key = await self.get_widevine_decryption_key(
-                media.stream_info.audio_track.widevine_pssh
-            )
+            if media.stream_info.audio_track.widevine_pssh:
+                if self.no_drm:
+                    raise VotifyDrmDisabledException(media.media_id, episode_data)
+                media.decryption_key = await self.get_widevine_decryption_key(
+                    media.stream_info.audio_track.widevine_pssh
+                )
 
         logger.debug(f"Parsed episode video media: {media}")
 
