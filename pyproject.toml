@@ -18,7 +18,6 @@ dependencies = [
     "pybase62>=1.0.0",
     "pycryptodome>=3.23.0",
     "pywidevine>=1.9.0",
-    "websocket-client>=1.9.0",
     "yt-dlp>=2026.2.4",
 ]
 
