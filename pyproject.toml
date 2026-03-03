@@ -1,6 +1,6 @@
 [project]
 name = "votify"
-version = "1.6.3"
+version = "1.6.4"
 description = "A command-line app for downloading songs, podcasts and videos from Spotify."
 readme = "README.md"
 license = "MIT"
