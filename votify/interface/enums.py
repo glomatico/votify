@@ -68,8 +68,16 @@ class AudioQuality(Enum):
             return "mp4"
         elif self.value in VORBIS_AUDIO_QUALITIES:
             return "ogg"
-        elif self.value == "flac":
+        return None
+
+    @property
+    def actual_file_format(self) -> str | None:
+        if self.value == "flac":
             return "flac"
+        elif self.value in MP4_AUDIO_QUALITIES:
+            return "m4a"
+        elif self.value in VORBIS_AUDIO_QUALITIES:
+            return "ogg"
         return None
 
     @property
