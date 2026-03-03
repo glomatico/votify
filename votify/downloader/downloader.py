@@ -96,21 +96,21 @@ class SpotifyDownloader:
                 raise VotifyDependencyNotFound("cURL")
 
             if (
-                self.base.interface.song.audio_quality.mp4
+                item.media.stream_info.audio_track.file_format == "mp4"
                 and self.audio.remux_mode == AudioRemuxMode.FFMPEG
                 and not self.base.ffmpeg_full_path
             ):
                 raise VotifyDependencyNotFound("ffmpeg")
 
             if (
-                self.base.interface.song.audio_quality.mp4
+                item.media.stream_info.audio_track.file_format == "mp4"
                 and self.audio.remux_mode == AudioRemuxMode.MP4BOX
                 and not self.base.mp4box_full_path
             ):
                 raise VotifyDependencyNotFound("MP4Box")
 
             if (
-                self.base.interface.song.audio_quality.mp4
+                item.media.stream_info.audio_track.file_format == "mp4"
                 and (
                     self.audio.remux_mode == AudioRemuxMode.MP4DECRYPT
                     or self.audio.remux_mode == AudioRemuxMode.MP4BOX
