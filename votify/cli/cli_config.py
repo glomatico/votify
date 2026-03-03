@@ -137,14 +137,6 @@ class CliConfig:
             type=CoverSize,
         ),
     ]
-    prefer_video: Annotated[
-        bool,
-        option(
-            "--prefer-video",
-            help="Prefer video streams when available",
-            is_flag=True,
-        ),
-    ]
     no_drm: Annotated[
         bool,
         option(
@@ -197,6 +189,14 @@ class CliConfig:
         ),
     ]
     # Interface specific options
+    prefer_video: Annotated[
+        bool,
+        option(
+            "--prefer-video",
+            help="Prefer video streams when available",
+            is_flag=True,
+        ),
+    ]
     artist_media_option: Annotated[
         ArtistMediaOption,
         option(

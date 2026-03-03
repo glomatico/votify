@@ -73,7 +73,6 @@ async def main(config: CliConfig):
     base_interface = SpotifyBaseInterface(
         api=api,
         cover_size=config.cover_size,
-        prefer_video=config.prefer_video,
         no_drm=config.no_drm,
         skip_stream_info=config.synced_lyrics_only,
         wvd_path=wvd_path,
@@ -97,6 +96,7 @@ async def main(config: CliConfig):
         episode=episode_interface,
         music_video=music_video_interface,
         episode_video=episode_video_interface,
+        prefer_video=config.prefer_video,
         artist_media_option=config.artist_media_option,
     )
 
