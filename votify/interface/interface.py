@@ -73,7 +73,9 @@ class SpotifyInterface:
                             "album_data": album_data,
                         }
                         if track_data["mediaType"] == "VIDEO"
-                        else {}
+                        else {
+                            "track_id": track_id,
+                        }
                     ),
                 )
 
