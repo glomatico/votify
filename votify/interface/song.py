@@ -68,7 +68,7 @@ class SpotifySongInterface(SpotifyAudioInterface):
         if not self.skip_stream_info:
             try:
                 media.stream_info = await self.get_stream_info(
-                    track_id=track_id,
+                    media_id=track_id,
                     media_type="track",
                     skip_pssh=False,
                 )
