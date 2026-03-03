@@ -77,7 +77,11 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
         ):
             return None
 
-        file_id = self._parse_file_id(playback_info, audio_quality.format_id)
+        file_id = self._parse_file_id(
+            playback_info=playback_info,
+            format_id=audio_quality.format_id,
+            flac=audio_quality == AudioQuality.FLAC,
+        )
         if not file_id:
             return None
 
@@ -103,12 +107,9 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
         self,
         playback_info: dict,
         format_id: str,
+        flac: bool = False,
     ) -> str | None:
-        manifest_key = (
-            "file_ids_mp4flac"
-            if self.audio_quality_priority == AudioQuality.FLAC
-            else "file_ids_mp4"
-        )
+        manifest_key = "file_ids_mp4flac" if flac else "file_ids_mp4"
         file_id = next(
             (
                 file_info["file_id"]
