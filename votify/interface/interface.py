@@ -29,6 +29,7 @@ class SpotifyInterface:
         episode: SpotifyEpisodeInterface,
         music_video: SpotifyMusicVideoInterface,
         episode_video: SpotifyEpisodeVideoInterface,
+        prefer_video: bool = False,
         artist_media_option: ArtistMediaOption | None = None,
     ) -> None:
         self.base = base
@@ -36,6 +37,7 @@ class SpotifyInterface:
         self.episode = episode
         self.music_video = music_video
         self.episode_video = episode_video
+        self.prefer_video = prefer_video
         self.artist_media_option = artist_media_option
 
     async def _get_track_media(
@@ -58,29 +60,24 @@ class SpotifyInterface:
         if not track_data["playability"]["playable"]:
             return VotifyMediaUnstreamableException(track_id, track_data)
 
-        playback_info = await self.base.get_playback_info(
-            media_id=track_id,
-            media_type="track",
-            flac=self.song.audio_quality == AudioQuality.FLAC,
-        )
-        assert playback_info, "Playback info should be available for playable track"
-
         try:
-            if self.base.is_video(playback_info):
+            if (
+                track_data["mediaType"] == "VIDEO"
+                or self.prefer_video
+                and track_data["associationsV3"]["videoAssociations"]["totalCount"]
+            ):
                 return await self.music_video.proccess_media(
-                    playback_info=playback_info,
                     **(
                         {
                             "track_data": track_data,
                             "album_data": album_data,
                         }
-                        if playback_info["metadata"]["uri"] == track_data["uri"]
+                        if track_data["mediaType"] == "VIDEO"
                         else {}
                     ),
                 )
 
             return await self.song.proccess_media(
-                playback_info=playback_info,
                 track_data=track_data,
                 album_data=album_data,
                 album_items=album_items,
@@ -105,23 +102,15 @@ class SpotifyInterface:
         if not episode_data["playability"]["playable"]:
             return VotifyMediaUnstreamableException(episode_id, episode_data)
 
-        playback_info = await self.base.get_playback_info(
-            media_id=episode_id,
-            media_type="episode",
-        )
-        assert playback_info, "Playback info should be available for playable episode"
-
         try:
-            if self.base.is_video(playback_info):
+            if "VIDEO" in episode_data["mediaTypes"] and self.prefer_video:
                 return await self.episode_video.proccess_media(
-                    playback_info=playback_info,
                     episode_data=episode_data,
                     show_data=show_data,
                     show_items=show_items,
                 )
 
             return await self.episode.proccess_media(
-                playback_info=playback_info,
                 episode_data=episode_data,
                 show_data=show_data,
                 show_items=show_items,

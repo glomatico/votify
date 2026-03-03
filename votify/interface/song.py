@@ -7,7 +7,7 @@ from .audio import SpotifyAudioInterface
 from .constants import COVER_SIZE_ID_MAP_SONG
 from .enums import MediaType
 from .exceptions import (
-    VotifyMediaAudioQualityNotAvailableException,
+    VotifyMediaFormatNotAvailableException,
 )
 from .types import MediaLyrics, MediaTags, SpotifyMedia
 
@@ -23,16 +23,17 @@ class SpotifySongInterface(SpotifyAudioInterface):
 
     async def proccess_media(
         self,
-        playback_info: dict,
+        track_id: str | None = None,
         track_data: dict | None = None,
         album_data: dict | None = None,
         album_items: list[dict] | None = None,
     ) -> SpotifyMedia:
         if not track_data:
-            track_response = await self.api.get_track(
-                playback_info["metadata"]["uri"].split(":")[-1]
-            )
+            track_response = await self.api.get_track(track_id)
             track_data = track_response["data"]["trackUnion"]
+
+        if not track_id:
+            track_id = track_data["uri"].split(":")[-1]
 
         if not album_data:
             if (
@@ -66,8 +67,12 @@ class SpotifySongInterface(SpotifyAudioInterface):
 
         if not self.skip_stream_info:
             try:
-                media.stream_info = await self.get_stream_info(playback_info, False)
-            except VotifyMediaAudioQualityNotAvailableException as e:
+                media.stream_info = await self.get_stream_info(
+                    track_id=track_id,
+                    media_type="track",
+                    skip_pssh=False,
+                )
+            except VotifyMediaFormatNotAvailableException as e:
                 e.media_metadata = track_data
                 raise
 

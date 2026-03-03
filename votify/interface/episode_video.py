@@ -17,16 +17,17 @@ class SpotifyEpisodeVideoInterface(SpotifyVideoInterface):
 
     async def proccess_media(
         self,
-        playback_info: dict,
+        episode_id: dict | None = None,
         episode_data: dict | None = None,
         show_data: dict | None = None,
         show_items: list[dict] | None = None,
     ) -> SpotifyMedia:
         if not episode_data:
-            episode_response = await self.api.get_episode(
-                playback_info["metadata"]["uri"].split(":")[-1]
-            )
+            episode_response = await self.api.get_episode(episode_id)
             episode_data = episode_response["data"]["episodeUnionV2"]
+
+        if not episode_id:
+            episode_id = episode_data["uri"].split(":")[-1]
 
         if not show_data:
             show_data, show_items = await self.get_show_data_cached(
@@ -49,7 +50,7 @@ class SpotifyEpisodeVideoInterface(SpotifyVideoInterface):
         )
 
         if not self.skip_stream_info:
-            media.stream_info = await self.get_stream_info(playback_info)
+            media.stream_info = await self.get_stream_info(episode_id, "episode")
 
             if media.stream_info.audio_track.widevine_pssh:
                 if self.no_drm:

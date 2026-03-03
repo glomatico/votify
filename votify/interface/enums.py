@@ -8,6 +8,7 @@ from .constants import (
     MEDIA_TYPE_STR_MAP,
     MP4_AUDIO_QUALITIES,
     PREMIUM_AUDIO_QUALITIES,
+    VORBIS_AUDIO_QUALITIES,
 )
 
 
@@ -60,6 +61,16 @@ class AudioQuality(Enum):
     @property
     def mp4(self) -> bool:
         return self.value in MP4_AUDIO_QUALITIES
+
+    @property
+    def file_format(self) -> str | None:
+        if self.value in MP4_AUDIO_QUALITIES:
+            return "mp4"
+        elif self.value in VORBIS_AUDIO_QUALITIES:
+            return "ogg"
+        elif self.value == "flac":
+            return "flac"
+        return None
 
     @property
     def format_id(self) -> str | None:

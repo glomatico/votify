@@ -54,7 +54,7 @@ class VotifyMediaUnstreamableException(VotifyMediaException):
         )
 
 
-class VotifyMediaAudioQualityNotAvailableException(VotifyMediaException):
+class VotifyMediaFormatNotAvailableException(VotifyMediaException):
     def __init__(
         self,
         media_id: str,

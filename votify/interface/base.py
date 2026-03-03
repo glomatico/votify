@@ -18,7 +18,6 @@ class SpotifyBaseInterface:
         self,
         api: SpotifyApi,
         cover_size: CoverSize = CoverSize.EXTRA_LARGE,
-        prefer_video: bool = False,
         no_drm: bool = False,
         skip_stream_info: bool = False,
         wvd_path: str | None = "./device.wvd",
@@ -26,7 +25,6 @@ class SpotifyBaseInterface:
     ) -> None:
         self.api = api
         self.cover_size = cover_size
-        self.prefer_video = prefer_video
         self.no_drm = no_drm
         self.skip_stream_info = skip_stream_info
         self.wvd_path = wvd_path
@@ -103,36 +101,6 @@ class SpotifyBaseInterface:
         logger.debug(f"Received decryption key: {key_id}:{decryption_key}")
 
         return DecryptionKey(key_id=key_id, decryption_key=decryption_key)
-
-    def is_video(self, playback_info: dict) -> bool:
-        return bool(playback_info["manifest"].get("manifest_ids_video"))
-
-    async def get_playback_info(
-        self,
-        media_id: str,
-        media_type: str,
-        flac: bool = False,
-    ) -> dict | None:
-        playback_info_response = await self.api.get_playback_info(
-            media_id=media_id,
-            media_type=media_type,
-            file_formats=[
-                "manifest_ids_video",
-                "file_ids_mp4flac" if flac else "file_ids_mp4",
-            ],
-        )
-
-        playback_info_key = next(iter(playback_info_response.get("media", {})), None)
-        if not playback_info_key:
-            return None
-        playback_info = playback_info_response["media"][playback_info_key]
-
-        if self.prefer_video and playback_info.get("video_version_uri"):
-            playback_info = playback_info_response["media"][
-                playback_info["video_version_uri"]
-            ]
-
-        return playback_info["item"]
 
     def _transform_cover_url(self, url: str, cover_map: dict[str, str]) -> str:
         cover_url, _, cover_id = url.rpartition("/")

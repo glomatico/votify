@@ -22,6 +22,27 @@ class SpotifyVideoInterface(SpotifyBaseInterface):
         self.video_format = video_format
         self.resolution = resolution
 
+    async def _get_playback_info(
+        self,
+        media_id: str,
+        media_type: str,
+    ) -> dict:
+        playback_info_response = await self.api.get_playback_info(
+            media_id=media_id,
+            media_type=media_type,
+            file_formats=["manifest_ids_video"],
+        )
+
+        playback_info_key = next(iter(playback_info_response.get("media", {})), None)
+        playback_info = playback_info_response["media"][playback_info_key]
+
+        if playback_info.get("video_version_uri"):
+            playback_info = playback_info_response["media"][
+                playback_info["video_version_uri"]
+            ]
+
+        return playback_info["item"]
+
     def _get_encryption_info(
         self,
         encryption_infos: list[dict],
@@ -161,19 +182,21 @@ class SpotifyVideoInterface(SpotifyBaseInterface):
     def _parse_file_id(
         self,
         playback_info: dict,
-    ) -> str | None:
+    ) -> str:
         manifest_ids_video = playback_info.get("manifest", {}).get("manifest_ids_video")
-        if manifest_ids_video:
-            return manifest_ids_video[0]["file_id"]
-
-        return None
+        return manifest_ids_video[0]["file_id"]
 
     async def get_stream_info(
         self,
-        playback_info: dict,
-    ) -> StreamInfoAv:
+        media_id: str,
+        media_type: str,
+    ) -> StreamInfoAv | None:
+        playback_info = await self._get_playback_info(
+            media_id=media_id,
+            media_type=media_type,
+        )
+
         file_id = self._parse_file_id(playback_info)
-        assert file_id, "File ID should be available in playback info for video content"
 
         manifest = await self.api.get_video_manifest(file_id)
         content = manifest["contents"][0]

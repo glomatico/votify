@@ -58,15 +58,16 @@ class SpotifyMusicVideoInterface(SpotifyVideoInterface):
 
     async def proccess_media(
         self,
-        playback_info: dict,
+        track_id: str | None = None,
         track_data: dict | None = None,
         album_data: dict | None = None,
     ) -> SpotifyMedia:
         if not track_data:
-            track_response = await self.api.get_track(
-                playback_info["metadata"]["uri"].split(":")[-1]
-            )
+            track_response = await self.api.get_track(track_id)
             track_data = track_response["data"]["trackUnion"]
+
+        if not track_id:
+            track_id = track_data["uri"].split(":")[-1]
 
         if not album_data:
             if track_data["albumOfTrack"].get("tracks"):
@@ -90,7 +91,7 @@ class SpotifyMusicVideoInterface(SpotifyVideoInterface):
         )
 
         if not self.skip_stream_info:
-            media.stream_info = await self.get_stream_info(playback_info)
+            media.stream_info = await self.get_stream_info(track_id, "track")
 
             media.decryption_key = await self.get_widevine_decryption_key(
                 media.stream_info.audio_track.widevine_pssh

@@ -2,7 +2,7 @@ import logging
 
 from .base import SpotifyBaseInterface
 from .enums import AudioQuality
-from .exceptions import VotifyMediaAudioQualityNotAvailableException
+from .exceptions import VotifyMediaFormatNotAvailableException
 from .types import DecryptionKey, StreamInfo, StreamInfoAv
 
 logger = logging.getLogger(__name__)
@@ -12,37 +12,74 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
     def __init__(
         self,
         base: SpotifyBaseInterface,
-        audio_quality: AudioQuality = AudioQuality.AAC_MEDIUM,
+        audio_quality_priority: list[AudioQuality] = [AudioQuality.AAC_MEDIUM],
     ):
         self.__dict__.update(base.__dict__)
 
-        self.audio_quality = audio_quality
+        self.audio_quality_priority = audio_quality_priority
+
+    async def _get_playback_info(
+        self,
+        media_id: str,
+        media_type: str,
+        flac: bool = False,
+    ) -> dict:
+        playback_info_response = await self.api.get_playback_info(
+            media_id=media_id,
+            media_type=media_type,
+            file_formats=[
+                "file_ids_mp4flac" if flac else "file_ids_mp4",
+            ],
+        )
+
+        playback_info_key = next(iter(playback_info_response.get("media", {})), None)
+        playback_info = playback_info_response["media"][playback_info_key]
+
+        return playback_info["item"]
 
     async def get_stream_info(
         self,
-        playback_info: dict,
+        media_id: str,
+        media_type: str,
+        skip_pssh: bool,
+    ) -> StreamInfoAv:
+        for audio_quality in self.audio_quality_priority:
+            stream_info = await self._get_stream_info(
+                media_id=media_id,
+                media_type=media_type,
+                skip_pssh=skip_pssh,
+                audio_quality=audio_quality,
+            )
+            if stream_info:
+                return stream_info
+
+        raise VotifyMediaFormatNotAvailableException(
+            media_id=media_id,
+        )
+
+    async def _get_stream_info(
+        self,
+        media_id: str,
+        media_type: str,
+        audio_quality: AudioQuality,
         skip_pssh: bool,
     ) -> StreamInfoAv | None:
+        playback_info = await self._get_playback_info(
+            media_id=media_id,
+            media_type=media_type,
+            flac=audio_quality == AudioQuality.FLAC,
+        )
+
         if (
-            not self.audio_quality.mp4
-            or self.audio_quality.premium
+            audio_quality.file_format != "mp4"
+            or audio_quality.premium
             and not self.api.premium_session
         ):
-            raise VotifyMediaAudioQualityNotAvailableException(
-                media_id=playback_info["metadata"]["uri"].split(":")[-1],
-            )
+            return None
 
-        file_id = None
-        audio_quality = self.audio_quality
-        while True:
-            file_id = self._parse_file_id(playback_info, audio_quality.format_id)
-            if not file_id:
-                assert (
-                    audio_quality.previous_quality
-                ), "No more audio qualities to fallback to"
-                audio_quality = audio_quality.previous_quality
-            else:
-                break
+        file_id = self._parse_file_id(playback_info, audio_quality.format_id)
+        if not file_id:
+            return None
 
         stream_url = await self._get_stream_url(file_id)
         pssh = None if skip_pssh else await self._get_pssh(file_id)
@@ -51,7 +88,7 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
             audio_track=StreamInfo(
                 stream_url=stream_url,
                 widevine_pssh=pssh,
-                file_format="flac" if audio_quality == AudioQuality.FLAC else "mp4",
+                file_format=audio_quality.file_format,
             ),
         )
 
@@ -69,7 +106,7 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
     ) -> str | None:
         manifest_key = (
             "file_ids_mp4flac"
-            if self.audio_quality == AudioQuality.FLAC
+            if self.audio_quality_priority == AudioQuality.FLAC
             else "file_ids_mp4"
         )
         file_id = next(

@@ -3,7 +3,7 @@ import logging
 from .audio import SpotifyAudioInterface
 from .constants import COVER_SIZE_ID_MAP_EPISODE, DEFAULT_EPISODE_DECRYPTION_KEY
 from .enums import MediaType
-from .exceptions import VotifyMediaAudioQualityNotAvailableException
+from .exceptions import VotifyMediaFormatNotAvailableException
 from .types import DecryptionKey, MediaTags, SpotifyMedia
 
 logger = logging.getLogger(__name__)
@@ -18,16 +18,19 @@ class SpotifyEpisodeInterface(SpotifyAudioInterface):
 
     async def proccess_media(
         self,
-        playback_info: dict,
+        episode_id: dict | None = None,
         episode_data: dict | None = None,
         show_data: dict | None = None,
         show_items: list[dict] | None = None,
     ) -> SpotifyMedia:
         if not episode_data:
             episode_response = await self.api.get_episode(
-                playback_info["metadata"]["uri"].split(":")[-1]
+                episode_id=episode_id,
             )
             episode_data = episode_response["data"]["episodeUnionV2"]
+
+        if not episode_id:
+            episode_id = episode_data["uri"].split(":")[-1]
 
         if not show_data:
             show_data, show_items = await self.get_show_data_cached(
@@ -50,8 +53,12 @@ class SpotifyEpisodeInterface(SpotifyAudioInterface):
 
         if not self.skip_stream_info:
             try:
-                media.stream_info = await self.get_stream_info(playback_info, True)
-            except VotifyMediaAudioQualityNotAvailableException as e:
+                media.stream_info = await self.get_stream_info(
+                    media_id=episode_id,
+                    media_type="episode",
+                    skip_pssh=True,
+                )
+            except VotifyMediaFormatNotAvailableException as e:
                 e.media_metadata = episode_data
                 raise
 
