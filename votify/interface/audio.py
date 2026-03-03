@@ -71,7 +71,7 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
         )
 
         if (
-            audio_quality.file_format != "mp4"
+            audio_quality.file_format not in {"mp4", "flac"}
             or audio_quality.premium
             and not self.api.premium_session
         ):
