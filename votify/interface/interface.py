@@ -43,18 +43,16 @@ class SpotifyInterface:
     async def _get_track_media(
         self,
         track_id: str,
-        track_data: dict | None = None,
         album_data: dict | None = None,
         album_items: list[dict] | None = None,
     ) -> SpotifyMedia | BaseException | None:
         if self.base.no_drm:
             return VotifyDrmDisabledException(track_id)
 
-        if not track_data:
-            track_response = await self.base.api.get_track(track_id)
-            track_data = track_response["data"]["trackUnion"]
+        track_response = await self.base.api.get_track(track_id)
+        track_data = track_response["data"]["trackUnion"]
 
-        if "__typename" in track_data and track_data["__typename"] != "Track":
+        if track_data["__typename"] != "Track":
             return VotifyMediaNotFoundException(track_id, track_data)
 
         if not track_data["playability"]["playable"]:
@@ -90,13 +88,11 @@ class SpotifyInterface:
     async def _get_episode_media(
         self,
         episode_id: str,
-        episode_data: dict | None = None,
         show_data: dict | None = None,
         show_items: list[dict] | None = None,
     ) -> SpotifyMedia | BaseException | None:
-        if not episode_data:
-            episode_response = await self.base.api.get_episode(episode_id)
-            episode_data = episode_response["data"]["episodeUnionV2"]
+        episode_response = await self.base.api.get_episode(episode_id)
+        episode_data = episode_response["data"]["episodeUnionV2"]
 
         if episode_data["__typename"] != "Episode":
             return VotifyMediaNotFoundException(episode_id, episode_data)
@@ -141,7 +137,6 @@ class SpotifyInterface:
 
                 yield await self._get_track_media(
                     track_id=track_id,
-                    track_data=track_data,
                     album_data=album_data,
                     album_items=album_items,
                 )
@@ -156,12 +151,10 @@ class SpotifyInterface:
             yield VotifyMediaNotFoundException(media_id, show_data)
         else:
             for item in show_items:
-                episode_data = item["entity"]["data"]
                 episode_id = item["entity"]["_uri"].split(":")[-1]
 
                 yield await self._get_episode_media(
                     episode_id=episode_id,
-                    episode_data=episode_data,
                     show_data=show_data,
                     show_items=show_items,
                 )
@@ -193,12 +186,10 @@ class SpotifyInterface:
                 if track_data["__typename"] == "Track":
                     media = await self._get_track_media(
                         track_id=track_id,
-                        track_data=track_data,
                     )
                 elif track_data["__typename"] == "Episode":
                     media = await self._get_episode_media(
                         episode_id=track_id,
-                        episode_data=track_data,
                     )
                 else:
                     yield VotifyMediaNotFoundException(track_id, track_data)
@@ -299,10 +290,9 @@ class SpotifyInterface:
             ).execute_async()
 
         for video_item in selection:
-            track_id = video_item["uri"].split(":")[-1]
+            track_id = video_item["_uri"].split(":")[-1]
             media = await self._get_track_media(
                 track_id=track_id,
-                track_data=video_item,
             )
             yield media
 
