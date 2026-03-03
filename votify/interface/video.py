@@ -190,11 +190,13 @@ class SpotifyVideoInterface(SpotifyBaseInterface):
         self,
         media_id: str,
         media_type: str,
+        playback_info: dict | None = None,
     ) -> StreamInfoAv | None:
-        playback_info = await self._get_playback_info(
-            media_id=media_id,
-            media_type=media_type,
-        )
+        if not playback_info:
+            playback_info = await self._get_playback_info(
+                media_id=media_id,
+                media_type=media_type,
+            )
 
         file_id = self._parse_file_id(playback_info)
 
