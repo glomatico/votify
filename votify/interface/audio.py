@@ -93,6 +93,7 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
                 stream_url=stream_url,
                 widevine_pssh=pssh,
                 file_format=audio_quality.file_format,
+                actual_file_format=audio_quality.actual_file_format,
             ),
         )
 

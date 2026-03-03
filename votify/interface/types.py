@@ -25,6 +25,7 @@ class StreamInfo:
     stream_url: str | list[str]
     widevine_pssh: str
     file_format: str
+    actual_file_format: str | None = None
 
 
 @dataclass
