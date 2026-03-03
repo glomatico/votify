@@ -85,7 +85,7 @@ async def main(config: CliConfig):
     )
     audio_interface = SpotifyAudioInterface(
         base=base_interface,
-        audio_quality=config.audio_quality,
+        audio_quality_priority=config.audio_quality,
     )
     song_interface = SpotifySongInterface(audio_interface)
     episode_interface = SpotifyEpisodeInterface(audio_interface)

@@ -172,9 +172,9 @@ class CliConfig:
         AudioQuality,
         option(
             "--audio-quality",
-            help="Audio quality to use",
-            default=audio_interface_sig.parameters["audio_quality"].default,
-            type=AudioQuality,
+            help="Comma-separated audio quality priority",
+            default=audio_interface_sig.parameters["audio_quality_priority"].default,
+            type=Csv(AudioQuality),
         ),
     ]
     # Video Interface specific options
