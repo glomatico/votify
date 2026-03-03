@@ -152,25 +152,25 @@ The file is created automatically on first run. Command-line arguments override 
 | Command-line argument / Config file key | Description | Default |
 | --------------------------------------- | ----------- | ------- |
 | **General** | | |
-| `--wait-interval`, `-w` / `wait_interval` | Wait interval between downloads in seconds | `10` |
-| `--read-urls-as-txt`, `-r` / - | Interpret URLs as paths to text files containing URLs | `false` |
-| `--config-path` / - | Path to config file | `<home>/.votify/config.ini` |
-| `--log-level` / `log_level` | Log level | `INFO` |
+| `--wait-interval` / `wait_interval` | Wait interval between downloads in seconds | `10` |
+| `--read-urls-as-txt`, `-r` / - | Read URLs from text files | `false` |
+| `--config-path` / - | Config file path | `<home>/.votify/config.ini` |
+| `--log-level` / `log_level` | Logging level | `INFO` |
 | `--log-file` / `log_file` | Log file path | `null` |
 | `--no-exceptions` / `no_exceptions` | Don't print exceptions | `false` |
-| `--no-config-file`, `-n` / - | Do not use a config file | `false` |
+| `--no-config-file`, `-n` / - | Don't use a config file | `false` |
 | **Spotify** | | |
-| `--cookies-path`, `-c` / `cookies_path` | Path to cookies file | `cookies.txt` |
-| `--wvd-path` / `wvd_path` | Path to .wvd file | `device.wvd` |
+| `--cookies-path`, `-c` / `cookies_path` | Cookies file path | `./cookies.txt` |
+| `--wvd-path` / `wvd_path` | .wvd file path | `./device.wvd` |
 | `--prefer-video` / `prefer_video` | Prefer video streams when available | `false` |
 | `--no-drm` / `no_drm` | Don't allow DRM-protected media | `false` |
 | **Output** | | |
-| `--output`, `-o` / `output` | Path to output directory | `./Spotify` |
-| `--temp` / `temp` | Path to temporary directory | `.` |
+| `--output`, `-o` / `output` | Output directory path | `./Spotify` |
+| `--temp` / `temp` | Temporary directory path | `.` |
 | `--save-cover-file` / `save_cover_file` | Save cover as a separate file | `false` |
 | `--save-playlist-file` / `save_playlist_file` | Save a M3U8 playlist file when downloading a playlist | `false` |
 | `--overwrite` / `overwrite` | Overwrite existing files | `false` |
-| `--cover-size` / `cover_size` | Cover size | `extra-large` |
+| `--cover-size` / `cover_size` | Cover size to use | `extra-large` |
 | `--exclude-tags` / `exclude_tags` | Comma-separated tags to exclude | `null` |
 | `--truncate` / `truncate` | Maximum length of file/folder names | `null` |
 | **Template** | | |
@@ -185,17 +185,17 @@ The file is created automatically on first run. Command-line arguments override 
 | `--playlist-file-template` / `playlist_file_template` | File template for M3U8 playlists | `Playlists/{playlist_artist}/{playlist_title}` |
 | `--date-tag-template` / `date_tag_template` | Date tag template | `%Y-%m-%dT%H:%M:%SZ` |
 | **Song / Podcast** | | |
-| `--audio-quality`, `-a` / `audio_quality` | Audio quality | `aac-medium` |
-| `--audio-download-mode` / `audio_download_mode` | Download mode for songs and podcasts | `ytdlp` |
-| `--audio-remux-mode` / `audio_remux_mode` | Remux mode for songs and podcasts | `ffmpeg` |
-| `--synced-lyrics-only` / `synced_lyrics_only` | Download only the synced lyrics | `false` |
-| `--no-synced-lyrics-file` / `no_synced_lyrics_file` | Don't download synced lyrics | `false` |
+| `--audio-quality` / `audio_quality` | Comma-separated audio quality priority | `aac-medium` |
+| `--audio-download-mode` / `audio_download_mode` | Audio download mode to use | `ytdlp` |
+| `--audio-remux-mode` / `audio_remux_mode` | Audio remux mode to use | `ffmpeg` |
+| `--synced-lyrics-only` / `synced_lyrics_only` | Only download synced lyrics file | `false` |
+| `--no-synced-lyrics-file` / `no_synced_lyrics_file` | Don't create synced lyrics file | `false` |
 | **Video** | | |
-| `--video-format` / `video_format` | Video format | `mp4` |
-| `--video-resolution` / `video_resolution` | Video resolution | `1080p` |
-| `--video-remux-mode` / `video_remux_mode` | Remux mode for videos | `ffmpeg` |
+| `--video-format` / `video_format` | Video format to use | `mp4` |
+| `--video-resolution` / `video_resolution` | Video resolution to use | `1080p` |
+| `--video-remux-mode` / `video_remux_mode` | Video remux mode to use | `ffmpeg` |
 | **Artist** | | |
-| `--artist-media-option` / `artist_media_option` | Auto-select which media type to download from artist URLs | `null` |
+| `--artist-media-option` / `artist_media_option` | Auto-select option for artist URLs | `null` |
 | **Executables** | | |
 | `--aria2c-path` / `aria2c_path` | Path to aria2c binary | `aria2c` |
 | `--curl-path` / `curl_path` | Path to curl binary | `curl` |
