@@ -249,15 +249,20 @@ class SpotifyAudioDownloader(SpotifyBaseDownloader):
     def parse_item(self, media: SpotifyMedia) -> DownloadItem:
         item = DownloadItem(media=media)
 
+        if not media.stream_info:
+            file_format = self.interface.song.audio_quality_priority[0].file_format
+        else:
+            file_format = media.stream_info.audio_track.file_format
+
         item.staged_path = self.get_temp_path(
             media.media_id,
             item.uuid_,
             "staged",
-            self.get_staged_file_extension(media.stream_info.audio_track.file_format),
+            self.get_staged_file_extension(file_format),
         )
         item.final_path = self.get_final_path(
             media.tags,
-            self.get_staged_file_extension(media.stream_info.audio_track.file_format),
+            self.get_staged_file_extension(file_format),
             media.playlist_tags,
         )
         if media.playlist_tags:
