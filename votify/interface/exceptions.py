@@ -61,7 +61,7 @@ class VotifyMediaFormatNotAvailableException(VotifyMediaException):
         media_metadata: dict | None = None,
     ):
         super().__init__(
-            "Selected audio quality is not available",
+            "Selected format is not available",
             media_id=media_id,
             media_metadata=media_metadata,
         )
