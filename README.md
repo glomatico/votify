@@ -11,14 +11,12 @@ A command-line app for downloading songs, podcasts and videos from Spotify.
 
 ## ✨ Features
 
-- 🎵 **Songs** - Download songs in AAC 128kbps, or AAC 256kbps with an active premium subscription.
-- 🎙️ **Podcasts** - Download podcasts in Vorbis or AAC.*
+- 🎵 **Songs** - Download songs.
+- 🎙️ **Podcasts** - Download podcasts.
 - 🎬 **Videos** - Download podcast videos and music videos.
 - 🎤 **Synced Lyrics** - Download synced lyrics in LRC format.
 - 🧑‍🎤 **Artist Support** - Download an entire discography by providing the artist's URL.
 - ⚙️ **Highly Customizable** - Extensive configuration options for advanced users.
-
-***Vorbis codecs are not available at the moment.** Podcasts can only be downloaded in AAC format, even if a Vorbis quality is selected.
 
 ## 📋 Prerequisites
 
@@ -239,10 +237,15 @@ Tags usable in the `exclude_tags` list only:
 ### Audio qualities
 
 - `aac-medium` - AAC 128kbps
-- `aac-high` - AAC 256kbps, requires an active premium subscription
+- `aac-high` - AAC 256kbps, songs only, requires an active premium subscription
 - `vorbis-low` - Vorbis 96kbps, podcasts only
-- `vorbis-medium` - Vorbis 160kbps, podcasts only
-- `vorbis-high` - Vorbis 320kbps, podcasts only, requires an active premium subscription
+- `vorbis-medium` - Vorbis 160kbps, unsupported
+- `vorbis-high` - Vorbis 320kbps, unsupported, requires an active premium subscription
+- `flac` - FLAC lossless, songs only
+
+> [!NOTE]
+> - **Vorbis quality levels are not available at the moment.**
+> - **FLAC quality doesn't work at the moment.** The Spotify servers refuse to accept the Widevine license for FLAC streams, resulting in a decryption failure.
 
 ### Video formats
 
