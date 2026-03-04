@@ -241,7 +241,7 @@ Tags usable in the `exclude_tags` list only:
 - `vorbis-low` - Vorbis 96kbps, podcasts only
 - `vorbis-medium` - Vorbis 160kbps, unsupported
 - `vorbis-high` - Vorbis 320kbps, unsupported, requires an active premium subscription
-- `flac` - FLAC lossless, songs only
+- `flac` - FLAC lossless, songs only, requires an active premium subscription
 
 > [!NOTE]
 > - **Vorbis quality levels are not available at the moment.**
