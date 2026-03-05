@@ -259,6 +259,9 @@ Tags usable in the `exclude_tags` list only:
 - `aria2c` - Faster alternative
 - `curl` - Alternative using curl
 
+> [!NOTE]
+> - **yt-dlp is only used as a file download library**. Tracks are still fetched directly from Spotify's servers, and yt-dlp is only responsible for handling the file download process.
+
 ### Video remux modes
 
 - `ffmpeg`
