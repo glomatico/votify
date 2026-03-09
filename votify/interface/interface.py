@@ -205,7 +205,7 @@ class SpotifyInterface:
     ) -> AsyncGenerator[SpotifyMedia | BaseException, None]:
         if not auto_media_option:
             choices = [
-                Choice(name=option.value.capitalize(), value=option)
+                Choice(name=option.value.split("-")[-1].capitalize(), value=option)
                 for option in AutoMediaOption
             ]
             artist_option = await inquirer.select(
