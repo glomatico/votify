@@ -85,7 +85,7 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
         if not file_id:
             return None
 
-        stream_url = await self._get_stream_url(file_id)
+        stream_url = await self._get_stream_url(audio_quality.format_id, file_id)
         pssh = None if skip_pssh else await self._get_pssh(file_id)
 
         stream_info = StreamInfoAv(
@@ -123,9 +123,13 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
 
     async def _get_stream_url(
         self,
+        format_id: str,
         file_id: str,
     ) -> str:
-        streams_url_response = await self.api.get_audio_stream_urls(file_id)
+        streams_url_response = await self.api.get_audio_stream_urls(
+            format_id,
+            file_id,
+        )
         stream_url = streams_url_response["cdnurl"][0]
 
         logger.debug(f"Received stream URL: {stream_url}")
