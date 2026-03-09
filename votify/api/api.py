@@ -640,11 +640,11 @@ class SpotifyApi:
 
         return widevine_license
 
-    async def get_audio_stream_urls(self, file_id: str) -> dict:
+    async def get_audio_stream_urls(self, format_id: str, file_id: str) -> dict:
         await self._refresh_authorization_if_needed()
 
         response = await self.client.get(
-            AUDIO_STREAM_URLS_API_URL.format(file_id=file_id),
+            AUDIO_STREAM_URLS_API_URL.format(format_id=format_id, file_id=file_id)
         )
         audio_stream_urls = safe_json(response)
 

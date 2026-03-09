@@ -15,7 +15,7 @@ WIDEVINE_LICENSE_API_URL = (
 SEEK_TABLE_API_URL = "https://seektables.scdn.co/seektable/{file_id}.json"
 TRACK_CREDITS_API_URL = "https://spclient.wg.spotify.com/track-credits-view/v0/experimental/{track_id}/credits"
 AUDIO_STREAM_URLS_API_URL = (
-    "https://gue1-spclient.spotify.com/storage-resolve/v2/files/audio/interactive/11/"
+    "https://gue1-spclient.spotify.com/storage-resolve/v2/files/audio/interactive/{format_id}/"
     "{file_id}?version=10000000&product=9&platform=39&alt=json"
 )
 EXTEND_TRACK_COLLECTION_WAIT_TIME = 0.5
