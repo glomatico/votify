@@ -250,7 +250,7 @@ Tags usable in the `exclude_tags` list only:
 
 > [!NOTE]
 > - **Vorbis quality levels are not available at the moment.**
-> - **FLAC quality doesn't work at the moment.** The Spotify servers refuse to accept the Widevine license for FLAC streams, resulting in a decryption failure.
+> - **FLAC quality requires a L1 .wvd file.**
 
 ### Video formats
 
