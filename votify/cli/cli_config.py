@@ -110,6 +110,20 @@ class CliConfig:
             is_flag=True,
         ),
     ]
+    database_path: Annotated[
+        str,
+        option(
+            "--database-path",
+            help="Path to the SQLite database file for registering downloaded media",
+            default=None,
+            type=click.Path(
+                file_okay=True,
+                dir_okay=False,
+                writable=True,
+                resolve_path=True,
+            ),
+        ),
+    ]
     # API specific options
     cookies_path: Annotated[
         str,

@@ -12,20 +12,25 @@ from ..api.api import SpotifyApi
 from ..downloader.audio import SpotifyAudioDownloader
 from ..downloader.base import SpotifyBaseDownloader
 from ..downloader.downloader import SpotifyDownloader
-from ..downloader.exceptions import VotifyDownloaderException
+from ..downloader.exceptions import VotifyDownloaderException, VotifyMediaFileExists
 from ..downloader.video import SpotifyVideoDownloader
 from ..interface.audio import SpotifyAudioInterface
 from ..interface.base import SpotifyBaseInterface
 from ..interface.enums import AutoMediaOption
 from ..interface.episode import SpotifyEpisodeInterface
 from ..interface.episode_video import SpotifyEpisodeVideoInterface
-from ..interface.exceptions import VotifyMediaException, VotifyUrlParseException
+from ..interface.exceptions import (
+    VotifyMediaException,
+    VotifyMediaFlatFilterException,
+    VotifyUrlParseException,
+)
 from ..interface.interface import SpotifyInterface
 from ..interface.music_video import SpotifyMusicVideoInterface
 from ..interface.song import SpotifySongInterface
 from ..interface.video import SpotifyVideoInterface
 from .cli_config import CliConfig
 from .config_file import ConfigFile
+from .database import Database
 from .utils import CustomLoggerFormatter, prompt_path
 
 logger = logging.getLogger(__name__)
@@ -79,6 +84,13 @@ async def main(config: CliConfig):
     if not config.no_drm:
         wvd_path = prompt_path(config.wvd_path)
 
+    if config.database_path:
+        database = Database(config.database_path)
+        flat_filter = database.flat_filter
+    else:
+        database = None
+        flat_filter = None
+
     api = await SpotifyApi.create_from_netscape_cookies(cookies_path)
 
     base_interface = SpotifyBaseInterface(
@@ -108,6 +120,7 @@ async def main(config: CliConfig):
         music_video=music_video_interface,
         episode_video=episode_video_interface,
         prefer_video=config.prefer_video,
+        flat_filter=flat_filter,
     )
 
     base_downloader = SpotifyBaseDownloader(
@@ -193,6 +206,10 @@ async def main(config: CliConfig):
                 media_title = "Unknown Title"
                 if e.media_metadata and e.media_metadata.get("name"):
                     media_title = e.media_metadata["name"]
+
+                if isinstance(e, VotifyMediaFlatFilterException):
+                    e = VotifyMediaFileExists(media_path=e.result)
+
                 logger.warning(
                     download_queue_progress + f' Skipping "{media_title}": {str(e)}'
                 )
@@ -226,6 +243,15 @@ async def main(config: CliConfig):
                     )
             finally:
                 download_index += 1
+                if (
+                    database
+                    and item
+                    and item.media
+                    and item.media.media_metadata
+                    and item.staged_path
+                ):
+                    media_id = item.media.media_metadata["uri"].split(":")[-1]
+                    database.add(media_id, item.final_path)
                 await asyncio.sleep(config.wait_interval)
 
     logger.info(f"Finished with {error_count} error(s)")
