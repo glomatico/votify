@@ -1,3 +1,5 @@
+from typing import Any
+
 from ..utils import VotiyException
 
 
@@ -28,12 +30,19 @@ class VotifyMediaException(VotifyInterfaceException):
 
 
 class VotifyMediaFlatFilterException(VotifyMediaException):
-    def __init__(self, media_id: str, media_metadata: dict | None = None):
+    def __init__(
+        self,
+        media_id: str,
+        media_metadata: dict | None = None,
+        result: Any = None,
+    ):
         super().__init__(
             "Media filtered out by flat filter",
             media_id=media_id,
             media_metadata=media_metadata,
         )
+
+        self.result = result
 
 
 class VotifyDrmDisabledException(VotifyMediaException):

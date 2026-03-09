@@ -66,7 +66,11 @@ class SpotifyInterface:
                 flat_filter_result = await flat_filter_result
 
             if flat_filter_result:
-                VotifyMediaFlatFilterException(track_id, track_data)
+                VotifyMediaFlatFilterException(
+                    track_id,
+                    track_data,
+                    flat_filter_result,
+                )
 
         try:
             if (
@@ -116,7 +120,11 @@ class SpotifyInterface:
                 flat_filter_result = await flat_filter_result
 
             if flat_filter_result:
-                VotifyMediaFlatFilterException(episode_id, episode_data)
+                VotifyMediaFlatFilterException(
+                    episode_id,
+                    episode_data,
+                    flat_filter_result,
+                )
 
         try:
             if "VIDEO" in episode_data["mediaTypes"] and self.prefer_video:
