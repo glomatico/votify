@@ -119,8 +119,8 @@ class VideoResolution(Enum):
 
 
 class AutoMediaOption(Enum):
-    ALBUMS = "albums"
-    COMPILATIONS = "compilations"
-    SINGLES = "singles"
-    VIDEOS = "videos"
+    ARTIST_ALBUMS = "artist-albums"
+    ARTIST_COMPILATIONS = "artist-compilations"
+    ARTIST_SINGLES = "artist-singles"
+    ARTIST_VIDEOS = "artist-videos"
     LIKED_TRACKS = "liked-tracks"
