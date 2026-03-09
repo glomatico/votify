@@ -445,6 +445,24 @@ class SpotifyApi:
 
         return artist_videos
 
+    async def get_library_tracks(
+        self,
+        offset: int = 0,
+        limit: int = 300,
+    ) -> dict:
+        library_tracks = await self._pathfinder_request(
+            operation_name="fetchLibraryTracks",
+            persisted_query_hash="087278b20b743578a6262c2b0b4bcd20d879c503cc359a2285baf083ef944240",
+            variables={
+                "offset": offset,
+                "limit": limit,
+            },
+        )
+
+        logger.debug(f"Received library tracks: {library_tracks}")
+
+        return library_tracks
+
     async def get_video_manifest(
         self,
         file_id: str,
