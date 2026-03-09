@@ -52,7 +52,7 @@ Add these tools to your system PATH or specify their paths via command-line argu
 
 1. Install Votify via pip:
    ```bash
-   pip install -y
+   pip install votify
    ```
 
 2. Set up the cookies file:
