@@ -27,6 +27,15 @@ class VotifyMediaException(VotifyInterfaceException):
         self.media_metadata = media_metadata
 
 
+class VotifyMediaFlatFilterException(VotifyMediaException):
+    def __init__(self, media_id: str, media_metadata: dict | None = None):
+        super().__init__(
+            "Media filtered out by flat filter",
+            media_id=media_id,
+            media_metadata=media_metadata,
+        )
+
+
 class VotifyDrmDisabledException(VotifyMediaException):
     def __init__(self, media_id: str, media_metadata: dict | None = None):
         super().__init__(

@@ -1,15 +1,17 @@
+import asyncio
 import logging
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Callable
 
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 
 from .audio import SpotifyAudioInterface
-from .enums import AutoMediaOption, AudioQuality
+from .enums import AudioQuality, AutoMediaOption
 from .episode import SpotifyEpisodeInterface
 from .episode_video import SpotifyEpisodeVideoInterface
 from .exceptions import (
     VotifyDrmDisabledException,
+    VotifyMediaFlatFilterException,
     VotifyMediaNotFoundException,
     VotifyMediaUnstreamableException,
     VotifyUnsupportedMediaTypeException,
@@ -30,6 +32,7 @@ class SpotifyInterface:
         music_video: SpotifyMusicVideoInterface,
         episode_video: SpotifyEpisodeVideoInterface,
         prefer_video: bool = False,
+        flat_filter: Callable = None,
     ) -> None:
         self.base = base
         self.song = song
@@ -37,6 +40,7 @@ class SpotifyInterface:
         self.music_video = music_video
         self.episode_video = episode_video
         self.prefer_video = prefer_video
+        self.flat_filter = flat_filter
 
     async def _get_track_media(
         self,
@@ -55,6 +59,14 @@ class SpotifyInterface:
 
         if not track_data["playability"]["playable"]:
             return VotifyMediaUnstreamableException(track_id, track_data)
+
+        if self.flat_filter:
+            flat_filter_result = self.flat_filter(track_data)
+            if asyncio.iscoroutine(flat_filter_result):
+                flat_filter_result = await flat_filter_result
+
+            if flat_filter_result:
+                VotifyMediaFlatFilterException(track_id, track_data)
 
         try:
             if (
@@ -97,6 +109,14 @@ class SpotifyInterface:
 
         if not episode_data["playability"]["playable"]:
             return VotifyMediaUnstreamableException(episode_id, episode_data)
+
+        if self.flat_filter:
+            flat_filter_result = self.flat_filter(episode_data)
+            if asyncio.iscoroutine(flat_filter_result):
+                flat_filter_result = await flat_filter_result
+
+            if flat_filter_result:
+                VotifyMediaFlatFilterException(episode_id, episode_data)
 
         try:
             if "VIDEO" in episode_data["mediaTypes"] and self.prefer_video:
