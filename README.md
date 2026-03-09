@@ -162,6 +162,7 @@ The file is created automatically on first run. Command-line arguments override 
 | `--log-file` / `log_file` | Log file path | `null` |
 | `--no-exceptions` / `no_exceptions` | Don't print exceptions | `false` |
 | `--no-config-file`, `-n` / - | Don't use a config file | `false` |
+| `--database-path` / `database_path` | Path to the SQLite database file for registering downloaded media | `null` |
 | `--auto-media-option` / `auto_media_option` | Auto media option | `null` |
 | **Spotify** | | |
 | `--cookies-path`, `-c` / `cookies_path` | Cookies file path | `./cookies.txt` |
