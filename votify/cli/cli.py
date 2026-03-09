@@ -120,7 +120,7 @@ async def main(config: CliConfig):
         music_video=music_video_interface,
         episode_video=episode_video_interface,
         prefer_video=config.prefer_video,
-        flat_filter=flat_filter,
+        flat_filter=flat_filter if not config.overwrite else None,
     )
 
     base_downloader = SpotifyBaseDownloader(
