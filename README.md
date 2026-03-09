@@ -123,7 +123,12 @@ votify "https://open.spotify.com/artist/0gxyHStUsqpMadRV0Di1Qt"
 
 Auto-select artist albums without a prompt:
 ```bash
-votify "https://open.spotify.com/artist/0gxyHStUsqpMadRV0Di1Qt" --artist-media-option albums
+votify "https://open.spotify.com/artist/0gxyHStUsqpMadRV0Di1Qt" --auto-media-option albums
+```
+
+Download liked tracks:
+```bash
+votify --auto-media-option liked-tracks
 ```
 
 ### Interactive prompt controls
@@ -157,6 +162,7 @@ The file is created automatically on first run. Command-line arguments override 
 | `--log-file` / `log_file` | Log file path | `null` |
 | `--no-exceptions` / `no_exceptions` | Don't print exceptions | `false` |
 | `--no-config-file`, `-n` / - | Don't use a config file | `false` |
+| `--auto-media-option` / `auto_media_option` | Auto media option | `null` |
 | **Spotify** | | |
 | `--cookies-path`, `-c` / `cookies_path` | Cookies file path | `./cookies.txt` |
 | `--wvd-path` / `wvd_path` | .wvd file path | `./device.wvd` |
@@ -192,8 +198,6 @@ The file is created automatically on first run. Command-line arguments override 
 | `--video-format` / `video_format` | Video format to use | `mp4` |
 | `--video-resolution` / `video_resolution` | Video resolution to use | `1080p` |
 | `--video-remux-mode` / `video_remux_mode` | Video remux mode to use | `ffmpeg` |
-| **Artist** | | |
-| `--artist-media-option` / `artist_media_option` | Auto-select option for artist URLs | `null` |
 | **Executables** | | |
 | `--aria2c-path` / `aria2c_path` | Path to aria2c binary | `aria2c` |
 | `--curl-path` / `curl_path` | Path to curl binary | `curl` |
@@ -277,12 +281,13 @@ Tags usable in the `exclude_tags` list only:
 
 - `144p`, `240p`, `360p`, `480p`, `576p`, `720p`, `1080p`
 
-### Artist media options
+### Auto media options
 
-- `albums` - Auto-select albums
-- `compilations` - Auto-select compilations
-- `singles` - Auto-select singles
-- `videos` - Auto-select music videos
+- `artist-albums` - Auto-select albums
+- `artist-compilations` - Auto-select compilations
+- `artist-singles` - Auto-select singles
+- `artist-videos` - Auto-select music videos
+- `liked-tracks` - Auto-select liked tracks (URL not required)
 
 ### Log levels
 
