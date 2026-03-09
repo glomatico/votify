@@ -3,7 +3,7 @@ import shutil
 from pathlib import Path
 from typing import AsyncGenerator
 
-from ..interface.enums import MediaType
+from ..interface.enums import AutoMediaOption, MediaType
 from .audio import SpotifyAudioDownloader
 from .base import SpotifyBaseDownloader
 from .constants import TEMP_PATH_TEMPLATE
@@ -45,9 +45,11 @@ class SpotifyDownloader:
         self.skip_cleanup = skip_cleanup
 
     async def get_download_item(
-        self, url: str
+        self,
+        url: str | None = None,
+        auto_media_option: AutoMediaOption | None = None,
     ) -> AsyncGenerator[DownloadItem | BaseException, None]:
-        async for media in self.base.interface.get_media_by_url(url):
+        async for media in self.base.interface.get_media(url, auto_media_option):
             if isinstance(media, BaseException):
                 yield media
                 continue
