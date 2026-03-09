@@ -76,10 +76,14 @@ class SpotifyEpisodeInterface(SpotifyAudioInterface):
         show_items: list[dict],
         is_video: bool = False,
     ) -> MediaTags:
+        release_date = episode_data["releaseDate"]
+
         tags = MediaTags(
             album=episode_data["podcastV2"]["data"]["name"],
-            date=SpotifyAudioInterface.parse_date(
-                episode_data["releaseDate"]["isoString"]
+            date=(
+                SpotifyAudioInterface.parse_date(release_date["isoString"])
+                if release_date
+                else None
             ),
             description=episode_data.get("description"),
             media_id=episode_data["uri"].split(":")[-1],

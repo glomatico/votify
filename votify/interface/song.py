@@ -105,7 +105,7 @@ class SpotifySongInterface(SpotifyAudioInterface):
         album_items: list[dict],
         lyrics: str | None = None,
     ) -> MediaTags:
-        iso_date = album_data["date"]["isoString"]
+        release_date = album_data["date"]
 
         (composer, producer), (album_artist, artist, isrc, label) = (
             await asyncio.gather(
@@ -130,7 +130,7 @@ class SpotifySongInterface(SpotifyAudioInterface):
             compilation=compilation,
             composer=composer,
             copyright=copyright,
-            date=self.parse_date(iso_date),
+            date=self.parse_date(release_date["isoString"]) if release_date else None,
             disc=disc,
             disc_total=disc_total,
             isrc=isrc,
