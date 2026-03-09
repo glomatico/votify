@@ -66,7 +66,7 @@ class SpotifyInterface:
                 flat_filter_result = await flat_filter_result
 
             if flat_filter_result:
-                VotifyMediaFlatFilterException(
+                return VotifyMediaFlatFilterException(
                     track_id,
                     track_data,
                     flat_filter_result,
@@ -120,7 +120,7 @@ class SpotifyInterface:
                 flat_filter_result = await flat_filter_result
 
             if flat_filter_result:
-                VotifyMediaFlatFilterException(
+                return VotifyMediaFlatFilterException(
                     episode_id,
                     episode_data,
                     flat_filter_result,
