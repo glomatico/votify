@@ -16,6 +16,7 @@ from ..downloader.exceptions import VotifyDownloaderException
 from ..downloader.video import SpotifyVideoDownloader
 from ..interface.audio import SpotifyAudioInterface
 from ..interface.base import SpotifyBaseInterface
+from ..interface.enums import AutoMediaOption
 from ..interface.episode import SpotifyEpisodeInterface
 from ..interface.episode_video import SpotifyEpisodeVideoInterface
 from ..interface.exceptions import VotifyMediaException, VotifyUrlParseException
@@ -60,6 +61,16 @@ async def main(config: CliConfig):
         file_handler.setFormatter(CustomLoggerFormatter(use_colors=False))
         root_logger.addHandler(file_handler)
 
+    if config.auto_media_option == AutoMediaOption.LIKED_TRACKS:
+        config.urls = ["Liked Tracks"]
+    elif not config.urls:
+        raise (
+            click.exceptions.MissingParameter(
+                param_type="argument",
+                param_hint="'URLS...'",
+            )
+        )
+
     logger.info(f"Starting Votify {__version__}")
 
     cookies_path = prompt_path(config.cookies_path)
@@ -97,7 +108,6 @@ async def main(config: CliConfig):
         music_video=music_video_interface,
         episode_video=episode_video_interface,
         prefer_video=config.prefer_video,
-        artist_media_option=config.artist_media_option,
     )
 
     base_downloader = SpotifyBaseDownloader(
@@ -162,7 +172,7 @@ async def main(config: CliConfig):
     for url_index, url in enumerate(urls, 1):
         url_progress = click.style(f"[URL {url_index}/{len(urls)}]", dim=True)
         logger.info(url_progress + f' Processing "{url}"')
-        download_queue = downloader.get_download_item(url)
+        download_queue = downloader.get_download_item(url, config.auto_media_option)
         download_index = 1
         while True:
             item = None

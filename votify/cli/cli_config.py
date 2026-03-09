@@ -19,7 +19,7 @@ from ..interface.enums import (
     CoverSize,
     VideoFormat,
     VideoResolution,
-    ArtistMediaOption,
+    AutoMediaOption,
 )
 from ..interface.interface import SpotifyInterface
 from ..interface.video import SpotifyVideoInterface
@@ -46,7 +46,6 @@ class CliConfig:
         argument(
             nargs=-1,
             type=str,
-            required=True,
         ),
     ]
     wait_interval: Annotated[
@@ -197,13 +196,13 @@ class CliConfig:
             is_flag=True,
         ),
     ]
-    artist_media_option: Annotated[
-        ArtistMediaOption,
+    auto_media_option: Annotated[
+        AutoMediaOption,
         option(
-            "--artist-media-option",
-            help="Auto-select option for artist URLs",
-            default=interface_sig.parameters["artist_media_option"].default,
-            type=ArtistMediaOption,
+            "--auto-media-option",
+            help="Auto media option",
+            default=None,
+            type=AutoMediaOption,
         ),
     ]
     # Base Downloader specific options
