@@ -5,7 +5,7 @@ from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 
 from .audio import SpotifyAudioInterface
-from .enums import ArtistMediaOption, AudioQuality
+from .enums import AutoMediaOption, AudioQuality
 from .episode import SpotifyEpisodeInterface
 from .episode_video import SpotifyEpisodeVideoInterface
 from .exceptions import (
@@ -30,7 +30,7 @@ class SpotifyInterface:
         music_video: SpotifyMusicVideoInterface,
         episode_video: SpotifyEpisodeVideoInterface,
         prefer_video: bool = False,
-        artist_media_option: ArtistMediaOption | None = None,
+        auto_media_option: AutoMediaOption | None = None,
     ) -> None:
         self.base = base
         self.song = song
@@ -38,7 +38,7 @@ class SpotifyInterface:
         self.music_video = music_video
         self.episode_video = episode_video
         self.prefer_video = prefer_video
-        self.artist_media_option = artist_media_option
+        self.auto_media_option = auto_media_option
 
     async def _get_track_media(
         self,
@@ -204,12 +204,12 @@ class SpotifyInterface:
         self,
         media_id: str,
     ) -> AsyncGenerator[SpotifyMedia | BaseException, None]:
-        if self.artist_media_option:
-            artist_media_option = self.artist_media_option
+        if self.auto_media_option:
+            artist_media_option = self.auto_media_option
         else:
             choices = [
                 Choice(name=option.value.capitalize(), value=option)
-                for option in ArtistMediaOption
+                for option in AutoMediaOption
             ]
             artist_media_option = await inquirer.select(
                 message="Select which media to download:",
@@ -217,16 +217,16 @@ class SpotifyInterface:
             ).execute_async()
 
         if artist_media_option in {
-            ArtistMediaOption.ALBUMS,
-            ArtistMediaOption.SINGLES,
-            ArtistMediaOption.COMPILATIONS,
+            AutoMediaOption.ALBUMS,
+            AutoMediaOption.SINGLES,
+            AutoMediaOption.COMPILATIONS,
         }:
             key = (
                 "albums"
-                if artist_media_option == ArtistMediaOption.ALBUMS
+                if artist_media_option == AutoMediaOption.ALBUMS
                 else (
                     "singles"
-                    if artist_media_option == ArtistMediaOption.SINGLES
+                    if artist_media_option == AutoMediaOption.SINGLES
                     else "compilations"
                 )
             )
@@ -269,7 +269,7 @@ class SpotifyInterface:
             yield VotifyMediaNotFoundException(media_id, videos_data)
             return
 
-        if self.artist_media_option:
+        if self.auto_media_option:
             selection = video_items
         else:
             choices = [
@@ -333,7 +333,7 @@ class SpotifyInterface:
             yield VotifyMediaNotFoundException(media_id, albums_data)
             return
 
-        if self.artist_media_option:
+        if self.auto_media_option:
             selection = album_items_filtered
         else:
             choices = [
@@ -360,14 +360,59 @@ class SpotifyInterface:
             async for media in self._get_album_media(album_id):
                 yield media
 
+    async def _get_liked_tracks_media(
+        self,
+    ) -> AsyncGenerator[SpotifyMedia | BaseException, None]:
+        offset = 0
+        total = None
+
+        while total is None or offset < total:
+            liked_tracks_response = await self.base.api.get_library_tracks(offset)
+            liked_tracks_data = liked_tracks_response["data"]["me"]["library"]["tracks"]
+
+            if liked_tracks_data["__typename"] != "UserLibraryTrackPage":
+                yield VotifyMediaNotFoundException("liked-tracks", liked_tracks_data)
+                return
+
+            total = liked_tracks_data["totalCount"]
+            items = liked_tracks_data["items"]
+
+            for item in items:
+                track_data = item["track"]
+                track_id = track_data["_uri"].split(":")[-1]
+
+                if track_data["__typename"] == "Track":
+                    media = await self._get_track_media(
+                        track_id=track_id,
+                    )
+                elif track_data["__typename"] == "Episode":
+                    media = await self._get_episode_media(
+                        episode_id=track_id,
+                    )
+                else:
+                    media = VotifyMediaNotFoundException(track_id, track_data)
+
+                yield media
+
+            offset += len(items)
+
     async def get_media_by_url(
         self,
-        url: str,
+        url: str | None = None,
     ) -> AsyncGenerator[SpotifyMedia | BaseException, None]:
-        url_info = self.base.parse_url_info(url)
+        url_info = self.base.parse_url_info(url) if url else None
 
-        if url_info.media_type in self.base.disallowed_media_types:
-            yield VotifyUnsupportedMediaTypeException(url_info.media_type)
+        if not url_info and self.auto_media_option == AutoMediaOption.LIKED_TRACKS:
+            async for media in self._get_liked_tracks_media():
+                yield media
+        elif not url_info or url_info.media_type in self.base.disallowed_media_types:
+            yield VotifyUnsupportedMediaTypeException(
+                getattr(
+                    url_info,
+                    "media_type",
+                    "Null URL",
+                ),
+            )
         elif url_info.media_type == "track":
             yield await self._get_track_media(url_info.media_id)
         elif url_info.media_type == "episode":

@@ -118,8 +118,9 @@ class VideoResolution(Enum):
         return int(self.value[:-1])
 
 
-class ArtistMediaOption(Enum):
+class AutoMediaOption(Enum):
     ALBUMS = "albums"
     COMPILATIONS = "compilations"
     SINGLES = "singles"
     VIDEOS = "videos"
+    LIKED_TRACKS = "liked-tracks"
