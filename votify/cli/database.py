@@ -38,6 +38,6 @@ class Database:
     def close(self) -> None:
         self.connection.close()
 
-    def flat_filter(self, media_metadata: dict) -> bool:
+    def flat_filter(self, media_metadata: dict) -> str | None:
         media_id = media_metadata["uri"].split(":")[-1]
-        return bool(self.get(media_id))
+        return self.get(media_id)
