@@ -2,9 +2,9 @@ import logging
 
 from .audio import SpotifyAudioInterface
 from .constants import COVER_SIZE_ID_MAP_EPISODE, DEFAULT_EPISODE_DECRYPTION_KEY
-from .enums import MediaType
+from .enums import AudioQuality, MediaType
 from .exceptions import VotifyMediaFormatNotAvailableException
-from .types import DecryptionKey, MediaTags, SpotifyMedia
+from .types import DecryptionKey, MediaTags, SpotifyMedia, StreamInfo, StreamInfoAv
 
 logger = logging.getLogger(__name__)
 
@@ -52,15 +52,9 @@ class SpotifyEpisodeInterface(SpotifyAudioInterface):
         )
 
         if not self.skip_stream_info:
-            try:
-                media.stream_info = await self.get_stream_info(
-                    media_id=episode_id,
-                    media_type="episode",
-                    skip_pssh=True,
-                )
-            except VotifyMediaFormatNotAvailableException as e:
-                e.media_metadata = episode_data
-                raise
+            media.stream_info = await self.get_stream_info(
+                episode_data=episode_data,
+            )
 
             media.decryption_key = DecryptionKey(
                 decryption_key=DEFAULT_EPISODE_DECRYPTION_KEY,
@@ -114,3 +108,53 @@ class SpotifyEpisodeInterface(SpotifyAudioInterface):
         logger.debug(f"Parsed episode cover URL: {cover_url}")
 
         return cover_url
+
+    async def get_stream_info(
+        self,
+        episode_data: dict,
+    ) -> StreamInfoAv:
+        for audio_quality in self.audio_quality_priority:
+            stream_info = await self._get_stream_info(
+                episode_data=episode_data,
+                audio_quality=audio_quality,
+            )
+            if stream_info:
+                return stream_info
+
+        raise VotifyMediaFormatNotAvailableException(
+            media_id=episode_data["uri"].split(":")[-1],
+            media_metadata=episode_data,
+        )
+
+    async def _get_stream_info(
+        self,
+        episode_data: dict,
+        audio_quality: AudioQuality,
+    ) -> StreamInfoAv | None:
+        audio_items = episode_data["audio"]["items"]
+        audio_item = next(
+            (
+                item
+                for item in audio_items
+                if item["format"].startswith(audio_quality.format_name)
+            ),
+            None,
+        )
+        if not audio_item:
+            return None
+
+        audio_id = audio_item["url"].split("/")[-1]
+        stream_url = await self._get_stream_url(audio_quality.format_id, audio_id)
+
+        stream_info = StreamInfoAv(
+            audio_track=StreamInfo(
+                stream_url=stream_url,
+                file_format=audio_quality.file_format,
+                actual_file_format=audio_quality.actual_file_format,
+                widevine_pssh=None,
+            )
+        )
+
+        logger.debug(f"Parsed episode stream info: {stream_info}")
+
+        return stream_info
