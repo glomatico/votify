@@ -47,6 +47,15 @@ FORMAT_ID_MAP = {
     "flac": "17",
 }
 
+FORMAT_NAME_MAP = {
+    "aac-high": "MP4_256",
+    "aac-medium": "MP4_128",
+    "vorbis-low": "OGG_VORBIS_96",
+    "vorbis-medium": "OGG_VORBIS_160",
+    "vorbis-high": "OGG_VORBIS_320",
+    "flac": "FLAC",
+}
+
 MP4_AUDIO_QUALITIES = {"aac-high", "aac-medium", "flac"}
 VORBIS_AUDIO_QUALITIES = {"vorbis-high", "vorbis-medium", "vorbis-low"}
 PREMIUM_AUDIO_QUALITIES = {"aac-high", "vorbis-high", "flac"}

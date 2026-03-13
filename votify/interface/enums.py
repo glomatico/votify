@@ -9,6 +9,7 @@ from .constants import (
     MP4_AUDIO_QUALITIES,
     PREMIUM_AUDIO_QUALITIES,
     VORBIS_AUDIO_QUALITIES,
+    FORMAT_NAME_MAP,
 )
 
 
@@ -83,6 +84,10 @@ class AudioQuality(Enum):
     @property
     def format_id(self) -> str | None:
         return FORMAT_ID_MAP.get(self.value)
+
+    @property
+    def format_name(self) -> str | None:
+        return FORMAT_NAME_MAP.get(self.value)
 
     @property
     def previous_quality(self) -> "AudioQuality" | None:
