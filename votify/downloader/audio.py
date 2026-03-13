@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 
 from Crypto.Cipher import AES
+from Crypto.Util import Counter
 from yt_dlp import YoutubeDL
 from yt_dlp.downloader.http import HttpFD
 
@@ -138,24 +139,23 @@ class SpotifyAudioDownloader(SpotifyBaseDownloader):
         output_path: str,
     ):
         cipher = AES.new(
-            decryption_key,
-            AES.MODE_CTR,
-            nonce=bytes.fromhex("72e067fbddcbcf77"),
-            initial_value=bytes.fromhex("ebe8bc643f630d93"),
+            key=decryption_key,
+            mode=AES.MODE_CTR,
+            counter=Counter.new(
+                128,
+                initial_value=int.from_bytes(
+                    bytes.fromhex("72e067fbddcbcf77ebe8bc643f630d93"), "big"
+                ),
+            ),
         )
 
         with open(input_path, "rb") as encrypted_file:
             encrypted_data = encrypted_file.read()
 
+        decrypted_data = cipher.decrypt(encrypted_data)
+
         with open(output_path, "wb") as decrypted_file:
-            decrypted_data = cipher.decrypt(encrypted_data)
-
-            offset = decrypted_data.find(b"OggS")
-            if offset == -1:
-                msg = "Unable to find ogg header"
-                raise ValueError(msg)
-
-            decrypted_file.write(decrypted_data[offset:])
+            decrypted_file.write(decrypted_data[167:])
 
     async def _decrypt_mp4decrypt(
         self,
