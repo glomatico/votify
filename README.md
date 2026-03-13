@@ -249,7 +249,6 @@ Tags usable in the `exclude_tags` list only:
 - `flac` - FLAC lossless, songs only, requires an active premium subscription
 
 > [!NOTE]
-> - **Vorbis quality levels are not available at the moment.**
 > - **FLAC quality requires a L1 .wvd file.**
 
 ### Video formats
