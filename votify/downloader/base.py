@@ -345,9 +345,9 @@ class SpotifyBaseDownloader:
             picture.data = cover_bytes
             picture.type = 3
             picture.width, picture.height = Image.open(BytesIO(cover_bytes)).size
-            ogg_tags["METADATA_BLOCK_PICTURE"] = base64.b64encode(
-                picture.write()
-            ).decode("ascii")
+            file["METADATA_BLOCK_PICTURE"] = [
+                base64.b64encode(picture.write()).decode("ascii")
+            ]
 
         try:
             file.save()
