@@ -82,8 +82,8 @@ class AudioQuality(Enum):
         return None
 
     @property
-    def format_id(self) -> str | None:
-        return FORMAT_ID_MAP.get(self.value)
+    def format_id(self) -> str:
+        return FORMAT_ID_MAP.get(self.value, "11")
 
     @property
     def format_name(self) -> str | None:
