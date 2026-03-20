@@ -141,6 +141,9 @@ class SpotifyApi:
             session_info["accessTokenExpirationTimestampMs"] / 1000
         )
 
+        self._access_token = access_token
+        self._client_token = granted_token
+
         self.client.headers.update(
             {
                 "authorization": f"Bearer {access_token}",
