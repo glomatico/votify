@@ -1,6 +1,6 @@
 HOME_PAGE_URL = "https://open.spotify.com/"
 COOKIE_DOMAIN = ".spotify.com"
-CLIENT_VERSION = "1.2.70.61.g856ccd63"
+CLIENT_VERSION = "1.2.87.27.ga2033a72"
 LYRICS_API_URL = "https://spclient.wg.spotify.com/color-lyrics/v2/track/{track_id}"
 GID_METADATA_URL = (
     "https://spclient.wg.spotify.com/metadata/4/{media_type}/{gid}?market=from_token"
