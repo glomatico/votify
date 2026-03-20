@@ -18,7 +18,6 @@ AUDIO_STREAM_URLS_API_URL = (
     "https://gue1-spclient.spotify.com/storage-resolve/v2/files/audio/interactive/{format_id}/"
     "{file_id}?version=10000000&product=9&platform=39&alt=json"
 )
-EXTEND_TRACK_COLLECTION_WAIT_TIME = 0.5
 SERVER_TIME_URL = "https://open.spotify.com/api/server-time"
 SESSION_TOKEN_URL = "https://open.spotify.com/api/token"
 CLIENT_TOKEN_URL = "https://clienttoken.spotify.com/v1/clienttoken"
