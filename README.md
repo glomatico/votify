@@ -181,9 +181,8 @@ The file is created automatically on first run. Command-line arguments override 
 | `--auto-media-option` / `auto_media_option` | Auto media option | `null` |
 | **Spotify** | | |
 | `--cookies-path`, `-c` / `cookies_path` | Cookies file path | `./cookies.txt` |
-| `--wvd-path` / `wvd_path` | .wvd file path | `./device.wvd` |
+| `--wvd-path` / `wvd_path` | .wvd file path | `null` |
 | `--prefer-video` / `prefer_video` | Prefer video streams when available | `false` |
-| `--no-drm` / `no_drm` | Don't allow DRM-protected media | `false` |
 | **Output** | | |
 | `--output`, `-o` / `output` | Output directory path | `./Spotify` |
 | `--temp` / `temp` | Temporary directory path | `.` |
