@@ -1,7 +1,6 @@
 import logging
 
 from .episode import SpotifyEpisodeInterface
-from .exceptions import VotifyNoCdmException
 from .types import SpotifyMedia
 from .video import SpotifyVideoInterface
 
