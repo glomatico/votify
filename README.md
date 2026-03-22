@@ -33,6 +33,8 @@ A command-line app for downloading songs, podcasts and videos from Spotify.
 
 ### External Tools
 
+Add these tools to your system PATH or specify their paths via command-line arguments or the config file depending on your use case:
+
 **Download songs in Vorbis quality**:
 - Votify uses default settings without requiring any optional tools
 
@@ -56,6 +58,7 @@ A command-line app for downloading songs, podcasts and videos from Spotify.
 - **aria2c** or **cURL**
 
 ### Tools Reference
+
 - **.wvd file** - Extract using [KeyDive](https://github.com/hyugogirubato/KeyDive) from an Android device. Extracted files from emulated devices may not work.
 - **FFmpeg** - Download for Windows: [AnimMouse's FFmpeg Builds](https://github.com/AnimMouse/ffmpeg-stable-autobuild/releases), Linux: [John Van Sickle's FFmpeg Builds](https://johnvansickle.com/ffmpeg/)
 - **MP4Box** - [Download](https://gpac.io/downloads/gpac-nightly-builds/)
