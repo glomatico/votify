@@ -196,6 +196,23 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
 
         return decryption_key
 
+    async def get_decryption_key(
+        self,
+        stream_info: StreamInfoAv,
+        media_id: str,
+    ):
+        if stream_info.audio_track.widevine_pssh:
+            return await self.get_widevine_decryption_key(
+                stream_info.audio_track.widevine_pssh
+            )
+        elif stream_info.audio_track.file_id:
+            return await self.get_librespot_decryption_key(
+                media_id=media_id,
+                file_id=stream_info.audio_track.file_id,
+            )
+        else:
+            raise Exception("No method available to get decryption key")
+
     def _parse_file_id(
         self,
         playback_info: dict,

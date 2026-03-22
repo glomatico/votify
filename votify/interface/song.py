@@ -76,15 +76,10 @@ class SpotifySongInterface(SpotifyAudioInterface):
                 e.media_metadata = track_data
                 raise
 
-            if media.stream_info.audio_track.widevine_pssh:
-                media.decryption_key = await self.get_widevine_decryption_key(
-                    media.stream_info.audio_track.widevine_pssh
-                )
-            else:
-                media.decryption_key = await self.get_librespot_decryption_key(
-                    media_id=track_id,
-                    file_id=media.stream_info.audio_track.file_id,
-                )
+            media.decryption_key = await self.get_decryption_key(
+                stream_info=media.stream_info,
+                media_id=track_id,
+            )
 
         logger.debug(f"Processed song media: {media}")
 
