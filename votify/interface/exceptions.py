@@ -45,10 +45,10 @@ class VotifyMediaFlatFilterException(VotifyMediaException):
         self.result = result
 
 
-class VotifyDrmDisabledException(VotifyMediaException):
+class VotifyNoCdmException(VotifyMediaException):
     def __init__(self, media_id: str, media_metadata: dict | None = None):
         super().__init__(
-            "DRM is disabled, cannot process media",
+            "Content requires a CDM but no .wvd file was provided",
             media_id=media_id,
             media_metadata=media_metadata,
         )
