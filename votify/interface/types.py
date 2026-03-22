@@ -26,6 +26,7 @@ class StreamInfo:
     widevine_pssh: str
     file_format: str
     actual_file_format: str | None = None
+    file_id: str | bytes | None = None
 
 
 @dataclass
