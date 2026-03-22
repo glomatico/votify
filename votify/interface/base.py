@@ -7,7 +7,7 @@ from pywidevine import PSSH, Cdm, Device
 from ..api import SpotifyApi
 from .constants import URL_INFO_RE
 from .enums import CoverSize, MediaRating
-from .exceptions import VotifyUrlParseException
+from .exceptions import VotifyNoCdmException, VotifyUrlParseException
 from .types import DecryptionKey, PlaylistTags, SpotifyUrlInfo
 
 logger = logging.getLogger(__name__)
@@ -18,14 +18,12 @@ class SpotifyBaseInterface:
         self,
         api: SpotifyApi,
         cover_size: CoverSize = CoverSize.EXTRA_LARGE,
-        no_drm: bool = False,
         skip_stream_info: bool = False,
         wvd_path: str | None = "./device.wvd",
         disallowed_media_types: list[str] | None = None,
     ) -> None:
         self.api = api
         self.cover_size = cover_size
-        self.no_drm = no_drm
         self.skip_stream_info = skip_stream_info
         self.wvd_path = wvd_path
         self.disallowed_media_types = disallowed_media_types or []
@@ -63,12 +61,11 @@ class SpotifyBaseInterface:
         return show_data, show_items
 
     def _initialize_cdm(self) -> None:
-        if self.wvd_path and not self.no_drm:
+        if self.wvd_path:
             self.cdm = Cdm.from_device(Device.load(self.wvd_path))
             self.cdm.MAX_NUM_OF_SESSIONS = float("inf")
         else:
             self.cdm = None
-            self.no_drm = True
 
     def parse_url_info(self, url: str) -> SpotifyUrlInfo:
         match = URL_INFO_RE.match(url)
@@ -84,6 +81,9 @@ class SpotifyBaseInterface:
         pssh: str,
         media_type: str,
     ) -> DecryptionKey:
+        if not self.cdm:
+            raise VotifyNoCdmException()
+
         try:
             cdm_session = self.cdm.open()
             pssh = PSSH(pssh)
