@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import logging
 import time
@@ -8,6 +9,7 @@ import httpx
 
 from ..utils import safe_json
 from .constants import (
+    AUDIO_STREAM_URLS_API_URL,
     CLIENT_TOKEN_URL,
     CLIENT_VERSION,
     COOKIE_DOMAIN,
@@ -15,17 +17,21 @@ from .constants import (
     HOME_PAGE_URL,
     LYRICS_API_URL,
     PATHFINDER_API_URL,
+    PLAYBACK_INFO_API_URL,
     SEEK_TABLE_API_URL,
     SERVER_TIME_URL,
     SESSION_TOKEN_URL,
-    AUDIO_STREAM_URLS_API_URL,
     TRACK_CREDITS_API_URL,
-    PLAYBACK_INFO_API_URL,
     VIDEO_MANIFEST_API_URL,
     WIDEVINE_LICENSE_API_URL,
 )
 from .exceptions import VotifyRequestException
 from .totp import Totp
+
+try:
+    from .librespot import Librespot
+except ImportError:
+    Librespot = None
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +40,10 @@ class SpotifyApi:
     def __init__(
         self,
         sp_dc: str | None = None,
+        skip_librespot: bool = False,
     ) -> None:
         self.sp_dc = sp_dc
+        self.skip_librespot = skip_librespot
 
     @property
     def premium_session(self) -> bool:
@@ -100,6 +108,7 @@ class SpotifyApi:
         await self._initialize_totp()
         await self._initialize_authorization()
         await self._initialize_user_profile()
+        await asyncio.to_thread(self._initialize_librespot)
 
     def _initialize_client(self) -> None:
         self.client = httpx.AsyncClient()
@@ -153,6 +162,17 @@ class SpotifyApi:
 
     async def _initialize_user_profile(self) -> None:
         self.user_profile = await self._get_user_profile() if self.sp_dc else None
+
+    def _initialize_librespot(self) -> None:
+        if not self.skip_librespot:
+            if not Librespot:
+                raise ImportError(
+                    "Librespot is not available. Make sure to install the 'librespot' extra."
+                )
+
+            self.librespot = Librespot(access_token=self._access_token)
+        else:
+            self.librespot = None
 
     async def _get_server_time(self) -> int:
         response = await self.client.get(SERVER_TIME_URL)
@@ -226,7 +246,9 @@ class SpotifyApi:
         timestamp_now = time.time()
         if timestamp_now < timestamp_session_expire:
             return
+
         await self._initialize_authorization()
+        await asyncio.to_thread(self._initialize_librespot)
 
     @staticmethod
     def media_id_to_gid(media_id: str) -> str:
