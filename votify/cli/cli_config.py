@@ -150,14 +150,6 @@ class CliConfig:
             type=CoverSize,
         ),
     ]
-    no_drm: Annotated[
-        bool,
-        option(
-            "--no-drm",
-            help="Don't allow DRM-protected media",
-            is_flag=True,
-        ),
-    ]
     wvd_path: Annotated[
         str,
         option(

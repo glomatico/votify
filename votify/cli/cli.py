@@ -81,7 +81,7 @@ async def main(config: CliConfig):
     cookies_path = prompt_path(config.cookies_path)
 
     wvd_path = None
-    if not config.no_drm:
+    if wvd_path:
         wvd_path = prompt_path(config.wvd_path)
 
     if config.database_path:
@@ -96,7 +96,6 @@ async def main(config: CliConfig):
     base_interface = SpotifyBaseInterface(
         api=api,
         cover_size=config.cover_size,
-        no_drm=config.no_drm,
         skip_stream_info=config.synced_lyrics_only,
         wvd_path=wvd_path,
     )
