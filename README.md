@@ -35,12 +35,15 @@ A command-line app for downloading songs, podcasts and videos from Spotify.
 
 Add these tools to your system PATH or specify their paths via command-line arguments or the config file:
 
+- **FFmpeg** - Required when using `ffmpeg` as remux mode. Recommended builds:
+  - Windows: [AnimMouse's FFmpeg Builds](https://github.com/AnimMouse/ffmpeg-stable-autobuild/releases)
+  - Linux: [John Van Sickle's FFmpeg Builds](https://johnvansickle.com/ffmpeg/)
 - **[MP4Box](https://gpac.io/downloads/gpac-nightly-builds/)** - Required when using `mp4box` as remux mode.
 - **[Shaka Packager](https://github.com/shaka-project/shaka-packager/releases/latest)** - Required for `webm` video format and music video downloads.
 - **[mp4decrypt](https://www.bento4.com/downloads/)** - Required when using `mp4box` or `mp4decrypt` as remux mode.
 - **[aria2c](https://github.com/aria2/aria2/releases)** - Required when using `aria2c` as download mode.
 - **[cURL](https://curl.se/download.html)** - Required when using `curl` as download mode.
-- **.wvd file** - Required to download music videos and songs in AAC quality. Use KeyDive to extract it from an Android device. Files from emulated devices may not work.
+- **.wvd file** - Required to download music videos and songs in AAC quality. Use [KeyDive](https://github.com/hyugogirubato/KeyDive) to extract it from an Android device. Extracted files from emulated devices may not work.
 
 ## 📦 Installation
 
