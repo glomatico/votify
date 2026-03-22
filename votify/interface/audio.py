@@ -1,5 +1,7 @@
 import logging
 
+from pywidevine.license_protocol_pb2 import WidevinePsshData
+
 from .base import SpotifyBaseInterface
 from .enums import AudioQuality
 from .exceptions import VotifyMediaFormatNotAvailableException
@@ -140,9 +142,11 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
         self,
         file_id: str,
     ) -> str:
-        seek_table_response = await self.api.get_seek_table(file_id)
-        pssh = seek_table_response.get("pssh", seek_table_response.get("widevine_pssh"))
+        pssh_obj = WidevinePsshData()
+        pssh_obj.algorithm = WidevinePsshData.AESCTR
+        pssh_obj.key_ids.append(bytes.fromhex(file_id[:32]))
+        pssh_obj.provider = "spotify"
+        pssh_obj.content_id = bytes.fromhex(file_id)
+        pssh_obj.protection_scheme = 1667591779
 
-        logger.debug(f"Received PSSH: {pssh}")
-
-        return pssh
+        return pssh_obj.SerializeToString()
