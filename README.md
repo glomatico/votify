@@ -31,19 +31,38 @@ A command-line app for downloading songs, podcasts and videos from Spotify.
 > - **Some users have reported that Spotify suspended their accounts after using Votify.** Use it at your own risk.
 > - **You may not be able to download songs if your account is too new.** In this case, you can try downloading songs in AAC quality with a .wvd file, which uses a different download method that may work for new accounts.
 
-### Optional
+### External Tools
 
-Add these tools to your system PATH or specify their paths via command-line arguments or the config file:
+**Download songs in Vorbis quality**:
+- Votify uses default settings without requiring any optional tools
 
-- **FFmpeg** - Required when using `ffmpeg` as remux mode. Recommended builds:
-  - Windows: [AnimMouse's FFmpeg Builds](https://github.com/AnimMouse/ffmpeg-stable-autobuild/releases)
-  - Linux: [John Van Sickle's FFmpeg Builds](https://johnvansickle.com/ffmpeg/)
-- **[MP4Box](https://gpac.io/downloads/gpac-nightly-builds/)** - Required when using `mp4box` as remux mode.
-- **[Shaka Packager](https://github.com/shaka-project/shaka-packager/releases/latest)** - Required for `webm` video format and music video downloads.
-- **[mp4decrypt](https://www.bento4.com/downloads/)** - Required when using `mp4box` or `mp4decrypt` as remux mode.
-- **[aria2c](https://github.com/aria2/aria2/releases)** - Required when using `aria2c` as download mode.
-- **[cURL](https://curl.se/download.html)** - Required when using `curl` as download mode.
-- **.wvd file** - Required to download music videos and songs in AAC quality. Use [KeyDive](https://github.com/hyugogirubato/KeyDive) to extract it from an Android device. Extracted files from emulated devices may not work.
+**Download songs in AAC quality (128kbps / 256kbps)**:
+- **.wvd file**
+- **FFmpeg**, **mp4decrypt**, or **MP4Box** + **mp4decrypt**
+
+**Download songs in FLAC quality**:
+- L1-certified **.wvd file**
+- **FFmpeg**
+
+**Download music videos**:
+- **.wvd file**
+- **FFmpeg** or **MP4Box**
+- **mp4decrypt** (for MP4) or **Shaka Packager** (for WebM)
+
+**Download podcast videos**:
+- **FFmpeg** or **MP4Box**
+
+**Download with faster speeds**:
+- **aria2c** or **cURL**
+
+### Tools Reference
+- **.wvd file** - Extract using [KeyDive](https://github.com/hyugogirubato/KeyDive) from an Android device. Extracted files from emulated devices may not work.
+- **FFmpeg** - Download for Windows: [AnimMouse's FFmpeg Builds](https://github.com/AnimMouse/ffmpeg-stable-autobuild/releases), Linux: [John Van Sickle's FFmpeg Builds](https://johnvansickle.com/ffmpeg/)
+- **MP4Box** - [Download](https://gpac.io/downloads/gpac-nightly-builds/)
+- **mp4decrypt** - [Download](https://www.bento4.com/downloads/)
+- **Shaka Packager** - [Download](https://github.com/shaka-project/shaka-packager/releases/latest)
+- **cURL** - [Download](https://curl.se/download.html)
+- **aria2c** - [Download](https://github.com/aria2/ari2/releases)
 
 ## 📦 Installation
 
