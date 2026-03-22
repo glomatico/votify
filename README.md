@@ -38,8 +38,8 @@ Add these tools to your system PATH or specify their paths via command-line argu
 **Download songs in Vorbis quality**:
 - Votify uses default settings without requiring any optional tools
 
-**Download songs in AAC quality (128kbps / 256kbps)**:
-- **.wvd file**
+**Download songs and podcasts in AAC quality (128kbps / 256kbps)**:
+- **.wvd file** (for songs only)
 - **FFmpeg**, **mp4decrypt**, or **MP4Box** + **mp4decrypt**
 
 **Download songs in FLAC quality**:
