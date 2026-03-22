@@ -80,8 +80,7 @@ async def main(config: CliConfig):
 
     cookies_path = prompt_path(config.cookies_path)
 
-    wvd_path = None
-    if wvd_path:
+    if config.wvd_path:
         wvd_path = prompt_path(config.wvd_path)
 
     if config.database_path:
