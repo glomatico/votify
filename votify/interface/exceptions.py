@@ -7,6 +7,11 @@ class VotifyInterfaceException(VotiyException):
     pass
 
 
+class VotifyNoCdmException(VotifyInterfaceException):
+    def __init__(self):
+        super().__init__("Content requires a CDM but no .wvd file was provided")
+
+
 class VotifyUrlParseException(VotifyInterfaceException):
     def __init__(self, url: str):
         super().__init__(f"Failed to parse Spotify URL: {url}")
@@ -43,15 +48,6 @@ class VotifyMediaFlatFilterException(VotifyMediaException):
         )
 
         self.result = result
-
-
-class VotifyNoCdmException(VotifyMediaException):
-    def __init__(self, media_id: str, media_metadata: dict | None = None):
-        super().__init__(
-            "Content requires a CDM but no .wvd file was provided",
-            media_id=media_id,
-            media_metadata=media_metadata,
-        )
 
 
 class VotifyMediaNotFoundException(VotifyMediaException):
