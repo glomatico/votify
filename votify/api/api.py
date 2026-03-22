@@ -26,12 +26,8 @@ from .constants import (
     WIDEVINE_LICENSE_API_URL,
 )
 from .exceptions import VotifyRequestException
+from .librespot import Librespot
 from .totp import Totp
-
-try:
-    from .librespot import Librespot
-except ImportError:
-    Librespot = None
 
 logger = logging.getLogger(__name__)
 
@@ -165,11 +161,6 @@ class SpotifyApi:
 
     def _initialize_librespot(self) -> None:
         if not self.skip_librespot:
-            if not Librespot:
-                raise ImportError(
-                    "Librespot is not available. Make sure to install the 'librespot' extra."
-                )
-
             self.librespot = Librespot(access_token=self._access_token)
         else:
             self.librespot = None
