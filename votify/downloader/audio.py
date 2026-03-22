@@ -114,7 +114,9 @@ class SpotifyAudioDownloader(SpotifyBaseDownloader):
                 encrypted_path,
                 staged_path,
             )
-        elif self.remux_mode == AudioRemuxMode.FFMPEG:
+        elif self.remux_mode == AudioRemuxMode.FFMPEG or staged_path.lower().endswith(
+            ".flac"
+        ):
             await self._ffmpeg_remux(
                 encrypted_path,
                 staged_path,
