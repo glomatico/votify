@@ -29,7 +29,7 @@ A command-line app for downloading songs, podcasts and videos from Spotify.
 
 > [!WARNING]
 > - **Some users have reported that Spotify suspended their accounts after using Votify.** Use it at your own risk.
-> - You may not be able to download songs if your account is too new. In this case, try specifying a .wvd file.
+> - **You may not be able to download songs if your account is too new.** In this case, you can try downloading songs in AAC quality with a .wvd file, which uses a different download method that may work for new accounts.
 
 ### Optional
 
@@ -266,6 +266,9 @@ Tags usable in the `exclude_tags` list only:
 - `ffmpeg`
 - `mp4box`
 - `mp4decrypt`
+
+> [!NOTE]
+> Audio remux modes only apply for non vorbis qualities.
 
 ### Video resolutions
 
