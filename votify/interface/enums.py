@@ -48,9 +48,9 @@ class CoverSize(Enum):
 
 
 class AudioQuality(Enum):
-    VORBIS_HIGH = "vorbis-high"
-    VORBIS_MEDIUM = "vorbis-medium"
     VORBIS_LOW = "vorbis-low"
+    VORBIS_MEDIUM = "vorbis-medium"
+    VORBIS_HIGH = "vorbis-high"
     AAC_MEDIUM = "aac-medium"
     AAC_HIGH = "aac-high"
     FLAC = "flac"
