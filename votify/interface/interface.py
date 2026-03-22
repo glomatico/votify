@@ -6,11 +6,10 @@ from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 
 from .audio import SpotifyAudioInterface
-from .enums import AudioQuality, AutoMediaOption
+from .enums import AutoMediaOption
 from .episode import SpotifyEpisodeInterface
 from .episode_video import SpotifyEpisodeVideoInterface
 from .exceptions import (
-    VotifyDrmDisabledException,
     VotifyMediaFlatFilterException,
     VotifyMediaNotFoundException,
     VotifyMediaUnstreamableException,
@@ -48,9 +47,6 @@ class SpotifyInterface:
         album_data: dict | None = None,
         album_items: list[dict] | None = None,
     ) -> SpotifyMedia | BaseException | None:
-        if self.base.no_drm:
-            return VotifyDrmDisabledException(track_id)
-
         track_response = await self.base.api.get_track(track_id)
         track_data = track_response["data"]["trackUnion"]
 
@@ -146,10 +142,6 @@ class SpotifyInterface:
         self,
         media_id: str,
     ) -> AsyncGenerator[SpotifyMedia | BaseException, None]:
-        if self.base.no_drm:
-            yield VotifyDrmDisabledException(media_id)
-            return
-
         album_data, album_items = await self.base.get_album_data_cached(
             album_id=media_id
         )

@@ -1,7 +1,7 @@
 import logging
 
 from .episode import SpotifyEpisodeInterface
-from .exceptions import VotifyDrmDisabledException
+from .exceptions import VotifyNoCdmException
 from .types import SpotifyMedia
 from .video import SpotifyVideoInterface
 
@@ -53,8 +53,6 @@ class SpotifyEpisodeVideoInterface(SpotifyVideoInterface):
             media.stream_info = await self.get_stream_info(episode_id, "episode")
 
             if media.stream_info.audio_track.widevine_pssh:
-                if self.no_drm:
-                    raise VotifyDrmDisabledException(media.media_id, episode_data)
                 media.decryption_key = await self.get_widevine_decryption_key(
                     media.stream_info.audio_track.widevine_pssh
                 )
