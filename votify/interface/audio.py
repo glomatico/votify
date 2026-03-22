@@ -137,7 +137,7 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
                 media_id_wrapper(media_id, media_type),
             )
         elif media_type == "episode":
-            metadata = asyncio.to_thread(
+            metadata = await asyncio.to_thread(
                 self.api.librespot.session.api().get_metadata_4_episode,
                 media_id_wrapper(media_id, media_type),
             )
