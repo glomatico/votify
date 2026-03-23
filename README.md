@@ -35,7 +35,7 @@ A command-line app for downloading songs, podcasts and videos from Spotify.
 
 Add these tools to your system PATH or specify their paths via command-line arguments or the config file. Then configure the appropriate option for your use case:
 
-**Download songs in Vorbis quality**:
+**Download songs and podcasts in Vorbis quality**:
 - Votify uses default settings without requiring any optional tools
 
 **Download songs and podcasts in AAC quality (128kbps / 256kbps)**:
