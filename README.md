@@ -33,7 +33,7 @@ A command-line app for downloading songs, podcasts and videos from Spotify.
 
 ### External Tools
 
-Add these tools to your system PATH or specify their paths via command-line arguments or the config file depending on your use case:
+Add these tools to your system PATH or specify their paths via command-line arguments or the config file. Then configure the appropriate option for your use case:
 
 **Download songs in Vorbis quality**:
 - Votify uses default settings without requiring any optional tools
