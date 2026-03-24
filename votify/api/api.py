@@ -79,6 +79,8 @@ class SpotifyApi:
     async def create_from_netscape_cookies(
         cls,
         cookies_path: str = "./cookies.txt",
+        *args,
+        **kwargs,
     ) -> "SpotifyApi":
         cookies = cls._parse_cookies(cookies_path)
         sp_dc = cookies.get("sp_dc")
@@ -89,7 +91,11 @@ class SpotifyApi:
                 "from the Spotify homepage and are logged in."
             )
 
-        return await cls.create(sp_dc=sp_dc)
+        return await cls.create(
+            sp_dc=sp_dc,
+            *args,
+            **kwargs,
+        )
 
     @classmethod
     async def create(
