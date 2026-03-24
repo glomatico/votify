@@ -12,7 +12,6 @@ dependencies = [
     "dataclass-click>=1.0.4",
     "httpx>=0.28.1",
     "inquirerpy>=0.3.4",
-    "librespot",
     "mutagen>=1.47.0",
     "pillow>=12.1.0",
     "pybase62>=1.0.0",
@@ -28,6 +27,9 @@ repository = "https://github.com/glomatico/votify"
 votify = "votify.cli.cli:main"
 
 [dependency-groups]
+librespot = [
+    "librespot",
+]
 dev = [
     "asynctest>=0.13.0",
     "pytest>=9.0.2",
