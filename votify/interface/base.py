@@ -19,7 +19,7 @@ class SpotifyBaseInterface:
         api: SpotifyApi,
         cover_size: CoverSize = CoverSize.EXTRA_LARGE,
         skip_stream_info: bool = False,
-        wvd_path: str | None = "./device.wvd",
+        wvd_path: str | None = None,
         disallowed_media_types: list[str] | None = None,
     ) -> None:
         self.api = api
