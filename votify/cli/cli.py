@@ -82,6 +82,8 @@ async def main(config: CliConfig):
 
     if config.wvd_path:
         wvd_path = prompt_path(config.wvd_path)
+    else:
+        wvd_path = None
 
     if config.database_path:
         database = Database(config.database_path)
