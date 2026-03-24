@@ -71,12 +71,15 @@ Add these tools to your system PATH or specify their paths via command-line argu
 
 1. Install Votify via pip:
    ```bash
-   pip install votify
+   pip install votify[librespot]
    ```
 
 2. Set up the cookies file:
    - Place the cookies file in your working directory as `cookies.txt`, or
    - Specify its path using `--cookies-path` or in the config file.
+
+> [!NOTE]
+> - **The 'librespot' extra is only required if you want to download in Vorbis quality.** If you only want to download in AAC quality, you can just install the main `votify` package without the extra.
 
 ## 🚀 Usage
 
