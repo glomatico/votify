@@ -31,7 +31,7 @@ A command-line app for downloading songs, podcasts and videos from Spotify.
 > - **Some users have reported that Spotify suspended their accounts after using Votify.** Use it at your own risk.
 > - **You may not be able to download songs if your account is too new.** In this case, you can try downloading songs in AAC quality with a .wvd file, which uses a different download method that may work for new accounts.
 
-### External Tools
+### Optional
 
 Add these tools to your system PATH or specify their paths via command-line arguments or the config file. Then configure the appropriate option for your use case:
 
