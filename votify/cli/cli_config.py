@@ -166,7 +166,7 @@ class CliConfig:
     ]
     # Audio Interface specific options
     audio_quality: Annotated[
-        AudioQuality,
+        list[AudioQuality],
         option(
             "--audio-quality",
             help="Comma-separated audio quality priority",

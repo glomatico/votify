@@ -82,6 +82,8 @@ async def main(config: CliConfig):
 
     if config.wvd_path:
         wvd_path = prompt_path(config.wvd_path)
+    else:
+        wvd_path = None
 
     if config.database_path:
         database = Database(config.database_path)
@@ -89,6 +91,14 @@ async def main(config: CliConfig):
     else:
         database = None
         flat_filter = None
+
+    if not Librespot and not any(
+        audio_quality.mp4 for audio_quality in config.audio_quality
+    ):
+        logger.warning(
+            "Librespot is not available, "
+            "Vorbis audio quality for songs will not be available"
+        )
 
     api = await SpotifyApi.create_from_netscape_cookies(
         cookies_path,
