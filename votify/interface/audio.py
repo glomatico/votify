@@ -15,7 +15,7 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
     def __init__(
         self,
         base: SpotifyBaseInterface,
-        audio_quality_priority: list[AudioQuality] = [AudioQuality.AAC_MEDIUM],
+        audio_quality_priority: list[AudioQuality] = [AudioQuality.VORBIS_MEDIUM],
     ):
         self.__dict__.update(base.__dict__)
 
