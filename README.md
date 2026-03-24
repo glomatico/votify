@@ -26,42 +26,60 @@ A command-line app for downloading songs, podcasts and videos from Spotify.
 - **Spotify cookies** - Export your browser cookies in Netscape format while logged in at the Spotify homepage:
   - Firefox: [Export Cookies](https://addons.mozilla.org/addon/export-cookies-txt)
   - Chromium-based browsers: [Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc)
-- **FFmpeg** on your system PATH. Recommended builds:
-  - Windows: [AnimMouse's FFmpeg Builds](https://github.com/AnimMouse/ffmpeg-stable-autobuild/releases)
-  - Linux: [John Van Sickle's FFmpeg Builds](https://johnvansickle.com/ffmpeg/)
-- **[.wvd file](https://github.com/hyugogirubato/KeyDive)** - Required to decrypt music videos and AAC songs. Use [KeyDive](https://github.com/hyugogirubato/KeyDive) to extract it from an Android device. Files from emulated devices may not work.
 
 > [!WARNING]
-> **Some users have reported that Spotify suspended their accounts after using Votify.** Use it at your own risk.
-
-> [!NOTE]
-> - A .wvd file is not needed if you only plan to download podcasts. In this case, you can use the `--no-drm` flag to disable the .wvd file requirement.
-> - FFmpeg can also be skipped when downloading podcasts in Vorbis codec.
+> - **Some users have reported that Spotify suspended their accounts after using Votify.** Use it at your own risk.
+> - **You may not be able to download songs if your account is too new.** In this case, you can try downloading songs in AAC quality with a .wvd file, which uses a different download method that may work for new accounts.
 
 ### Optional
 
-Add these tools to your system PATH or specify their paths via command-line arguments or the config file:
+Add these tools to your system PATH or specify their paths via command-line arguments or the config file. Then configure the appropriate option for your use case:
 
-- **[MP4Box](https://gpac.io/downloads/gpac-nightly-builds/)** - Required when using `mp4box` as remux mode.
-- **[Shaka Packager](https://github.com/shaka-project/shaka-packager/releases/latest)** - Required for `webm` video format and music video downloads.
-- **[mp4decrypt](https://www.bento4.com/downloads/)** - Required when using `mp4box` or `mp4decrypt` as remux mode.
-- **[aria2c](https://github.com/aria2/aria2/releases)** - Required when using `aria2c` as download mode.
-- **[cURL](https://curl.se/download.html)** - Required when using `curl` as download mode.
+**Download songs and podcasts in Vorbis quality**:
+- Votify uses default settings without requiring any optional tools
+
+**Download songs and podcasts in AAC quality (128kbps / 256kbps)**:
+- **.wvd file** (for songs only)
+- **FFmpeg**, **mp4decrypt**, or **MP4Box** + **mp4decrypt**
+
+**Download songs in FLAC quality**:
+- L1-certified **.wvd file**
+- **FFmpeg**
+
+**Download music videos**:
+- **.wvd file**
+- **FFmpeg** or **MP4Box**
+- **mp4decrypt** (for MP4) or **Shaka Packager** (for WebM)
+
+**Download podcast videos**:
+- **FFmpeg** or **MP4Box**
+
+**Download with faster speeds**:
+- **aria2c** or **cURL**
+
+### Tools Reference
+
+- **.wvd file** - Extract using [KeyDive](https://github.com/hyugogirubato/KeyDive) from an Android device. Extracted files from emulated devices may not work.
+- **FFmpeg** - Download for Windows: [AnimMouse's FFmpeg Builds](https://github.com/AnimMouse/ffmpeg-stable-autobuild/releases), Linux: [John Van Sickle's FFmpeg Builds](https://johnvansickle.com/ffmpeg/)
+- **MP4Box** - [Download](https://gpac.io/downloads/gpac-nightly-builds/)
+- **mp4decrypt** - [Download](https://www.bento4.com/downloads/)
+- **Shaka Packager** - [Download](https://github.com/shaka-project/shaka-packager/releases/latest)
+- **cURL** - [Download](https://curl.se/download.html)
+- **aria2c** - [Download](https://github.com/aria2/ari2/releases)
 
 ## 📦 Installation
 
 1. Install Votify via pip:
    ```bash
-   pip install votify
+   pip install votify[librespot]
    ```
 
 2. Set up the cookies file:
    - Place the cookies file in your working directory as `cookies.txt`, or
    - Specify its path using `--cookies-path` or in the config file.
 
-3. Set up the `.wvd` file:
-   - Place it in your working directory as `device.wvd`, or
-   - Specify its path using `--wvd-path` or in the config file.
+> [!NOTE]
+> - **The 'librespot' extra is only required if you want to download in Vorbis quality.** If you only want to download in AAC quality, you can just install the main `votify` package without the extra.
 
 ## 🚀 Usage
 
@@ -166,9 +184,8 @@ The file is created automatically on first run. Command-line arguments override 
 | `--auto-media-option` / `auto_media_option` | Auto media option | `null` |
 | **Spotify** | | |
 | `--cookies-path`, `-c` / `cookies_path` | Cookies file path | `./cookies.txt` |
-| `--wvd-path` / `wvd_path` | .wvd file path | `./device.wvd` |
+| `--wvd-path` / `wvd_path` | .wvd file path | `null` |
 | `--prefer-video` / `prefer_video` | Prefer video streams when available | `false` |
-| `--no-drm` / `no_drm` | Don't allow DRM-protected media | `false` |
 | **Output** | | |
 | `--output`, `-o` / `output` | Output directory path | `./Spotify` |
 | `--temp` / `temp` | Temporary directory path | `.` |
@@ -190,7 +207,7 @@ The file is created automatically on first run. Command-line arguments override 
 | `--playlist-file-template` / `playlist_file_template` | File template for M3U8 playlists | `Playlists/{playlist_artist}/{playlist_title}` |
 | `--date-tag-template` / `date_tag_template` | Date tag template | `%Y-%m-%dT%H:%M:%SZ` |
 | **Song / Podcast** | | |
-| `--audio-quality` / `audio_quality` | Comma-separated audio quality priority | `aac-medium` |
+| `--audio-quality` / `audio_quality` | Comma-separated audio quality priority | `vorbis-medium` |
 | `--audio-download-mode` / `audio_download_mode` | Audio download mode to use | `ytdlp` |
 | `--audio-remux-mode` / `audio_remux_mode` | Audio remux mode to use | `ffmpeg` |
 | `--synced-lyrics-only` / `synced_lyrics_only` | Only download synced lyrics file | `false` |
@@ -241,12 +258,12 @@ Tags usable in the `exclude_tags` list only:
 
 ### Audio qualities
 
-- `aac-medium` - AAC 128kbps
-- `aac-high` - AAC 256kbps, songs only, requires an active premium subscription
-- `vorbis-low` - Vorbis 96kbps, podcasts only
-- `vorbis-medium` - Vorbis 160kbps, unsupported
-- `vorbis-high` - Vorbis 320kbps, unsupported, requires an active premium subscription
-- `flac` - FLAC lossless, songs only, requires an active premium subscription
+- `vorbis-low` - Vorbis 96kbps
+- `vorbis-medium` - Vorbis 160kbps, songs only
+- `vorbis-high` - Vorbis 320kbps, songs only, requires an active premium subscription
+- `aac-medium` - AAC 128kbps, .wvd file required for songs
+- `aac-high` - AAC 256kbps, songs only, .wvd required, requires an active premium subscription
+- `flac` - FLAC lossless, songs only, .wvd required, requires an active premium subscription
 
 > [!NOTE]
 > - **FLAC quality requires a L1 .wvd file.**
@@ -276,6 +293,9 @@ Tags usable in the `exclude_tags` list only:
 - `ffmpeg`
 - `mp4box`
 - `mp4decrypt`
+
+> [!NOTE]
+> Audio remux modes only apply for non vorbis qualities.
 
 ### Video resolutions
 

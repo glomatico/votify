@@ -8,7 +8,7 @@ import colorama
 from dataclass_click import dataclass_click
 
 from .. import __version__
-from ..api.api import SpotifyApi
+from ..api.api import Librespot, SpotifyApi
 from ..downloader.audio import SpotifyAudioDownloader
 from ..downloader.base import SpotifyBaseDownloader
 from ..downloader.downloader import SpotifyDownloader
@@ -80,8 +80,7 @@ async def main(config: CliConfig):
 
     cookies_path = prompt_path(config.cookies_path)
 
-    wvd_path = None
-    if not config.no_drm:
+    if config.wvd_path:
         wvd_path = prompt_path(config.wvd_path)
 
     if config.database_path:
@@ -91,12 +90,20 @@ async def main(config: CliConfig):
         database = None
         flat_filter = None
 
-    api = await SpotifyApi.create_from_netscape_cookies(cookies_path)
+    api = await SpotifyApi.create_from_netscape_cookies(
+        cookies_path,
+        skip_librespot=not Librespot,
+    )
+    if api.anonymous_session:
+        logger.critical(
+            "Could not authenticate with the provided cookies, "
+            "please check your cookies file and try again"
+        )
+        return
 
     base_interface = SpotifyBaseInterface(
         api=api,
         cover_size=config.cover_size,
-        no_drm=config.no_drm,
         skip_stream_info=config.synced_lyrics_only,
         wvd_path=wvd_path,
     )
