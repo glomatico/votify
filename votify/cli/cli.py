@@ -92,6 +92,14 @@ async def main(config: CliConfig):
         database = None
         flat_filter = None
 
+    if not Librespot and not any(
+        audio_quality.mp4 for audio_quality in config.audio_quality
+    ):
+        logger.warning(
+            "Librespot is not available, "
+            "Vorbis audio quality for songs will not be available"
+        )
+
     api = await SpotifyApi.create_from_netscape_cookies(
         cookies_path,
         skip_librespot=not Librespot,
