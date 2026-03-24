@@ -91,6 +91,12 @@ async def main(config: CliConfig):
         flat_filter = None
 
     api = await SpotifyApi.create_from_netscape_cookies(cookies_path)
+    if api.anonymous_session:
+        logger.critical(
+            "Could not authenticate with the provided cookies, "
+            "please check your cookies file and try again"
+        )
+        return
 
     base_interface = SpotifyBaseInterface(
         api=api,
