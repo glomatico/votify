@@ -1,0 +1,33 @@
+syntax = "proto2";
+
+package votify.playplay.proto;
+
+option optimize_for = CODE_SIZE;
+option csharp_namespace = "Eum.Spotify.playplay";
+
+
+enum Interactivity {
+    UNKNOWN_INTERACTIVITY = 0;
+    INTERACTIVE = 1;
+    DOWNLOAD = 2;
+}
+
+enum ContentType {
+    UNKNOWN_CONTENT_TYPE = 0;
+    AUDIO_TRACK = 1;
+    AUDIO_EPISODE = 2;
+    AUDIO_ADD = 3;
+}
+
+message PlayPlayLicenseRequest {
+    optional int32 version = 1;
+    optional bytes token = 2;
+    optional bytes cache_id = 3;
+    optional Interactivity interactivity = 4;
+    optional ContentType content_type = 5;
+    optional int64 timestamp = 6;
+}
+
+message PlayPlayLicenseResponse {
+    optional bytes obfuscated_key = 1;
+}

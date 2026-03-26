@@ -1,0 +1,1023 @@
+// syntax = "proto2";
+syntax = "proto3";
+import "google/protobuf/any.proto";
+
+package votify.extendedmetadata;
+
+// Copyright 2011-2021 Spotify AB. All rights reserved.
+//
+// Definition of metadata protobuf messages.
+//
+// Master version found at:
+// https://ghe.spotify.net/metadata/metadata-storage/blob/master/src/main/proto/spotify/metadata/metadata.proto
+//
+// A general principal in how we've chosen to format these messages is that it
+// should be possible to request small things without requesting the things
+// that contain them, but the inverse is not necessarily true. So, for example,
+// if I want track metadata, I should get everything I need when I request that
+// track, including artist and album names. But if I request an album, I won't
+// get all the data about the tracks on that album. I will get just the IDs of
+// those tracks, which I'll have to request separately.
+//
+// Also, in many cases messages will embed other messages, but may not have all
+// of the fields defined that comments say are mandatory. For example, Track
+// objects in a Disc will contain only gids. The decision was made to do this
+// rather than have something like "repeated bytes track_gid" so that we can
+// more easily add additional data in the future, if needed.
+
+option java_outer_classname = "Metadata";
+option java_package = "com.spotify.metadata.proto";
+option optimize_for = SPEED;
+
+message Entity {
+  oneof entity {
+    Artist artist = 1;
+    Album album = 2;
+    Track track = 3;
+    Show show = 4;
+    Episode episode = 5;
+    AlbumGroup albumGroup = 6;
+  }
+}
+
+message LocalizedString {
+  optional string language = 1;
+  optional string value = 2;
+}
+
+message Artist {
+  // [mandatory]
+  optional bytes gid = 1; // 16 bytes
+  // [mandatory]
+  optional string name = 2;
+  optional sint32 popularity = 3; // 0-100
+  repeated TopTracks top_track = 4;
+  repeated AlbumGroup album_group = 5;
+  repeated AlbumGroup single_group = 6;
+  repeated AlbumGroup compilation_group = 7;
+  repeated AlbumGroup appears_on_group = 8;
+  repeated string genre = 9;
+  repeated ExternalId external_id = 10;
+  repeated Image portrait = 11; // Deprecated, use portrait_group instead
+  repeated Biography biography = 12;
+  repeated ActivityPeriod activity_period = 13;
+  repeated Restriction restriction = 14;
+  repeated Artist related = 15; // Only artist.gid will be set
+  optional bool is_portrait_album_cover = 16;
+  optional ImageGroup portrait_group = 17;
+  repeated SalePeriod sale_period = 18;
+  repeated LocalizedString localized_name = 19;
+  repeated Availability availability = 20;
+  optional int64 index_version = 21; // Version of the index this entity was built in. Hidden internal field, should not escape to metadata clients
+  repeated CompressedTopTracks compressed_top_track = 22; // Hidden internal field, used to optimize encoding of top tracks. Should not escape to metadata clients
+}
+
+message Album {
+  enum Type {
+    FOO = 0;
+    ALBUM = 1;
+    SINGLE = 2;
+    COMPILATION = 3;
+    EP = 4;
+    AUDIOBOOK = 5;
+    PODCAST = 6;
+  }
+
+  // [mandatory]
+  optional bytes gid = 1; // 16 bytes
+  // [mandatory]
+  optional string name = 2; // Concatenation of the album original title and version title
+  // [mandatory]
+  repeated Artist artist = 3; // only artist.gid, artist.name will be set
+  // [mandatory]
+  optional Type type = 4;
+  optional string label = 5;
+  optional Date date = 6; // Original release date of the album
+  optional sint32 popularity = 7; // 0-100
+  repeated string genre = 8;
+  repeated Image cover = 9; // Deprecated, use cover_group instead
+  repeated ExternalId external_id = 10;
+  repeated Disc disc = 11;
+  repeated string review = 12;
+  repeated Copyright copyright = 13;
+  repeated Restriction restriction = 14;
+  repeated Album related = 15; // only album.gid will be set
+  repeated SalePeriod sale_period = 16;
+  optional ImageGroup cover_group = 17;
+  optional string original_title = 18;
+  optional string version_title = 19; // The version of this album, eg: remix, remaster...
+  optional string type_str = 20;
+  repeated Block visibility_block = 21; // Hidden internal field, should not escape to metadata clients
+  optional int64 earliest_live_timestamp = 22; // UTC timestamp (in seconds) of when an album is playable in at least one market and allowed to be exposed in the metadata service. This is not guaranteed to remain stable over time
+  repeated Availability availability = 23;
+  repeated Track windowed_track = 24; // Hidden internal field, should not escape to metadata clients
+  optional Licensor licensor = 25;
+  optional int64 version = 26; // Version in seconds since epoch. Hidden internal field, should not escape to metadata clients
+  optional string feed_gid = 27; // Hidden internal field, should not escape to metadata clients
+  optional string delivery_id = 28; // Hidden internal field, should not escape to metadata clients
+  repeated LocalizedString localized_name = 29 [deprecated = true];
+  optional int64 index_version = 30; // Version of the index this entity was built in. Hidden internal field, should not escape to metadata clients
+  repeated bytes segment_block_gid = 31; // 16 bytes (UUID). The segment block gids this album has active. Hidden internal field, should not escape to metadata clients
+  optional string courtesy_line = 32;
+  repeated LocalizedTitle title = 33; // All titles for the Album. Hidden internal field, should not escape to metadata clients
+  optional bool is_metadata_hidden = 34; // If true, means no metadata should be surfaced in clients for this album for legal reasons
+  optional string canonical_uri = 35; // Highest ranked album in the album group
+  repeated ArtistWithRole artist_with_role = 36; // Hidden internal field, not exposed publicly. If you need artist roles for albums, please consider migrating to V5 API
+  optional AlbumPrerelease prerelease_config = 37; // Prerelease data, should only be set for the allowlisted clients
+  repeated LabelId label_id = 38;
+  optional AlbumImplDetails implementation_details = 39; // Hidden internal field.
+  repeated ReleaseAdmin release_admin = 40;
+}
+
+// Implementation details about an album. You should never assume any of this exists when requesting data about albums,
+// and you must be prepared for BREAKING changes to this in patch releases, including removing this entire type and its
+// corresponding field.
+message AlbumImplDetails {
+  optional string media_type = 1;
+}
+
+message LocalizedTitle {
+  // [mandatory]
+  optional string language = 1; // Language and script as defined in IETF RfC 5646(lowercase). Language and Script are provided as lang[-script][-region][-variant] - e.g., en, en-us etc
+  // [mandatory]
+  optional bool is_default = 2;  // Only one default=true per entity.
+  // [mandatory]
+  optional string display_text = 3; // Complete title, with any subtitle(s) in a single string - e.g., Rocking the Decks (Crunked Out Mix)
+  // [mandatory]
+  optional string title = 4; // Main(clean) title - e.g., Rocking the Decks
+  optional string subtitle = 5; // If available, subtitle or version information in a separate field - e.g., Crunked Out Mix, instrumental version etc
+}
+
+message Track {
+  // [mandatory]
+  optional bytes gid = 1; // 16 bytes
+  // [mandatory]
+  optional string name = 2; // Concatenation of the track original title and version title
+  // [mandatory]
+  // only the following fields will be set:
+  //   album.gid, album.name,
+  //   album.artist.gid, album.artist.name
+  // the following fields will be set if they are set in the album:
+  //   album.label, album.date, album.genre
+  optional Album album = 3;
+  repeated Artist artist = 4; // only artist.gid, artist.name will be set
+  // [mandatory]
+  optional sint32 number = 5;
+  // [mandatory]
+  optional sint32 disc_number = 6;
+  optional sint32 duration = 7; // Milliseconds
+  optional sint32 popularity = 8; // 0-100
+  optional bool explicit = 9;
+  repeated ExternalId external_id = 10;
+  repeated Restriction restriction = 11;
+  repeated AudioFile file = 12;
+  repeated Track alternative = 13; // only track.gid will be set
+  repeated SalePeriod sale_period = 14;
+  repeated AudioFile preview = 15;
+  repeated string tags = 16; // freeform, for experimental features, etc.
+  optional int64 earliest_live_timestamp = 17; // UTC timestamp (in seconds) of when a track is playable in at least one market and allowed to be exposed in the metadata service. This is not guaranteed to remain stable over time
+  optional bool has_lyrics = 18;
+  repeated Availability availability = 19;
+  repeated string lyrics_country = 20; // Hidden internal field, should not escape to metadata clients
+  optional Licensor licensor = 21;
+  repeated string language_of_performance = 22; // BCP 47 language codes
+  repeated LocalizedString localized_name = 23 [deprecated = true];
+  optional Audio original_audio = 24;
+  repeated ContentRating content_rating = 25;
+  optional int64 index_version = 26; // Version of the index this entity was built in. Hidden internal field, should not escape to metadata clients
+  optional string original_title = 27;
+  optional string version_title = 28; // The version of this track, eg: remix, remaster...
+  repeated bytes segment_block_gid = 31; // 16 bytes (UUID). The segment block gids this track has active. Hidden internal field, should not escape to metadata clients
+  repeated ArtistWithRole artist_with_role = 32; // artists and their roles. Can be used together with version_title to add formatting to original_title
+  repeated LocalizedTitle title = 33; // All titles for the Track. Hidden internal field, should not escape to metadata clients
+  optional bool is_metadata_hidden = 34; // If true, means no metadata should be surfaced in clients for this track for legal reasons
+  repeated Block visibility_block = 35; // Hidden internal field, should not escape to metadata clients
+  optional string canonical_uri = 36; // Highest ranked track in the track link group
+  optional TrackPrerelease prerelease_config = 37; // Prerelease data, should only be set for the allowlisted clients
+  // Video asset, only present if the track is a music video.
+  // In this case "Audio original_audio = 24" will contain an extracted audio of the ingested video,
+  // and is supposed to be used as a fallback for clients that are not capable of playing video.
+  repeated Video original_video = 38;
+}
+
+message ArtistWithRole {
+  // The ArtistRole enum represents the list of artist roles currently exposed by the metadata service.
+  // For non-classical content we expose the roles "main artist", "featured artist", "remixer", and "actor".
+  // For classical content we also expose "composer", "conductor" and "orchestra".
+  enum ArtistRole {
+    ARTIST_ROLE_UNKNOWN = 0;
+    ARTIST_ROLE_MAIN_ARTIST = 1;
+    ARTIST_ROLE_FEATURED_ARTIST = 2;
+    ARTIST_ROLE_REMIXER = 3;
+    ARTIST_ROLE_ACTOR = 4;
+    ARTIST_ROLE_COMPOSER = 5;
+    ARTIST_ROLE_CONDUCTOR = 6;
+    ARTIST_ROLE_ORCHESTRA = 7;
+  }
+
+  // [mandatory]
+  optional bytes artist_gid = 1;
+  // [mandatory]
+  optional string artist_name = 2;
+  // [mandatory]
+  optional ArtistRole role = 3;
+  repeated LocalizedString localized_name = 4;
+}
+
+message Show {
+  /// Minimal playable audio entity "collection" fields
+  // These fields are intentionally using the same numbers as for Album, because old hardware
+  // speakers would reinterpret_cast<>() them into Album.  This probably doesn't happen any more,
+  // but to be safe we add any fields that are common to both Show and Album in the 1..63 block.
+  enum MediaType {
+    MIXED = 0;
+    AUDIO = 1;
+    VIDEO = 2;
+  }
+  enum ConsumptionOrder {
+    // omitting 0 so that there is no default
+    FOO = 0;
+    SEQUENTIAL = 1;
+    EPISODIC = 2;
+    RECENT = 3;
+  }
+  enum Passthrough {
+    UNKNOWN = 0;
+    NONE = 1;
+    ALLOWED = 2; //aka: cat 2 passthrough; this can fallback to transcoded audio
+    MANDATORY = 3; //aka: cat 3 passthrough; no fallback
+  }
+  // [mandatory]
+  optional bytes gid = 1; // 16 bytes
+  // [mandatory]
+  optional string name = 2; // Will contain PII information if is_creator_channel is set to true. Please read the implications of handling this piece of content at https://backstage.spotify.net/docs/default/component/data-protection-privacy
+  repeated LocalizedString localized_name = 29;
+
+  /// Show specific fields
+  optional string description = 64; // Will contain PII information if is_creator_channel is set to true. Please read the implications of handling this piece of content at https://backstage.spotify.net/docs/default/component/data-protection-privacy
+  optional sint32 deprecated_popularity = 65 [deprecated = true];
+  optional string publisher = 66;
+  optional string language = 67; // in BCP 47 format
+  optional bool explicit = 68;
+  optional ImageGroup cover_image = 69;
+  repeated Episode episode = 70; // only episode.gid will be set
+  repeated Copyright copyright = 71;
+  repeated Restriction restriction = 72;
+  repeated string keyword = 73;
+  optional MediaType media_type = 74;
+  optional ConsumptionOrder consumption_order = 75;
+  optional bool interpret_restriction_using_geoip = 76 [deprecated = true];
+  repeated SalePeriod sale_period = 77; // combines information from ingested sale periods, curated sale period patches and segment block periods, so it is perhaps more appropriate to interpret these at this point as "availability periods"
+  repeated Availability availability = 78;
+  optional string country_of_origin = 79;
+  repeated Categories categories = 80;
+  optional Passthrough passthrough = 81;
+  optional bool employee_only = 82;
+  optional string trailer_uri = 83;
+  // This is temporary and accessible by specific backend services.
+  // This will be deprecated once the v5 version of the metadata api is out.
+  optional string html_description = 84; // Will contain PII information if is_creator_channel is set to true. Please read the implications of handling this piece of content at https://backstage.spotify.net/docs/default/component/data-protection-privacy
+  // Is this a music and talk show. This is defined as more than 50% of this show is made up of music and talk episodes.
+  optional bool music_and_talk = 85;
+  optional Authorization authorization = 86;
+  optional bool is_enterprise_content = 87;
+  optional ShowType show_type = 88;
+  optional bool is_audiobook = 89;
+  optional bool is_creator_channel = 90;
+  optional bool is_searchable = 91;
+  optional string deprecated_spotify_user_id = 92; // Field is never populated and was added by mistake, if you need this field please use show-api service instead
+  optional bool is_paywall_content = 93;
+  optional bool is_podcast_show = 94;
+}
+
+message Episode {
+  /// Minimal playable audio entity fields
+  // These fields are intentionally using the same numbers as for Track, because old hardware
+  // speakers would reinterpret_cast<>() them into Track.  This probably doesn't happen any more,
+  // but to be safe we add any fields that are common to both Episode and Track in the 1..63 block.
+
+  enum EpisodeType {
+    FULL = 0;
+    TRAILER = 1;
+    BONUS = 2;
+  }
+
+  // [mandatory]
+  optional bytes gid = 1; // 16 bytes
+  // [mandatory]
+  optional string name = 2; // Will contain PII information if is_podcast_short is set to true. Please read the implications of handling this piece of content at https://backstage.spotify.net/docs/default/component/data-protection-privacy
+  optional sint32 duration = 7; // milliseconds
+  repeated AudioFile audio = 12;
+  repeated LocalizedString localized_name = 23;
+
+  /// Episode specific fields
+  optional string description = 64; // Will contain PII information if is_podcast_short is set to true. Please read the implications of handling this piece of content at https://backstage.spotify.net/docs/default/component/data-protection-privacy
+  optional sint32 number = 65; // semantic, starting from 1
+  optional Date publish_time = 66;
+  optional sint32 deprecated_popularity = 67 [deprecated = true]; // 0-100
+  optional ImageGroup cover_image = 68;
+  optional string language = 69; // in BCP 47 format
+  optional bool explicit = 70;
+
+  optional Show show = 71; // only show.gid, show.name will be set
+  repeated VideoFile video = 72;
+  repeated VideoFile video_preview = 73;
+
+  repeated AudioFile audio_preview = 74;
+  repeated Restriction restriction = 75;
+  optional ImageGroup freeze_frame = 76;
+  repeated string keyword = 77;
+  optional bool interpret_restriction_using_geoip = 78 [deprecated = true];
+  optional bool suppress_monetization = 79;
+  repeated SalePeriod sale_period = 80;
+  optional bool allow_background_playback = 81;
+  repeated Availability availability = 82;
+  optional string external_url = 83;
+  optional Audio original_audio = 84;
+  optional bool employee_only = 85;
+  optional string rss_guid = 86;
+  optional EpisodeType type = 87;
+  optional int32 season_number = 88;
+  optional int32 episode_number = 89;
+  // This is temporary and accessible by specific backend services.
+  // This will be deprecated once the v5 version of the metadata api is out.
+  optional string html_description = 90; // Will contain PII information if is_podcast_short is set to true. Please read the implications of handling this piece of content at https://backstage.spotify.net/docs/default/component/data-protection-privacy
+  optional bool music_and_talk = 91;
+  optional Authorization authorization = 92;
+  optional bool is_enterprise_content = 93;
+  optional bool is_paywall_content = 94;
+  repeated ContentRating content_rating = 95;
+  optional bool is_audiobook_chapter = 96;
+  optional bool is_podcast_short = 97;
+  optional bool is_searchable = 98;
+  optional string deprecated_spotify_user_id = 99; // Field is never populated and was added by mistake, if you need this field please use episode-api service instead
+  optional bool is_podcast_episode = 100;
+}
+
+message Licensor {
+  // [mandatory]
+  optional bytes uuid = 1;
+}
+
+// Original audio that was submitted to transcoding
+// This is used to get all transcodings available for a certain audio
+message Audio {
+  // [mandatory]
+  optional bytes uuid = 1;
+}
+
+// Maps country -> list of tracks. Tracks should be
+// orderered by popularity with most popular first.
+message TopTracks {
+  // [mandatory]
+  optional string country = 1; // ISO 3166-1 alpha-2 code
+  repeated Track track = 2; // Only track.gid will be set
+}
+
+// Used to compress the representation of top tracks, since
+// top lists are usually the same for most countries
+message CompressedTopTracks {
+  repeated string country = 1;
+  repeated Track track = 2;
+}
+
+// If decade is set, none of the other fields will be set.
+// At least one field must be set
+message ActivityPeriod {
+  optional sint32 start_year = 1;
+  optional sint32 end_year = 2;
+  optional sint32 decade = 3;
+}
+
+// In order to support grouping of similar albums (same tracks, etc., but
+// available in different territories for instance) we need to add an extra
+// level here.
+message AlbumGroup {
+  repeated Album album = 1; // only album.gid will be set
+}
+
+message Date {
+  // [mandatory]
+  optional sint32 year = 1; // calendar year
+  optional sint32 month = 2; // month of year, one-based
+  optional sint32 day = 3; // day of month, one-based
+  optional sint32 hour = 4;
+  optional sint32 minute = 5;
+}
+
+message Image {
+  enum Size {
+    DEFAULT = 0;
+    SMALL = 1;
+    LARGE = 2;
+    XLARGE = 3;
+    XXLARGE = 4;
+  }
+
+  // [mandatory]
+  optional bytes file_id = 1; // 20 bytes
+  // [mandatory]
+  optional Size size = 2;
+  optional sint32 width = 3; // pixel width of the specific file - not the original
+  optional sint32 height = 4;
+}
+
+message ImageGroup {
+  repeated Image image = 1;
+}
+
+message Biography {
+  optional string text = 1;
+  repeated Image portrait = 2; // Deprecated, use portrait_group instead
+  repeated ImageGroup portrait_group = 3;
+  repeated LocalizedString localized_text = 4;
+}
+
+message Disc {
+  // [mandatory]
+  optional sint32 number = 1;
+  optional string name = 2;
+  repeated Track track = 3; // only track.gid will be set
+}
+
+message Copyright {
+  enum Type {
+    P = 0;
+    C = 1;
+  }
+
+  // [mandatory]
+  optional Type type = 1;
+  // [mandatory]
+  optional string text = 2;
+}
+
+message Restriction {
+  // Deprecated enum of catalogues. At some point we will stop adding new catalogues and just use
+  // a string instead
+  enum Catalogue {
+    AD = 0;
+    SUBSCRIPTION = 1;
+    CATALOGUE_ALL = 2;
+    SHUFFLE = 3;
+    COMMERCIAL = 4;
+  }
+
+  enum Type {
+    STREAMING = 0;
+  }
+
+  // Will not be set in the future, use the new metadata API's and the catalogue_str field instead.
+  repeated Catalogue catalogue = 1;
+
+  oneof country_restriction {
+    string countries_allowed = 2; // Repeated ISO 3166-1 alpha-2 codes, e.g. "FINOSE"
+    string countries_forbidden = 3; // Repeated ISO 3166-1 alpha-2 codes, e.g. "ATCHDE"
+  }
+  optional Type type = 4; // If not set, it is both STREAMING and DOWNLOAD
+  // (DOWNLOAD only is not supported)
+
+  // New way of communicating the catalogue. Will not be set at the same time as catalogue
+  repeated string catalogue_str = 5;
+}
+
+// An indication of when a restricted entity is available.  All of the conditions of the
+// availability need to hold, i.e. if "catalogue_str" and "start" is set, it means
+// "The entity will be available in the specified catalogue(s) after the given date."
+// To express "The entity is available in the specified catalogue" OR "The entity will be
+// available after a certain date," two different Availability messages should be used.
+// This means that a consumer of this message SHOULD check if there are any unknown
+// fields and if so discard the Availability, since it contains conditions that might not
+// hold for that consumer.
+message Availability {
+  // The entity is available in the specified catalogues, so if the user would switch to
+  // one of these catalogues, the entity would most likely be available.
+  repeated string catalogue_str = 1;
+  // The entity is available after the specified date (inclusive).
+  optional Date start = 2;
+}
+
+message Categories {
+  optional string name = 1;
+  repeated SubCategories subcategories = 2;
+}
+
+message SubCategories {
+  optional string name = 1;
+}
+
+message SalePeriod {
+  // [mandatory]
+  repeated Restriction restriction = 1;
+
+  // Missing start date indicates that the saleperiod was valid
+  // since before the index was built
+  optional Date start = 2;
+
+  // Missing end date indicates that the saleperiod
+  // will be valid at least until the next index
+  optional Date end = 3;
+}
+
+message ExternalId {
+  // [mandatory]
+  optional string type = 1;
+  // [mandatory]
+  optional string id = 2;
+}
+
+message LabelId {
+  // [mandatory]
+  optional string type = 1;
+  // [mandatory]
+  optional string value = 2;
+}
+
+message AudioFile {
+  enum Format {
+    OGG_VORBIS_96 = 0;
+    OGG_VORBIS_160 = 1;
+    OGG_VORBIS_320 = 2;
+    MP3_256 = 3;
+    MP3_320 = 4;
+    MP3_160 = 5; // Unencrypted, 1 substream
+    MP3_96 = 6; // Unencrypted, 1 substream, for previews
+    MP3_160_ENC = 7; // Encrypted, 1 substream, rc4
+    AAC_24 = 8; // Encrypted, 1 substream, aes
+    AAC_48 = 9; // Encrypted, 1 substream, aes
+    MP4_128 = 10; // AAC + EME, web audio
+    MP4_256 = 11; // AAC + EME, web audio
+    MP4_128_DUAL = 12; // dual DRM
+    MP4_256_DUAL = 13; // dual DRM
+    MP4_128_CBCS = 14; // AAC + EME, AES-CBCS for fairplay
+    MP4_256_CBCS = 15; // AAC + EME, AES-CBCS for fairplay
+    FLAC_FLAC = 16; // FLAC in FLAC container
+    MP4_FLAC = 17; // FLAC in MP4 container, for EME widevine
+    XHE_AAC_24 = 18; // xHE-AAC 24 kbps in MP4 container
+    XHE_AAC_16 = 19; // xHE-AAC 16 kbps in MP4 container
+    XHE_AAC_12 = 20; // xHE-AAC 12 kbps in MP4 container
+    HE_AAC_64 = 21; // HE-AACv1 64 kbps in MP4 container
+    FLAC_FLAC_24BIT = 22; // 24-bit FLAC in a FLAC container
+    MP4_FLAC_24BIT = 23; // 24-bit FLAC in a MP4 container
+  }
+
+  // [mandatory]
+  optional bytes file_id = 1; // 20 bytes
+  // [mandatory]
+  optional Format format = 2;
+}
+
+// Represents the original video delivered to Spotify and registered on Playback systems
+message Video {
+  // [mandatory]
+  // 16 bytes hex encoded UUID of the video
+  // This property is named source_id in Videophile and Director
+  optional bytes gid = 1;
+}
+
+// Originally intended to represent a video file generated from transcoding an original video
+// Nowadays we don't store any information about video transcoded files on Metadata APIs
+// VideoFile.file_id actually returns the source_id of the original video for backwards compatibility
+message VideoFile {
+  // [mandatory]
+  optional bytes file_id = 1; // 16 bytes
+
+  repeated AdPlacement ad_placements = 2; // Deprecated
+
+  // combines information from episode sale periods and video regional blocks
+  repeated SalePeriod sale_periods = 3;
+}
+
+message AdPlacement {
+  enum AdType {
+    PRE = 0; // pre-roll (before the video)
+    MID = 1; // mid-roll (at a point in the middle)
+    POST = 2; // post-roll (after the end of the video)
+  }
+
+  optional AdType ad_type = 1;
+  optional int32 start_time = 2;
+  optional int32 finish_time = 3;
+}
+
+message Block {
+  enum Type {
+    TOTAL = 0; // Complete block, every entity
+    COVERARTCP = 1; // Block cover art and copyright lines
+  }
+  // Can be omitted, with the implication that the block is world wide.
+  optional string countries = 1; // Repeated ISO 3166-1 alpha-2 codes, e.g. "FINOSE"
+  // [mandatory]
+  optional Type type = 2;
+}
+
+message ContentRating {
+  optional string country = 1; // ISO 3166-1 alpha-2 code
+  repeated string tag = 2;
+}
+
+// This is different from statements but consistent with v5 model
+message Grant {
+  optional string market = 1;
+  repeated string groups = 2;
+  optional bool is_override_grant = 3;
+}
+
+message GrantV2 {
+  repeated string markets = 1;
+  optional string group = 2;
+  optional bool is_override_grant = 3;
+  optional Date start = 4; // Missing start date indicates that the grant was valid since before the index was built
+  optional Date end = 5; // Missing end date indicates that the grant will bevalid at least until the next index
+}
+
+message Authorization {
+  repeated string groups = 1 [deprecated = true];
+  // Restrictions and sale periods would still apply regardless of
+  // the access tier.
+  optional bool should_check_auth_groups = 2;
+  repeated Grant grants = 3 [deprecated = true];
+  repeated GrantV2 grants_v2 = 4;
+}
+
+message ShowType {
+  optional bool original = 1;
+  optional bool exclusive = 2;
+  optional bool adaptation = 3;
+}
+
+message AlbumPrerelease {
+  optional Date earliest_reveal_date = 1;
+  optional Date earliest_coverart_reveal_date = 2;
+}
+
+message TrackPrerelease {
+  optional Date earliest_reveal_date = 1;
+}
+
+message ReleaseAdmin {
+  // [mandatory]
+  optional string release_admin_id = 1;
+  optional string personnel_description = 2;
+  repeated string system_description = 3;
+}
+// Original: https://ghe.spotify.net/extended-metadata/extended-metadata/blob/master/src/main/proto/spotify/extendedmetadata/extended_metadata.proto
+
+// Ground rules for Protobuf schemas:
+// - You may only edit the original (linked above)
+// - You may update copies verbatim from the original (master branch, merged changes only)
+// - You may not simply remove (or comment out) fields or enum values. Reserving is acceptable:
+//   https://developers.google.com/protocol-buffers/docs/proto#reserved
+
+
+
+// When asking for the extension for an entity, the client can optionally
+// provide an ETag. If the ETag matches the extension value currently at
+// the server, the server returns the ETag and doesn't have to fill in the
+// actual value of the extension as the client already has it in its cache.
+message ExtensionQuery {
+  ExtensionKind extension_kind = 1;
+  string etag = 2;
+}
+
+// The client asks for a list of extensions for each entity.
+//
+// Example:
+// {
+//   entity_uri: "spotify:track:1",
+//   query: [
+//     ExtensionQuery(ExtensionKind::CANVAZ, $etag1canvaz),
+//     ExtensionQuery(ExtensionKind::STORYLINES, "")
+//   ]
+// }
+message EntityRequest {
+  string entity_uri = 1;
+  repeated ExtensionQuery query = 2;
+}
+
+// The entire request is a list of "EntityRequest"s so that in a single
+// request the client can ask for multiple extensions for multiple entities.
+
+message BatchedEntityRequestHeader {
+  // Deprecated country and catalogue fields. These values will be taken from
+  // the user-info header instead.
+  string country = 1 [deprecated = true];
+  string catalogue = 2 [deprecated = true];
+
+  // The random 128-bit task ID used to correlate backend requests
+  // with client tasks. Multiple requests share the same task_id
+  // if they are all part of the same metadata fetching operation
+  // (e.g. fetching metadata fro 100s of tracks in a playlist).
+  bytes task_id = 3;
+}
+
+message BatchedEntityRequest {
+  BatchedEntityRequestHeader header = 1; // reserved
+  repeated EntityRequest entity_request = 2;
+}
+
+// The cache TTLs are specified per entity kind (i.e. extension values
+// of the same kind for all the entities in the response have the same
+// cache configuration).
+//
+// The client will enforce a min TTL of 1 minute.
+//
+// cache_ttl_in_seconds = for how long the client should be allowed to
+//                        use the cached value if the client is ONLINE
+//
+// offline_ttl_in_seconds = for how long the client should be allowed
+//                          to use the cached value if the client
+//                          is OFFLINE
+//
+// IMPORTANT: Notice that offline_ttl_in_seconds will effectively be
+//            the max(cache_ttl_in_seconds, offline_ttl_in_seconds).
+//
+// Cache configuration examples:
+//
+// 1. Unspecified TTLs (min TTLs will still be 1 minute)
+//
+//   cache_ttl_in_seconds = 0
+//   offline_ttl_in_seconds = 0
+//
+// 2. Unspecified offline TTL (will be max of cache TTL and 1 minute)
+//
+//   cache_ttl_in_seconds = 3600
+//   offline_ttl_in_seconds = 0
+//
+// 3. Regular cache TTL and extended offline TTL
+//
+//   cache_ttl_in_seconds = 3600
+//   offline_ttl_in_seconds = 86400
+//
+// 4. Unspecified cache TTL (will still be at least 1 minute) and extended offline TTL
+//
+//   cache_ttl_in_seconds = 0
+//   offline_ttl_in_seconds = 86400
+
+message EntityExtensionDataArrayHeader {
+  reserved 4;
+
+  // When the metadata provider request fails completely, this error code
+  // is set and the extension_data array will be empty.
+  //
+  // This field is internal to the backend and should be ignored by the client.
+  int32 provider_error_status = 1 [deprecated = true];
+
+  // Cache configuration for the data in the array. All extension values of
+  // the same extension kind get the same cache configuration by default. Note that the default
+  // TTLs can be overridden by per-entity cache TTLs specified in the enclosed
+  // EntityExtensionData messages.
+  int64 cache_ttl_in_seconds = 2;
+  int64 offline_ttl_in_seconds = 3 [deprecated = true];
+
+  // ExtensionType extension_type = 4;
+}
+
+message EntityExtensionDataArray {
+  EntityExtensionDataArrayHeader header = 1;
+  ExtensionKind extension_kind = 2;
+  repeated EntityExtensionData extension_data = 3;
+}
+
+message BatchedExtensionResponseHeader {
+  // empty
+}
+
+message BatchedExtensionResponse {
+  BatchedExtensionResponseHeader header = 1; // reserved
+  repeated EntityExtensionDataArray extended_metadata = 2;
+}
+
+message EntityExtensionDataHeader {
+  int32 status_code = 1; // HTTP-compliant status code
+  string etag = 2;
+  string locale = 3;
+
+  // Per-entity cache TTLs. See EntityExtensionDataArray for details. The per-entity cache
+  // TTLs will override the default TTLs specified in the enclosing EntityExtensionDataArray
+  // message. (The override is active if the per-entity cache TTL is non-zero.)
+  int64 cache_ttl_in_seconds = 4;
+  int64 offline_ttl_in_seconds = 5 [deprecated = true];
+}
+
+message EntityExtensionData {
+  EntityExtensionDataHeader header = 1;
+  string entity_uri = 2;
+
+  // https://developers.google.com/protocol-buffers/docs/proto3#any
+  google.protobuf.Any extension_data = 3;
+}
+
+// Mark obsolete extension kinds as deprecated - client-core will add a comment
+// to deprecated extension kinds.
+enum ExtensionKind {
+  UNKNOWN_EXTENSION = 0;
+  CANVAZ = 1;
+  STORYLINES = 2;
+  PODCAST_TOPICS = 3;
+  PODCAST_SEGMENTS = 4;
+  AUDIO_FILES = 5;
+  TRACK_DESCRIPTOR = 6;
+  PODCAST_COUNTER = 7 [deprecated = true];
+  ARTIST_V4 = 8;
+  ALBUM_V4 = 9;
+  TRACK_V4 = 10;
+  SHOW_V4 = 11;
+  EPISODE_V4 = 12;
+  PODCAST_HTML_DESCRIPTION = 13;
+  PODCAST_QUOTES = 14 [deprecated = true];
+  USER_PROFILE = 15;
+  CANVAS_V1 = 16;
+  SHOW_V4_BASE = 17 [deprecated = true];
+  SHOW_V4_EPISODES_ASSOC = 18 [deprecated = true];
+  TRACK_DESCRIPTOR_SIGNATURES = 19;
+  PODCAST_AD_SEGMENTS = 20;
+  EPISODE_TRANSCRIPTS = 21;
+  PODCAST_SUBSCRIPTIONS = 22 [deprecated = true]; // use EPISODE_ACCESS
+  EXTRACTED_COLOR = 23;
+  PODCAST_VIRALITY = 24;
+  IMAGE_SPARKLES_HACK = 25;
+  PODCAST_POPULARITY_HACK = 26;
+  AUTOMIX_MODE = 27;
+  CUEPOINTS = 28;
+  PODCAST_POLL = 29;
+  EPISODE_ACCESS = 30;
+  SHOW_ACCESS = 31;
+  PODCAST_QNA = 32 [deprecated = true];
+  CLIPS = 33;
+  SHOW_V5 = 34 [deprecated = true];
+  EPISODE_V5 = 35 [deprecated = true];
+  PODCAST_CTA_CARDS = 36;
+  PODCAST_RATING = 37;
+  DISPLAY_SEGMENTS = 38;
+  GREENROOM = 39 [deprecated = true];
+  USER_CREATED = 40 [deprecated = true];
+  SHOW_DESCRIPTION = 41 [deprecated = true];
+  SHOW_HTML_DESCRIPTION = 42 [deprecated = true];
+  SHOW_PLAYABILITY = 43 [deprecated = true];
+  EPISODE_DESCRIPTION = 44 [deprecated = true];
+  EPISODE_HTML_DESCRIPTION = 45 [deprecated = true];
+  EPISODE_PLAYABILITY = 46 [deprecated = true];
+  SHOW_EPISODES_ASSOC = 47 [deprecated = true];
+  CLIENT_CONFIG = 48;
+  PLAYLISTABILITY = 49;
+  AUDIOBOOK_V5 = 50 [deprecated = true];
+  CHAPTER_V5 = 51 [deprecated = true];
+  AUDIOBOOK_SPECIFICS = 52;
+  EPISODE_RANKING = 53 [deprecated = true];
+  HTML_DESCRIPTION = 54;
+  CREATOR_CHANNEL = 55 [deprecated = true];
+  AUDIOBOOK_PROVIDERS = 56;
+  PLAY_TRAIT = 57;
+  CONTENT_WARNING = 58 [deprecated = true];
+  IMAGE_CUE = 59 [deprecated = true];
+  STREAM_COUNT = 60 [deprecated = true];
+  AUDIO_ATTRIBUTES = 61 [deprecated = true];
+  NAVIGABLE_TRAIT = 62 [deprecated = true];
+  NEXT_BEST_EPISODE = 63;
+  AUDIOBOOK_PRICE = 64;
+  EXPRESSIVE_PLAYLISTS = 65 [deprecated = true];
+  DYNAMIC_SHOW_EPISODE = 66 [deprecated = true];
+  LIVE = 67 [deprecated = true];
+  SKIP_PLAYED = 68 [deprecated = true];
+  AD_BREAK_FREE_PODCASTS = 69 [deprecated = true];
+  ASSOCIATIONS = 70;
+  PLAYLIST_EVALUATION = 71;
+  CACHE_INVALIDATIONS = 72 [deprecated = true];
+  LIVESTREAM_ENTITY = 73;
+  SINGLE_TAP_REACTIONS = 74;
+  USER_COMMENTS = 75;
+  CLIENT_RESTRICTIONS = 76;
+  PODCAST_GUEST = 77;
+  PLAYABILITY = 78;
+  COVER_IMAGE = 79;
+  SHARE_TRAIT = 80;
+  INSTANCE_SHARING = 81;
+  ARTIST_TOUR = 82 [deprecated = true];
+  AUDIOBOOK_GENRE = 83;
+  CONCEPT = 84;
+  ORIGINAL_VIDEO = 85;
+  SMART_SHUFFLE = 86;
+  LIVE_EVENTS = 87;
+  AUDIOBOOK_RELATIONS = 88;
+  HOME_POC_BASECARD = 89 [deprecated = true];
+  AUDIOBOOK_SUPPLEMENTS = 90;
+  PAID_PODCAST_BANNER = 91;
+  FEWER_ADS = 92 [deprecated = true];
+  WATCH_FEED_SHOW_EXPLORER = 93;
+  TRACK_EXTRA_DESCRIPTORS = 94 [deprecated = true];
+  TRACK_EXTRA_AUDIO_ATTRIBUTES = 95 [deprecated = true];
+  TRACK_EXTENDED_CREDITS = 96;
+  SIMPLE_TRAIT = 97;
+  AUDIO_ASSOCIATIONS = 98;
+  VIDEO_ASSOCIATIONS = 99;
+  PLAYLIST_TUNER = 100;
+  ARTIST_VIDEOS_ENTRYPOINT = 101;
+  ALBUM_PRERELEASE = 102 [deprecated = true];
+  CONTENT_ALTERNATIVES = 103;
+  SNAPSHOT_SHARING = 105;
+  DISPLAY_SEGMENTS_COUNT = 106;
+  PODCAST_FEATURED_EPISODE = 107;
+  PODCAST_SPONSORED_CONTENT = 108;
+  PODCAST_EPISODE_TOPICS_LLM = 109 [deprecated = true];
+  PODCAST_EPISODE_TOPICS_KG = 110 [deprecated = true];
+  EPISODE_RANKING_POPULARITY = 111 [deprecated = true];
+  MERCH = 112;
+  COMPANION_CONTENT = 113;
+  WATCH_FEED_ENTITY_EXPLORER = 114;
+  ANCHOR_CARD_TRAIT = 115;
+  AUDIO_PREVIEW_PLAYBACK_TRAIT = 116;
+  VIDEO_PREVIEW_STILL_TRAIT = 117;
+  PREVIEW_CARD_TRAIT = 118;
+  SHORTCUTS_CARD_TRAIT = 119;
+  VIDEO_PREVIEW_PLAYBACK_TRAIT = 120;
+  COURSE_SPECIFICS = 121;
+  CONCERT = 122;
+  CONCERT_LOCATION = 123;
+  CONCERT_MARKETING = 124;
+  CONCERT_PERFORMERS = 125;
+  TRACK_PAIR_TRANSITION = 126;
+  CONTENT_TYPE_TRAIT = 127;
+  NAME_TRAIT = 128;
+  ARTWORK_TRAIT = 129;
+  RELEASE_DATE_TRAIT = 130;
+  CREDITS_TRAIT = 131 [deprecated = true];
+  RELEASE_URI_TRAIT = 132 [deprecated = true];
+  ENTITY_CAPPING = 133;
+  LESSON_SPECIFICS = 134;
+  CONCERT_OFFERS = 135;
+  TRANSITION_MAPS = 136;
+  ARTIST_HAS_CONCERTS = 137;
+  PRERELEASE = 138;
+  PLAYLIST_ATTRIBUTES_V2 = 139 [deprecated = true];
+  LIST_ATTRIBUTES_V2 = 140 [deprecated = true];
+  LIST_METADATA = 141;
+  LIST_TUNER_AUDIO_ANALYSIS = 142;
+  LIST_TUNER_CUEPOINTS = 143;
+  CONTENT_RATING_TRAIT = 144;
+  COPYRIGHT_TRAIT = 145;
+  SUPPORTED_BADGES = 146;
+  BADGES = 147;
+  PREVIEW_TRAIT = 148;
+  ROOTLISTABILITY_TRAIT = 149;
+  LOCAL_CONCERTS = 150;
+  RECOMMENDED_PLAYLISTS = 151;
+  POPULAR_RELEASES = 152;
+  RELATED_RELEASES = 153;
+  SHARE_RESTRICTIONS = 154;
+  CONCERT_OFFER = 155;
+  CONCERT_OFFER_PROVIDER = 156;
+  ENTITY_BOOKMARKS = 157;
+  PRIVACY_TRAIT = 158;
+  DUPLICATE_ITEMS_TRAIT = 159;
+  REORDERING_TRAIT = 160;
+  PODCAST_RESUMPTION_SEGMENTS = 161 [deprecated = true];
+  ARTIST_EXPRESSION_VIDEO = 162;
+  PRERELEASE_VIDEO = 163;
+  GATED_ENTITY_RELATIONS = 164;
+  RELATED_CREATORS_SECTION = 165;
+  CREATORS_APPEARS_ON_SECTION = 166 [deprecated = true];
+  PROMO_V1_TRAIT = 167;
+  SPEECHLESS_SHARE_CARD = 168;
+  TOP_PLAYABLES_SECTION = 169;
+  AUTO_LENS = 170;
+  PROMO_V3_TRAIT = 171;
+  TRACK_CONTENT_FILTER = 172;
+  HIGHLIGHTABILITY = 173;
+  LINK_CARD_WITH_IMAGE_TRAIT = 174;
+  TRACK_CLOUD_SECTION = 175;
+  EPISODE_TOPICS = 176  [deprecated = true];
+  VIDEO_THUMBNAIL = 177;
+  IDENTITY_TRAIT = 178;
+  VISUAL_IDENTITY_TRAIT = 179;
+  CONTENT_TYPE_V2_TRAIT = 180;
+  PREVIEW_PLAYBACK_TRAIT = 181;
+  CONSUMPTION_EXPERIENCE_TRAIT = 182;
+  PUBLISHING_METADATA_TRAIT = 183;
+  DETAILED_EVALUATION_TRAIT = 184;
+  ON_PLATFORM_REPUTATION_TRAIT = 185;
+  CREDITS_V2_TRAIT = 186;
+  HIGHLIGHT_PLAYABILITY_TRAIT = 187;
+  SHOW_EPISODE_LIST = 188 [deprecated = true];
+  AVAILABLE_RELEASES = 189;
+  PLAYLIST_DESCRIPTORS = 190;
+  LINK_CARD_WITH_ANIMATIONS_TRAIT = 191;
+  RECAP = 192;
+  AUDIOBOOK_COMPANION_CONTENT = 193;
+  THREE_OH_THREE_PLAY_TRAIT = 194;
+  ARTIST_WRAPPED_2024_VIDEO = 195;
+  CONTAINED_CONTENT_TYPES = 196;
+  CONTENT_CLASSIFICATION = 197;
+  CHAPTER_SPECIFICS = 198;
+  CREATOR_FAN_FUNDING = 199;
+  CREATOR_PLAYLISTS_SECTION = 200;
+  CREATOR_PINNED_ITEM = 201;
+  PODCAST_POLL_V2 = 202;
+  CREATOR_APPEARS_ON_SECTION = 203;
+  ARTIST_CONCERTS = 204;
+}
+
+
+service ExtendedMetadata {
+  rpc GetExtensions(BatchedEntityRequest) returns (BatchedExtensionResponse) {}
+}

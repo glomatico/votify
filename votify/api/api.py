@@ -5,6 +5,8 @@ import time
 from http.cookiejar import MozillaCookieJar
 
 import base62
+from .proto.extendedmetadata_pb2 import BatchedEntityRequest, BatchedExtensionResponse
+from .proto.playplay_pb2 import PlayPlayLicenseRequest, PlayPlayLicenseResponse
 import httpx
 
 from ..utils import safe_json
@@ -706,16 +708,20 @@ class SpotifyApi:
 
         return audio_stream_urls
 
-    async def get_playplay_license(self, file_id: str, request: bytes) -> bytes:
+    async def get_playplay_license(
+        self,
+        file_id: str,
+        request: PlayPlayLicenseRequest,
+    ) -> PlayPlayLicenseResponse:
         await self._refresh_authorization_if_needed()
 
         response = await self.client.post(
             PLAYPLAY_LICENSE_API_URL.format(file_id=file_id),
-            content=request,
+            content=request.SerializeToString(),
         )
-        playplay_license = response.content
+        response_bytes = response.content
 
-        if response.status_code != 200 or not playplay_license:
+        if response.status_code != 200 or not response_bytes:
             raise VotifyRequestException(
                 name="PlayPlay license",
                 response_status_code=response.status_code,
@@ -726,30 +732,39 @@ class SpotifyApi:
                 },
             )
 
-        logger.debug("Received PlayPlay license: (bytes)")
+        playplay_license = PlayPlayLicenseResponse()
+        playplay_license.ParseFromString(response_bytes)
+
+        logger.debug(f"Received PlayPlay license: {playplay_license}")
 
         return playplay_license
 
-    async def get_extended_metadata(self, request: bytes) -> dict:
+    async def get_extended_metadata(
+        self,
+        request: BatchedEntityRequest,
+    ) -> BatchedExtensionResponse:
         await self._refresh_authorization_if_needed()
 
         response = await self.client.post(
             EXTENDED_METADATA_API_URL,
-            content=request,
+            content=request.SerializeToString(),
             headers={
                 "Accept": "application/x-protobuf",
                 "Content-Type": "application/x-protobuf",
             },
         )
-        extended_metadata = response.content
+        response_bytes = response.content
 
-        if response.status_code != 200 or not extended_metadata:
+        if response.status_code != 200 or not response_bytes:
             raise VotifyRequestException(
                 name="Extended metadata",
                 response_status_code=response.status_code,
                 response_text=response.text,
             )
 
-        logger.debug("Received extended metadata: (bytes)")
+        extended_metadata = BatchedExtensionResponse()
+        extended_metadata.ParseFromString(response_bytes)
+
+        logger.debug(f"Received extended metadata: {extended_metadata}")
 
         return extended_metadata
