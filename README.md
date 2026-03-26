@@ -310,7 +310,7 @@ Tags usable in the `exclude_tags` list only:
 - `mp4decrypt`
 
 > [!NOTE]
-> Audio remux modes only apply for non vorbis qualities.
+> Audio remux modes only apply for AAC qualities.
 
 ### Video resolutions
 
