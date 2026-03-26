@@ -109,6 +109,7 @@ async def main(config: CliConfig):
         cover_size=config.cover_size,
         skip_stream_info=config.synced_lyrics_only,
         wvd_path=wvd_path,
+        spotify_dll_path=config.spotify_dll_path,
     )
     video_interface = SpotifyVideoInterface(
         base=base_interface,

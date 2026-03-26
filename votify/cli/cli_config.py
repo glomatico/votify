@@ -175,6 +175,20 @@ class CliConfig:
             ),
         ),
     ]
+    spotify_dll_path: Annotated[
+        str,
+        option(
+            "--spotify-dll-path",
+            help="Spotify DLL file path for desktop session decryption",
+            default=base_interface_sig.parameters["spotify_dll_path"].default,
+            type=click.Path(
+                file_okay=True,
+                dir_okay=False,
+                readable=True,
+                resolve_path=True,
+            ),
+        ),
+    ]
     # Audio Interface specific options
     audio_quality: Annotated[
         list[AudioQuality],
