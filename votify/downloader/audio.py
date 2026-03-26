@@ -127,7 +127,11 @@ class SpotifyAudioDownloader(SpotifyBaseDownloader):
         else:
             await self._decrypt_mp4decrypt(
                 encrypted_path,
-                decrypted_path,
+                (
+                    staged_path
+                    if self.remux_mode == AudioRemuxMode.MP4DECRYPT
+                    else decrypted_path
+                ),
                 decryption_key_hex,
             )
             if self.remux_mode == AudioRemuxMode.MP4BOX:
