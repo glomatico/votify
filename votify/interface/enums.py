@@ -4,12 +4,12 @@ from enum import Enum
 
 from .constants import (
     FORMAT_ID_MAP,
+    FORMAT_NAME_MAP,
     MEDIA_RATING_STR_MAP,
     MEDIA_TYPE_STR_MAP,
     MP4_AUDIO_QUALITIES,
     PREMIUM_AUDIO_QUALITIES,
     VORBIS_AUDIO_QUALITIES,
-    FORMAT_NAME_MAP,
 )
 
 
@@ -62,6 +62,10 @@ class AudioQuality(Enum):
     @property
     def mp4(self) -> bool:
         return self.value in MP4_AUDIO_QUALITIES
+
+    @property
+    def ogg(self) -> bool:
+        return self.value in VORBIS_AUDIO_QUALITIES
 
     @property
     def file_format(self) -> str | None:
