@@ -718,6 +718,10 @@ class SpotifyApi:
         response = await self.client.post(
             PLAYPLAY_LICENSE_API_URL.format(file_id=file_id),
             content=request.SerializeToString(),
+            headers={
+                "Accept": "application/x-protobuf",
+                "Content-Type": "application/x-protobuf",
+            },
         )
         response_bytes = response.content
 
@@ -726,10 +730,6 @@ class SpotifyApi:
                 name="PlayPlay license",
                 response_status_code=response.status_code,
                 response_text=response.text,
-                headers={
-                    "Accept": "application/x-protobuf",
-                    "Content-Type": "application/x-protobuf",
-                },
             )
 
         playplay_license = PlayPlayLicenseResponse()
