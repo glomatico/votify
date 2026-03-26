@@ -54,7 +54,8 @@ class AudioQuality(Enum):
     VORBIS_HIGH = "vorbis-high"
     AAC_MEDIUM = "aac-medium"
     AAC_HIGH = "aac-high"
-    FLAC = "flac"
+    FLAC_FLAC = "flac-flac"
+    FLAC_MP4 = "flac-mp4"
 
     @property
     def premium(self) -> bool:
@@ -78,11 +79,13 @@ class AudioQuality(Enum):
             return "mp4"
         elif self.value in VORBIS_AUDIO_QUALITIES:
             return "ogg"
+        elif self.value in FLAC_AUDIO_QUALITIES:
+            return "flac"
         return None
 
     @property
     def actual_file_format(self) -> str | None:
-        if self.value == "flac":
+        if self.value in {"flac-flac", "flac-mp4"}:
             return "flac"
         elif self.value in MP4_AUDIO_QUALITIES:
             return "m4a"
@@ -97,20 +100,6 @@ class AudioQuality(Enum):
     @property
     def format_name(self) -> str | None:
         return FORMAT_NAME_MAP.get(self.value)
-
-    @property
-    def previous_quality(self) -> "AudioQuality" | None:
-        if not self.mp4:
-            if self.value == "vorbis-high":
-                return AudioQuality.VORBIS_MEDIUM
-            elif self.value == "vorbis-medium":
-                return AudioQuality.VORBIS_LOW
-            elif self.value == "flac":
-                return AudioQuality.AAC_HIGH
-        else:
-            if self.value == "aac-high":
-                return AudioQuality.AAC_MEDIUM
-        return None
 
 
 class VideoFormat(Enum):
