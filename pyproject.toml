@@ -17,6 +17,7 @@ dependencies = [
     "pybase62>=1.0.0",
     "pycryptodome>=3.23.0",
     "pywidevine>=1.9.0",
+    "unplayplay",
     "yt-dlp>=2026.2.4",
 ]
 
@@ -39,3 +40,4 @@ dev = [
 
 [tool.uv.sources]
 librespot = { url = "https://github.com/AshokShau/librespot-python/archive/refs/heads/master.zip" }
+unplayplay = { url = "https://github.com/cycyrild/another-unplayplay/archive/refs/heads/main.zip" }
