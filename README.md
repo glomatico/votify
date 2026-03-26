@@ -64,7 +64,7 @@ Add these tools to your system PATH or specify their paths via command-line argu
 | Tool | Download | Notes |
 |---|---|---|
 | **.wvd file** | Extract using [KeyDive](https://github.com/hyugogirubato/KeyDive) | Required for AAC/FLAC quality. **L1-certified required for FLAC**. Extract from Android device (emulator files may not work) |
-| **Spotify DLL** | Extract from the Spotify desktop app inside its installation directory | Required for desktop session |
+| **Spotify DLL** | Extract from the Spotify desktop app inside its installation directory (Spotify.dll) | Required for desktop session |
 | **FFmpeg** | [Windows](https://github.com/AnimMouse/ffmpeg-stable-autobuild/releases) / [Linux](https://johnvansickle.com/ffmpeg/) | Used for audio/video remuxing and conversion |
 | **MP4Box** | [Download](https://gpac.io/downloads/gpac-nightly-builds/) | Alternative for audio/video remuxing |
 | **mp4decrypt** | [Download](https://www.bento4.com/downloads/) | Decrypts MP4 files when used with MP4Box |
