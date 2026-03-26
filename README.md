@@ -188,7 +188,7 @@ The file is created automatically on first run. Command-line arguments override 
 | `--database-path` / `database_path` | Path to the SQLite database file for registering downloaded media | `null` |
 | `--auto-media-option` / `auto_media_option` | Auto media option | `null` |
 | **Spotify** | | |
-| `--session-type` / `session_type` | Session type to use | `desktop` |
+| `--session-type` / `session_type` | Session type to use | `librespot` |
 | `--cookies-path`, `-c` / `cookies_path` | Cookies file path | `./cookies.txt` |
 | `--wvd-path` / `wvd_path` | .wvd file path | `null` |
 | `--spotify-dll-path` / `spotify_dll_path` | Spotify DLL file path for desktop session decryption | `null` |
