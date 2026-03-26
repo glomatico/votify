@@ -107,7 +107,9 @@ class SpotifyAudioDownloader(SpotifyBaseDownloader):
             else decryption_key
         )
 
-        if staged_path.lower().endswith(".ogg"):
+        if encrypted_path.lower().endswith(".ogg") or encrypted_path.lower().endswith(
+            ".flac"
+        ):
             await asyncio.to_thread(
                 self._decrypt_playplay,
                 decryption_key,
