@@ -26,6 +26,7 @@ from .constants import (
     WIDEVINE_LICENSE_API_URL,
 )
 from .device_flow import SpotifyDeviceFlow
+from .enums import SessionType
 from .exceptions import VotifyRequestException
 
 try:
@@ -41,12 +42,10 @@ class SpotifyApi:
     def __init__(
         self,
         sp_dc: str | None = None,
-        skip_librespot: bool = False,
-        use_totp: bool = False,
+        session_type: SessionType = SessionType.LIBRESPOT,
     ) -> None:
         self.sp_dc = sp_dc
-        self.skip_librespot = skip_librespot
-        self.use_totp = use_totp
+        self.session_type = session_type
 
     @property
     def premium_session(self) -> bool:
@@ -116,7 +115,6 @@ class SpotifyApi:
         self._initialize_client()
         await self._initialize_authorization()
         await self._initialize_user_profile()
-        await asyncio.to_thread(self._initialize_librespot)
 
     def _initialize_client(self) -> None:
         self.client = httpx.AsyncClient()
@@ -145,10 +143,13 @@ class SpotifyApi:
             self.client.cookies.update({"sp_dc": self.sp_dc})
 
     async def _initialize_authorization(self) -> None:
-        if not self.use_totp:
+        self.librespot = None
+        if self.session_type == SessionType.DESKTOP:
             await self._initialize_authorization_with_device_flow()
-        else:
+        elif self.session_type in {SessionType.LIBRESPOT, SessionType.WEB}:
             await self._initialize_authorization_with_totp()
+            if self.session_type == SessionType.LIBRESPOT:
+                asyncio.to_thread(self._initialize_librespot)
 
     def _set_authorization_header(
         self,
@@ -195,15 +196,12 @@ class SpotifyApi:
         self.user_profile = await self._get_user_profile() if self.sp_dc else None
 
     def _initialize_librespot(self) -> None:
-        if not self.skip_librespot:
-            if not Librespot:
-                raise ImportError(
-                    "Librespot is not available. "
-                    "Make sure you have installed the 'librespot' dependency."
-                )
-            self.librespot = Librespot(access_token=self._access_token)
-        else:
-            self.librespot = None
+        if not Librespot:
+            raise ImportError(
+                "Librespot is not available. "
+                "Make sure you have installed the 'librespot' dependency."
+            )
+        self.librespot = Librespot(access_token=self._access_token)
 
     async def _get_server_time(self) -> int:
         response = await self.client.get(SERVER_TIME_URL)
@@ -279,7 +277,6 @@ class SpotifyApi:
             return
 
         await self._initialize_authorization()
-        await asyncio.to_thread(self._initialize_librespot)
 
     @staticmethod
     def media_id_to_gid(media_id: str) -> str:
