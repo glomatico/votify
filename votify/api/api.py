@@ -23,6 +23,7 @@ from .constants import (
     SESSION_TOKEN_URL,
     TRACK_CREDITS_API_URL,
     VIDEO_MANIFEST_API_URL,
+    PLAYPLAY_LICENSE_API_URL,
     WIDEVINE_LICENSE_API_URL,
 )
 from .device_flow import SpotifyDeviceFlow
@@ -703,3 +704,23 @@ class SpotifyApi:
         logger.debug(f"Received audio stream URLs: {audio_stream_urls}")
 
         return audio_stream_urls
+
+    async def get_playplay_license(self, file_id: str, request: bytes) -> bytes:
+        await self._refresh_authorization_if_needed()
+
+        response = await self.client.post(
+            PLAYPLAY_LICENSE_API_URL.format(file_id=file_id),
+            content=request,
+        )
+        playplay_license = response.content
+
+        if response.status_code != 200 or not playplay_license:
+            raise VotifyRequestException(
+                name="PlayPlay license",
+                response_status_code=response.status_code,
+                response_text=response.text,
+            )
+
+        logger.debug("Received PlayPlay license: (bytes)")
+
+        return playplay_license
