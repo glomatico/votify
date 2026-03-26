@@ -39,13 +39,17 @@ Add these tools to your system PATH or specify their paths via command-line argu
 
 | Feature | Configuration | Required Tools |
 |---|---|---|
-| **Vorbis** (default) | `audio_quality: vorbis-low\|vorbis-medium\|vorbis-high`<br/>`session_type: librespot` | None |
+| **Songs in Vorbis** (default) | `audio_quality: vorbis-low\|vorbis-medium\|vorbis-high`<br/>`session_type: librespot` | None |
 | | `audio_quality: vorbis-low\|vorbis-medium\|vorbis-high`<br/>`session_type: desktop` | Spotify DLL |
-| **AAC Quality** | `audio_quality: aac-medium\|aac-high`<br/>`session_type: librespot\|web`<br/>`audio_remux_mode: ffmpeg` | .wvd file<br/>FFmpeg |
+| **Songs in AAC Quality** | `audio_quality: aac-medium\|aac-high`<br/>`session_type: librespot\|web`<br/>`audio_remux_mode: ffmpeg` | .wvd file<br/>FFmpeg |
 | | `audio_quality: aac-medium\|aac-high`<br/>`session_type: librespot\|web`<br/>`audio_remux_mode: mp4box` | .wvd file<br/>MP4Box<br/>mp4decrypt |
 | | `audio_quality: aac-medium\|aac-high`<br/>`session_type: librespot\|web`<br/>`audio_remux_mode: mp4decrypt` | .wvd file<br/>mp4decrypt |
-| **FLAC Quality** | `audio_quality: flac-mp4\|flac-mp4-24`<br/>`audio_remux_mode: ffmpeg` | **L1-certified** .wvd file<br/>FFmpeg |
-| | `audio_quality: flac-flac\|flac-flac-24` | Spotify DLL |
+| **Songs in FLAC Quality** | `audio_quality: flac-mp4\|flac-mp4-24`<br/>`session_type: librespot\|web`<br/>`audio_remux_mode: ffmpeg` | **L1-certified** .wvd file<br/>FFmpeg |
+| | `audio_quality: flac-flac\|flac-flac-24`<br/>`session_type: desktop` | Spotify DLL |
+| **Podcasts in Vorbis** | `audio_quality: vorbis-low\|vorbis-medium\|vorbis-high` | None |
+| **Podcasts in AAC Quality** | `audio_quality: aac-medium\|aac-high`<br/>`audio_remux_mode: ffmpeg` | FFmpeg |
+| | `audio_quality: aac-medium\|aac-high`<br/>`audio_remux_mode: mp4box` | MP4Box<br/>mp4decrypt |
+| | `audio_quality: aac-medium\|aac-high`<br/>`audio_remux_mode: mp4decrypt` | mp4decrypt |
 | **Music Videos** | `session_type: librespot\|web`<br/>`video_format: mp4`<br/>`video_remux_mode: ffmpeg` | .wvd file<br/>FFmpeg<br/>mp4decrypt |
 | | `session_type: librespot\|web`<br/>`video_format: mp4`<br/>`video_remux_mode: mp4box` | .wvd file<br/>MP4Box<br/>mp4decrypt |
 | | `session_type: librespot\|web`<br/>`video_format: webm`<br/>`video_remux_mode: ffmpeg` | .wvd file<br/>FFmpeg<br/>Shaka Packager |
