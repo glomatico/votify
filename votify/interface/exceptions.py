@@ -82,9 +82,7 @@ class VotifyMediaFormatNotAvailableException(VotifyMediaException):
         )
 
 
-class VotifyMediaFormatNotAvailableForSessionTypeException(
-    VotifyMediaFormatNotAvailableException
-):
+class VotifyMediaFormatNotAvailableForSessionTypeException(VotifyMediaException):
     def __init__(
         self,
         media_id: str,
