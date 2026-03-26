@@ -29,13 +29,11 @@ A command-line app for downloading songs, podcasts and videos from Spotify.
 
 > [!WARNING]
 > - **Some users have reported that Spotify suspended their accounts after using Votify.** Use it at your own risk.
-> - **You may not be able to download songs with default settings if your account is too new.** In this case, you can try downloading songs in AAC quality with a .wvd file or using Spotify DLL file, which uses a different download method that may work for new accounts.
+> - **You may not be able to download songs with default settings if your account is too new.** In this case, refer to the Dependencies section for alternative configurations that may support new accounts.
 
-### Optional
+### Dependencies
 
 Add these tools to your system PATH or specify their paths via command-line arguments or the config file. The tools needed depend on which audio quality, video format, and download speed you want. Use the table below to find the required tools for your use case:
-
-#### Tools Dependency Table
 
 | Feature | Configuration | Required Tools |
 |---|---|---|
@@ -59,7 +57,7 @@ Add these tools to your system PATH or specify their paths via command-line argu
 | **Faster Downloads** | `audio_download_mode: aria2c` | aria2c |
 | | `audio_download_mode: curl` | cURL |
 
-### Tools Reference
+#### Reference
 
 | Tool | Download | Notes |
 |---|---|---|
