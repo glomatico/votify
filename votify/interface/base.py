@@ -9,6 +9,7 @@ from .constants import URL_INFO_RE
 from .enums import CoverSize, MediaRating
 from .exceptions import VotifyNoCdmException, VotifyUrlParseException
 from .types import DecryptionKey, PlaylistTags, SpotifyUrlInfo
+from unplayplay.key_emu import KeyEmu
 
 logger = logging.getLogger(__name__)
 
@@ -20,15 +21,18 @@ class SpotifyBaseInterface:
         cover_size: CoverSize = CoverSize.EXTRA_LARGE,
         skip_stream_info: bool = False,
         wvd_path: str | None = None,
+        spotify_dll_path: str | None = None,
         disallowed_media_types: list[str] | None = None,
     ) -> None:
         self.api = api
         self.cover_size = cover_size
         self.skip_stream_info = skip_stream_info
         self.wvd_path = wvd_path
+        self.spotify_dll_path = spotify_dll_path
         self.disallowed_media_types = disallowed_media_types or []
 
         self._initialize_cdm()
+        self._initialize_key_emu()
 
     @alru_cache()
     async def get_album_data_cached(self, album_id: str) -> tuple[dict, list[dict]]:
@@ -66,6 +70,12 @@ class SpotifyBaseInterface:
             self.cdm.MAX_NUM_OF_SESSIONS = float("inf")
         else:
             self.cdm = None
+
+    def _initialize_key_emu(self) -> None:
+        if self.spotify_dll_path:
+            self.key_emu = KeyEmu(self.spotify_dll_path)
+        else:
+            self.key_emu = None
 
     def parse_url_info(self, url: str) -> SpotifyUrlInfo:
         match = URL_INFO_RE.match(url)
