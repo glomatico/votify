@@ -164,7 +164,7 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
             ),
         )
 
-        logger.debug(f"Parsed stream info: {stream_info}")
+        logger.debug(f"Parsed stream info from web method: {stream_info}")
 
         return stream_info
 
@@ -281,7 +281,7 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
             audio_file_info[0].file.file_id.hex(),
         )
 
-        return StreamInfoAv(
+        stream_info = StreamInfoAv(
             audio_track=StreamInfo(
                 stream_url=stream_url,
                 widevine_pssh=None,
@@ -290,6 +290,10 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
                 actual_file_format=audio_quality.actual_file_format,
             ),
         )
+
+        logger.debug(f"Parsed stream info from desktop method: {stream_info}")
+
+        return stream_info
 
     async def get_widevine_decryption_key(self, pssh: str) -> DecryptionKey:
         return await self._get_widevine_decryption_key(pssh, "audio")
@@ -308,13 +312,13 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
             file_id,
         )
 
-        decryption_key = DecryptionKey(
+        decryption_key_obj = DecryptionKey(
             decryption_key=decryption_key,
         )
 
-        logger.debug(f"Received decryption key from librespot: {decryption_key}")
+        logger.debug(f"Received decryption key from librespot: {decryption_key.hex()}")
 
-        return decryption_key
+        return decryption_key_obj
 
     async def _get_desktop_decryption_key(self, file_id: bytes) -> DecryptionKey:
         if not self.key_emu:
@@ -334,6 +338,11 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
             obfuscated_key=license.obfuscated_key,
             content_id=file_id[: EMULATOR_SIZES.CONTENT_ID],
         )
+
+        logger.debug(
+            f"Received decryption key from desktop method: {decryption_key.hex()}"
+        )
+
         return DecryptionKey(
             decryption_key=decryption_key,
         )
