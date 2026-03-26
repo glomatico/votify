@@ -93,10 +93,20 @@ async def main(config: CliConfig):
         database = None
         flat_filter = None
 
-    api = await SpotifyApi.create_from_netscape_cookies(
-        cookies_path,
-        session_type=config.session_type,
-    )
+    try:
+        api = await SpotifyApi.create_from_netscape_cookies(
+            cookies_path,
+            session_type=config.session_type,
+        )
+    except ModuleNotFoundError as e:
+        if e.name == "librespot":
+            logger.critical(
+                "The 'librespot' extra is required to use the librespot session type, "
+                "please install the package with `pip install votify[librespot]` and try again"
+            )
+            return
+        raise e
+
     if api.anonymous_session:
         logger.critical(
             "Could not authenticate with the provided cookies, "
