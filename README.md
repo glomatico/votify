@@ -338,6 +338,4 @@ I'm generally not reviewing pull requests that change or add features at this ti
 
 ## 🙏 Credits
 
-- [spotify-oggmp4-dl](https://github.com/DevLARLEY/spotify-oggmp4-dl)
-- [spsync](https://github.com/baltitenger/spsync)
-- [unplayplay](https://git.gay/uhwot/unplayplay)
+- [spotify-dl-cli](https://github.com/cycyrild/spotify-dl-cli)
