@@ -13,6 +13,13 @@ class VotifyNoCdmException(VotifyInterfaceException):
         super().__init__("Content requires a CDM but no .wvd file was provided")
 
 
+class VotifyNoKeyEmuException(VotifyInterfaceException):
+    def __init__(self):
+        super().__init__(
+            "Content requires decryption but no Spotify DLL file was provided"
+        )
+
+
 class VotifyUrlParseException(VotifyInterfaceException):
     def __init__(self, url: str):
         super().__init__(f"Failed to parse Spotify URL: {url}")
