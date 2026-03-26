@@ -1,11 +1,15 @@
+import asyncio
 import logging
 
 from pywidevine.license_protocol_pb2 import WidevinePsshData
 
+from ..api.enums import SessionType
 from .base import SpotifyBaseInterface
 from .enums import AudioQuality
-import asyncio
-from .exceptions import VotifyMediaFormatNotAvailableException
+from .exceptions import (
+    VotifyMediaFormatNotAvailableException,
+    VotifyMediaFormatNotAvailableForSessionTypeException,
+)
 from .types import DecryptionKey, StreamInfo, StreamInfoAv
 
 logger = logging.getLogger(__name__)
@@ -48,18 +52,31 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
     ) -> StreamInfoAv:
         for audio_quality in self.audio_quality_priority:
             if audio_quality.mp4:
-                stream_info = await self._get_stream_info_web(
-                    media_id=media_id,
-                    media_type=media_type,
-                    skip_pssh=skip_pssh,
-                    audio_quality=audio_quality,
-                )
-            else:
-                stream_info = await self._get_stream_info_librespot(
-                    media_id=media_id,
-                    media_type=media_type,
-                    audio_quality=audio_quality,
-                )
+                if self.api.session_type in {SessionType.LIBRESPOT, SessionType.WEB}:
+                    stream_info = await self._get_stream_info_web(
+                        media_id=media_id,
+                        media_type=media_type,
+                        skip_pssh=skip_pssh,
+                        audio_quality=audio_quality,
+                    )
+                else:
+                    raise VotifyMediaFormatNotAvailableForSessionTypeException(
+                        media_id=media_id,
+                        session_type=self.api.session_type,
+                    )
+
+            elif audio_quality.ogg:
+                if self.api.session_type == SessionType.LIBRESPOT:
+                    stream_info = await self._get_stream_info_librespot(
+                        media_id=media_id,
+                        media_type=media_type,
+                        audio_quality=audio_quality,
+                    )
+                else:
+                    raise VotifyMediaFormatNotAvailableForSessionTypeException(
+                        media_id=media_id,
+                        session_type=self.api.session_type,
+                    )
 
             if stream_info:
                 return stream_info
@@ -201,11 +218,17 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
         stream_info: StreamInfoAv,
         media_id: str,
     ):
-        if stream_info.audio_track.widevine_pssh:
+        if (
+            self.api.session_type in {SessionType.LIBRESPOT, SessionType.WEB}
+            and stream_info.audio_track.widevine_pssh
+        ):
             return await self.get_widevine_decryption_key(
                 stream_info.audio_track.widevine_pssh
             )
-        elif stream_info.audio_track.file_id:
+        elif (
+            stream_info.audio_track.file_id
+            and self.api.session_type == SessionType.LIBRESPOT
+        ):
             return await self.get_librespot_decryption_key(
                 media_id=media_id,
                 file_id=stream_info.audio_track.file_id,

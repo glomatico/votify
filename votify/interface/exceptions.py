@@ -1,5 +1,6 @@
 from typing import Any
 
+from ..api.enums import SessionType
 from ..utils import VotiyException
 
 
@@ -78,4 +79,24 @@ class VotifyMediaFormatNotAvailableException(VotifyMediaException):
             "Selected format is not available",
             media_id=media_id,
             media_metadata=media_metadata,
+        )
+
+
+class VotifyMediaFormatNotAvailableForSessionTypeException(
+    VotifyMediaFormatNotAvailableException
+):
+    def __init__(
+        self,
+        media_id: str,
+        media_metadata: dict | None = None,
+        session_type: SessionType | None = None,
+    ):
+        message = "Selected format is not available for session type"
+        if session_type:
+            message += f": {session_type.value}"
+
+        super().__init__(
+            media_id=media_id,
+            media_metadata=media_metadata,
+            message=message,
         )

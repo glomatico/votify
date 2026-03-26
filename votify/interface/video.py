@@ -3,9 +3,11 @@ import logging
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 
+from ..api.enums import SessionType
 from .base import SpotifyBaseInterface
 from .constants import COVER_SIZE_ID_MAP_VIDEO
 from .enums import VideoFormat, VideoResolution
+from .exceptions import VotifyMediaFormatNotAvailableForSessionTypeException
 from .types import DecryptionKey, StreamInfo, StreamInfoAv
 
 logger = logging.getLogger(__name__)
@@ -191,7 +193,16 @@ class SpotifyVideoInterface(SpotifyBaseInterface):
         media_id: str,
         media_type: str,
         playback_info: dict | None = None,
-    ) -> StreamInfoAv | None:
+    ) -> StreamInfoAv:
+        if (
+            not self.api.session_type in {SessionType.LIBRESPOT, SessionType.WEB}
+            and media_type != "episode"
+        ):
+            raise VotifyMediaFormatNotAvailableForSessionTypeException(
+                media_id=media_id,
+                session_type=self.api.session_type,
+            )
+
         if not playback_info:
             playback_info = await self._get_playback_info(
                 media_id=media_id,
