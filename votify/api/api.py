@@ -28,11 +28,6 @@ from .constants import (
 from .device_flow import SpotifyDeviceFlow
 from .enums import SessionType
 from .exceptions import VotifyRequestException
-
-try:
-    from .librespot import Librespot
-except ImportError:
-    Librespot = None
 from .totp import Totp
 
 logger = logging.getLogger(__name__)
@@ -196,11 +191,8 @@ class SpotifyApi:
         self.user_profile = await self._get_user_profile() if self.sp_dc else None
 
     def _initialize_librespot(self) -> None:
-        if not Librespot:
-            raise ImportError(
-                "Librespot is not available. "
-                "Make sure you have installed the 'librespot' dependency."
-            )
+        from .librespot import Librespot
+
         self.librespot = Librespot(access_token=self._access_token)
 
     async def _get_server_time(self) -> int:
