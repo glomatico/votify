@@ -149,7 +149,7 @@ class SpotifyApi:
         elif self.session_type in {SessionType.LIBRESPOT, SessionType.WEB}:
             await self._initialize_authorization_with_totp()
             if self.session_type == SessionType.LIBRESPOT:
-                asyncio.to_thread(self._initialize_librespot)
+                await asyncio.to_thread(self._initialize_librespot)
 
     def _set_authorization_header(
         self,
