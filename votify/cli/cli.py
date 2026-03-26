@@ -8,7 +8,7 @@ import colorama
 from dataclass_click import dataclass_click
 
 from .. import __version__
-from ..api.api import Librespot, SpotifyApi
+from ..api.api import SpotifyApi
 from ..api.enums import SessionType
 from ..downloader.audio import SpotifyAudioDownloader
 from ..downloader.base import SpotifyBaseDownloader
@@ -92,13 +92,6 @@ async def main(config: CliConfig):
     else:
         database = None
         flat_filter = None
-
-    if not Librespot and config.session_type == SessionType.LIBRESPOT:
-        logger.critical(
-            "Librespot session type selected, but Librespot is not available. "
-            "Make sure you have installed the 'librespot' dependency."
-        )
-        return
 
     api = await SpotifyApi.create_from_netscape_cookies(
         cookies_path,
