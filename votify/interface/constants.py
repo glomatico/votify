@@ -42,20 +42,26 @@ DEFAULT_EPISODE_DECRYPTION_KEY = (
 )
 
 FORMAT_ID_MAP = {
-    "aac-high": "11",
+    "vorbis-low": "0",
+    "vorbis-medium": "1",
+    "vorbis-high": "2",
     "aac-medium": "10",
-    "flac": "17",
+    "aac-high": "11",
+    "flac-flac": "16",
+    "flac-mp4": "17",
 }
 
 FORMAT_NAME_MAP = {
-    "aac-high": "MP4_256",
-    "aac-medium": "MP4_128",
     "vorbis-low": "OGG_VORBIS_96",
     "vorbis-medium": "OGG_VORBIS_160",
     "vorbis-high": "OGG_VORBIS_320",
-    "flac": "FLAC",
+    "aac-medium": "MP4_128",
+    "aac-high": "MP4_256",
+    "flac-flac": "FLAC_FLAC",
+    "flac-mp4": "MP4_FLAC",
 }
 
-MP4_AUDIO_QUALITIES = {"aac-high", "aac-medium", "flac"}
+MP4_AUDIO_QUALITIES = {"aac-high", "aac-medium", "flac-mp4"}
 VORBIS_AUDIO_QUALITIES = {"vorbis-high", "vorbis-medium", "vorbis-low"}
-PREMIUM_AUDIO_QUALITIES = {"aac-high", "vorbis-high", "flac"}
+FLAC_AUDIO_QUALITIES = {"flac-flac"}
+PREMIUM_AUDIO_QUALITIES = {"aac-high", "vorbis-high", "flac-flac", "flac-mp4"}
