@@ -25,6 +25,7 @@ from .constants import (
     VIDEO_MANIFEST_API_URL,
     WIDEVINE_LICENSE_API_URL,
 )
+from .device_flow import SpotifyDeviceFlow
 from .exceptions import VotifyRequestException
 
 try:
@@ -41,9 +42,11 @@ class SpotifyApi:
         self,
         sp_dc: str | None = None,
         skip_librespot: bool = False,
+        use_totp: bool = False,
     ) -> None:
         self.sp_dc = sp_dc
         self.skip_librespot = skip_librespot
+        self.use_totp = use_totp
 
     @property
     def premium_session(self) -> bool:
@@ -111,7 +114,6 @@ class SpotifyApi:
 
     async def _initialize(self) -> None:
         self._initialize_client()
-        await self._initialize_totp()
         await self._initialize_authorization()
         await self._initialize_user_profile()
         await asyncio.to_thread(self._initialize_librespot)
@@ -142,10 +144,27 @@ class SpotifyApi:
         if self.sp_dc:
             self.client.cookies.update({"sp_dc": self.sp_dc})
 
-    async def _initialize_totp(self) -> Totp:
-        self.totp = await Totp.initialize()
-
     async def _initialize_authorization(self) -> None:
+        if not self.use_totp:
+            await self._initialize_authorization_with_device_flow()
+        else:
+            await self._initialize_authorization_with_totp()
+
+    def _set_authorization_header(
+        self,
+        access_token: str,
+        client_token: str | None = None,
+    ) -> None:
+        self.client.headers.update({"authorization": f"Bearer {access_token}"})
+        if client_token:
+            self.client.headers.update(
+                {
+                    "client-token": client_token,
+                }
+            )
+
+    async def _initialize_authorization_with_totp(self) -> None:
+        self.totp = await Totp.initialize()
         session_info = await self._get_session_token()
         client_token = await self._get_client_token(session_info["clientId"])
 
@@ -159,12 +178,18 @@ class SpotifyApi:
         self._access_token = access_token
         self._client_token = granted_token
 
-        self.client.headers.update(
-            {
-                "authorization": f"Bearer {access_token}",
-                "client-token": granted_token,
-            }
-        )
+        self._set_authorization_header(access_token, granted_token)
+
+    async def _initialize_authorization_with_device_flow(self) -> None:
+        device_flow = SpotifyDeviceFlow(self.sp_dc)
+        token_data = await device_flow.get_token()
+
+        self._access_token = token_data["access_token"]
+
+        self._set_authorization_header(token_data["access_token"])
+        self._authorization_expire_time = (
+            int(time.time()) + token_data["expires_in"]
+        ) * 1000
 
     async def _initialize_user_profile(self) -> None:
         self.user_profile = await self._get_user_profile() if self.sp_dc else None

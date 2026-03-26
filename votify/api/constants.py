@@ -27,3 +27,10 @@ TOTP_DIGITS = 6
 TOTP_SECRETS_URL = (
     "https://git.gay/thereallo/totp-secrets/raw/branch/main/secrets/secretDict.json"
 )
+
+DEVICE_AUTH_URL = "https://accounts.spotify.com/oauth2/device/authorize"
+DEVICE_TOKEN_URL = "https://accounts.spotify.com/api/token"
+DEVICE_RESOLVE_URL = "https://accounts.spotify.com/pair/api/resolve"
+DEVICE_CLIENT_ID = "65b708073fc0480ea92a077233ca87bd"  # Spotify for Desktop
+DEVICE_SCOPE = "app-remote-control,playlist-modify,playlist-modify-private,playlist-modify-public,playlist-read,playlist-read-collaborative,playlist-read-private,streaming,transfer-auth-session,ugc-image-upload,user-follow-modify,user-follow-read,user-library-modify,user-library-read,user-modify,user-modify-playback-state,user-modify-private,user-personalized,user-read-birthdate,user-read-currently-playing,user-read-email,user-read-play-history,user-read-playback-position,user-read-playback-state,user-read-private,user-read-recently-played,user-top-read"
+DEVICE_FLOW_USER_AGENT = "Spotify/126600447 Win32_x86_64/0 (PC laptop)"
