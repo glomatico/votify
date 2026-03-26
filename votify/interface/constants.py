@@ -49,6 +49,8 @@ FORMAT_ID_MAP = {
     "aac-high": "11",
     "flac-flac": "16",
     "flac-mp4": "17",
+    "flac-flac-24": "22",
+    "flac-mp4-24": "23",
 }
 
 FORMAT_NAME_MAP = {
@@ -59,9 +61,18 @@ FORMAT_NAME_MAP = {
     "aac-high": "MP4_256",
     "flac-flac": "FLAC_FLAC",
     "flac-mp4": "MP4_FLAC",
+    "flac-flac-24": "FLAC_FLAC_24",
+    "flac-mp4-24": "MP4_FLAC_24",
 }
 
-MP4_AUDIO_QUALITIES = {"aac-high", "aac-medium", "flac-mp4"}
+MP4_AUDIO_QUALITIES = {"aac-high", "aac-medium", "flac-mp4", "flac-mp4-24"}
 VORBIS_AUDIO_QUALITIES = {"vorbis-high", "vorbis-medium", "vorbis-low"}
-FLAC_AUDIO_QUALITIES = {"flac-flac"}
-PREMIUM_AUDIO_QUALITIES = {"aac-high", "vorbis-high", "flac-flac", "flac-mp4"}
+FLAC_AUDIO_QUALITIES = {"flac-flac", "flac-flac-24"}
+PREMIUM_AUDIO_QUALITIES = {
+    "aac-high",
+    "vorbis-high",
+    "flac-flac",
+    "flac-mp4",
+    "flac-flac-24",
+    "flac-mp4-24",
+}

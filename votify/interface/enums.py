@@ -56,6 +56,8 @@ class AudioQuality(Enum):
     AAC_HIGH = "aac-high"
     FLAC_FLAC = "flac-flac"
     FLAC_MP4 = "flac-mp4"
+    FLAC_FLAC_24 = "flac-flac-24"
+    FLAC_MP4_24 = "flac-mp4-24"
 
     @property
     def premium(self) -> bool:
@@ -85,7 +87,7 @@ class AudioQuality(Enum):
 
     @property
     def actual_file_format(self) -> str | None:
-        if self.value in {"flac-flac", "flac-mp4"}:
+        if self.value in {"flac-flac", "flac-mp4", "flac-flac-24", "flac-mp4-24"}:
             return "flac"
         elif self.value in MP4_AUDIO_QUALITIES:
             return "m4a"
