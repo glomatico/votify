@@ -10,6 +10,7 @@ from .constants import (
     MP4_AUDIO_QUALITIES,
     PREMIUM_AUDIO_QUALITIES,
     VORBIS_AUDIO_QUALITIES,
+    FLAC_AUDIO_QUALITIES,
 )
 
 
@@ -66,6 +67,10 @@ class AudioQuality(Enum):
     @property
     def ogg(self) -> bool:
         return self.value in VORBIS_AUDIO_QUALITIES
+
+    @property
+    def flac(self) -> bool:
+        return self.value in FLAC_AUDIO_QUALITIES
 
     @property
     def file_format(self) -> str | None:
