@@ -7,6 +7,7 @@ import click
 from dataclass_click import argument, option
 
 from ..api.api import SpotifyApi
+from ..api.enums import SessionType
 from ..downloader.audio import SpotifyAudioDownloader
 from ..downloader.base import SpotifyBaseDownloader
 from ..downloader.downloader import SpotifyDownloader
@@ -16,15 +17,16 @@ from ..interface.audio import SpotifyAudioInterface
 from ..interface.base import SpotifyBaseInterface
 from ..interface.enums import (
     AudioQuality,
+    AutoMediaOption,
     CoverSize,
     VideoFormat,
     VideoResolution,
-    AutoMediaOption,
 )
 from ..interface.interface import SpotifyInterface
 from ..interface.video import SpotifyVideoInterface
 from .utils import Csv
 
+api_sig = inspect.signature(SpotifyApi.__init__)
 api_from_cookies_sig = inspect.signature(SpotifyApi.create_from_netscape_cookies)
 
 base_interface_sig = inspect.signature(SpotifyBaseInterface.__init__)
@@ -125,6 +127,15 @@ class CliConfig:
         ),
     ]
     # API specific options
+    session_type: Annotated[
+        SessionType,
+        option(
+            "--session-type",
+            help="Session type to use for Spotify API",
+            default=api_sig.parameters["session_type"].default,
+            type=SessionType,
+        ),
+    ]
     cookies_path: Annotated[
         str,
         option(
