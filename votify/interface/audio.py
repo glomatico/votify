@@ -161,7 +161,7 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
         else:
             return None
 
-        audio_quality_int = list(AudioQuality).index(audio_quality)
+        audio_quality_int = int(audio_quality.format_id)
         file_id = next(
             (
                 file.file_id
