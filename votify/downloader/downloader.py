@@ -100,7 +100,10 @@ class SpotifyDownloader:
             if (
                 item.media.stream_info.audio_track.file_format == "mp4"
                 and self.audio.remux_mode == AudioRemuxMode.FFMPEG
-                or item.media.stream_info.audio_track.actual_file_format == "flac"
+                or (
+                    item.media.stream_info.audio_track.actual_file_format == "flac"
+                    and item.media.stream_info.audio_track.file_format == "mp4"
+                )
             ) and not self.base.ffmpeg_full_path:
                 raise VotifyDependencyNotFound("ffmpeg")
 
