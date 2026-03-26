@@ -134,7 +134,7 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
         playback_info = await self._get_playback_info(
             media_id=media_id,
             media_type=media_type,
-            flac=audio_quality == AudioQuality.FLAC_MP4,
+            flac=audio_quality in {AudioQuality.FLAC_MP4, AudioQuality.FLAC_MP4_24},
         )
 
         if (
@@ -147,7 +147,7 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
         file_id = self._parse_file_id(
             playback_info=playback_info,
             format_id=audio_quality.format_id,
-            flac=audio_quality == AudioQuality.FLAC_MP4,
+            flac=audio_quality in {AudioQuality.FLAC_MP4, AudioQuality.FLAC_MP4_24},
         )
         if not file_id:
             return None
