@@ -720,6 +720,10 @@ class SpotifyApi:
                 name="PlayPlay license",
                 response_status_code=response.status_code,
                 response_text=response.text,
+                headers={
+                    "Accept": "application/x-protobuf",
+                    "Content-Type": "application/x-protobuf",
+                },
             )
 
         logger.debug("Received PlayPlay license: (bytes)")
@@ -732,6 +736,10 @@ class SpotifyApi:
         response = await self.client.post(
             EXTENDED_METADATA_API_URL,
             content=request,
+            headers={
+                "Accept": "application/x-protobuf",
+                "Content-Type": "application/x-protobuf",
+            },
         )
         extended_metadata = response.content
 
