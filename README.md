@@ -29,43 +29,44 @@ A command-line app for downloading songs, podcasts and videos from Spotify.
 
 > [!WARNING]
 > - **Some users have reported that Spotify suspended their accounts after using Votify.** Use it at your own risk.
-> - **You may not be able to download songs if your account is too new.** In this case, you can try downloading songs in AAC quality with a .wvd file, which uses a different download method that may work for new accounts.
+> - **You may not be able to download songs with default settings if your account is too new.** In this case, you can try downloading songs in AAC quality with a .wvd file or using Spotify DLL file, which uses a different download method that may work for new accounts.
 
 ### Optional
 
-Add these tools to your system PATH or specify their paths via command-line arguments or the config file. Then configure the appropriate option for your use case:
+Add these tools to your system PATH or specify their paths via command-line arguments or the config file. The tools needed depend on which audio quality, video format, and download speed you want. Use the table below to find the required tools for your use case:
 
-**Download songs and podcasts in Vorbis quality**:
-- Votify uses default settings without requiring any optional tools
+#### Tools Dependency Table
 
-**Download songs and podcasts in AAC quality (128kbps / 256kbps)**:
-- **.wvd file** (for songs only)
-- **FFmpeg**, **mp4decrypt**, or **MP4Box** + **mp4decrypt**
-
-**Download songs in FLAC quality**:
-- L1-certified **.wvd file**
-- **FFmpeg**
-
-**Download music videos**:
-- **.wvd file**
-- **FFmpeg** or **MP4Box**
-- **mp4decrypt** (for MP4) or **Shaka Packager** (for WebM)
-
-**Download podcast videos**:
-- **FFmpeg** or **MP4Box**
-
-**Download with faster speeds**:
-- **aria2c** or **cURL**
+| Feature | Configuration | Required Tools |
+|---|---|---|
+| **Vorbis** (default) | `audio_quality: vorbis-low\|vorbis-medium\|vorbis-high`<br/>`session_type: librespot` | None |
+| | `audio_quality: vorbis-low\|vorbis-medium\|vorbis-high`<br/>`session_type: desktop` | Spotify DLL |
+| **AAC Quality** | `audio_quality: aac-medium\|aac-high`<br/>`session_type: librespot\|web`<br/>`audio_remux_mode: ffmpeg` | .wvd file<br/>FFmpeg |
+| | `audio_quality: aac-medium\|aac-high`<br/>`session_type: librespot\|web`<br/>`audio_remux_mode: mp4box` | .wvd file<br/>MP4Box<br/>mp4decrypt |
+| | `audio_quality: aac-medium\|aac-high`<br/>`session_type: librespot\|web`<br/>`audio_remux_mode: mp4decrypt` | .wvd file<br/>mp4decrypt |
+| **FLAC Quality** | `audio_quality: flac-mp4`<br/>`audio_remux_mode: ffmpeg` | **L1-certified** .wvd file<br/>FFmpeg |
+| | `audio_quality: flac-flac\|flac-flac-24` | Spotify DLL |
+| **Music Videos** | `session_type: librespot\|web`<br/>`video_format: mp4`<br/>`video_remux_mode: ffmpeg` | .wvd file<br/>FFmpeg<br/>mp4decrypt |
+| | `session_type: librespot\|web`<br/>`video_format: mp4`<br/>`video_remux_mode: mp4box` | .wvd file<br/>MP4Box<br/>mp4decrypt |
+| | `session_type: librespot\|web`<br/>`video_format: webm`<br/>`video_remux_mode: ffmpeg` | .wvd file<br/>FFmpeg<br/>Shaka Packager |
+| | `session_type: librespot\|web`<br/>`video_format: webm`<br/>`video_remux_mode: mp4box` | .wvd file<br/>MP4Box<br/>Shaka Packager |
+| **Podcast Videos** | `prefer_video: true`<br/>`video_remux_mode: ffmpeg` | FFmpeg |
+| | `prefer_video: true`<br/>`video_remux_mode: mp4box` | MP4Box |
+| **Faster Downloads** | `audio_download_mode: aria2c` | aria2c |
+| | `audio_download_mode: curl` | cURL |
 
 ### Tools Reference
 
-- **.wvd file** - Extract using [KeyDive](https://github.com/hyugogirubato/KeyDive) from an Android device. Extracted files from emulated devices may not work.
-- **FFmpeg** - Download for Windows: [AnimMouse's FFmpeg Builds](https://github.com/AnimMouse/ffmpeg-stable-autobuild/releases), Linux: [John Van Sickle's FFmpeg Builds](https://johnvansickle.com/ffmpeg/)
-- **MP4Box** - [Download](https://gpac.io/downloads/gpac-nightly-builds/)
-- **mp4decrypt** - [Download](https://www.bento4.com/downloads/)
-- **Shaka Packager** - [Download](https://github.com/shaka-project/shaka-packager/releases/latest)
-- **cURL** - [Download](https://curl.se/download.html)
-- **aria2c** - [Download](https://github.com/aria2/ari2/releases)
+| Tool | Download | Notes |
+|---|---|---|
+| **.wvd file** | Extract using [KeyDive](https://github.com/hyugogirubato/KeyDive) | Required for AAC/FLAC quality. **L1-certified required for FLAC**. Extract from Android device (emulator files may not work) |
+| **Spotify DLL** | Extract from the Spotify desktop app inside its installation directory | Required for desktop session |
+| **FFmpeg** | [Windows](https://github.com/AnimMouse/ffmpeg-stable-autobuild/releases) / [Linux](https://johnvansickle.com/ffmpeg/) | Used for audio/video remuxing and conversion |
+| **MP4Box** | [Download](https://gpac.io/downloads/gpac-nightly-builds/) | Alternative for audio/video remuxing |
+| **mp4decrypt** | [Download](https://www.bento4.com/downloads/) | Decrypts MP4 files when used with MP4Box |
+| **Shaka Packager** | [Download](https://github.com/shaka-project/shaka-packager/releases/latest) | Decrypts WebM video files |
+| **aria2c** | [Download](https://github.com/aria2/aria2/releases) | Faster download alternative |
+| **cURL** | [Download](https://curl.se/download.html) | Download alternative |
 
 ## 📦 Installation
 
@@ -79,7 +80,7 @@ Add these tools to your system PATH or specify their paths via command-line argu
    - Specify its path using `--cookies-path` or in the config file.
 
 > [!NOTE]
-> - **The 'librespot' extra is only required if you want to download in Vorbis quality.** If you only want to download in AAC quality, you can just install the main `votify` package without the extra.
+> - **The 'librespot' extra is required when `session_type` is set to `librespot`.** If you want to use the desktop or web session types, the extra is not required and you can install the package with `pip install votify` instead.
 
 ## 🚀 Usage
 
@@ -183,8 +184,10 @@ The file is created automatically on first run. Command-line arguments override 
 | `--database-path` / `database_path` | Path to the SQLite database file for registering downloaded media | `null` |
 | `--auto-media-option` / `auto_media_option` | Auto media option | `null` |
 | **Spotify** | | |
+| `--session-type` / `session_type` | Session type to use | `desktop` |
 | `--cookies-path`, `-c` / `cookies_path` | Cookies file path | `./cookies.txt` |
 | `--wvd-path` / `wvd_path` | .wvd file path | `null` |
+| `--spotify-dll-path` / `spotify_dll_path` | Spotify DLL file path for desktop session decryption | `null` |
 | `--prefer-video` / `prefer_video` | Prefer video streams when available | `false` |
 | **Output** | | |
 | `--output`, `-o` / `output` | Output directory path | `./Spotify` |
@@ -263,16 +266,26 @@ Tags usable in the `exclude_tags` list only:
 - `vorbis-high` - Vorbis 320kbps, songs only, requires an active premium subscription
 - `aac-medium` - AAC 128kbps, .wvd file required for songs
 - `aac-high` - AAC 256kbps, songs only, .wvd required, requires an active premium subscription
-- `flac` - FLAC lossless, songs only, .wvd required, requires an active premium subscription
+- `flac-flac` - FLAC lossless (native), songs only, Spotify DLL required, requires an active premium subscription
+- `flac-flac-24` - FLAC 24-bit (native), songs only, Spotify DLL required, requires an active premium subscription
+- `flac-mp4` - FLAC lossless in MP4 container, songs only, L1-certified .wvd file required, requires an active premium subscription
+- `flac-mp4-24` - FLAC 24-bit in MP4 container, songs only, L1-certified .wvd file required, requires an active premium subscription
 
 > [!NOTE]
-> - **FLAC quality requires a L1 .wvd file.**
+> - **L1-certified .wvd file is required for flac-mp4 and flac-mp4-24 qualities.**
+> - **Spotify DLL is required for flac-flac and flac-flac-24 qualities (desktop session only).**
 
 ### Video formats
 
 - `mp4` - H.264 up to 1080p with AAC 128kbps
 - `webm` - VP9 up to 1080p with Opus 160kbps
 - `ask` - Prompt to choose available video and audio codecs
+
+### Session types
+
+- `librespot` - Librespot session (for Vorbis quality with web support)
+- `desktop` - Spotify desktop session (for Vorbis and FLAC quality)
+- `web` - Spotify web session (for AAC quality and videos)
 
 ### Download modes
 
