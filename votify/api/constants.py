@@ -9,6 +9,9 @@ PATHFINDER_API_URL = "https://api-partner.spotify.com/pathfinder/v2/query"
 VIDEO_MANIFEST_API_URL = "https://gue1-spclient.spotify.com/manifests/v9/json/sources/{file_id}/options/supports_drm"
 PLAYBACK_INFO_API_URL = "https://gue1-spclient.spotify.com/track-playback/v1/media/spotify:{media_type}:{media_id}"
 PLAYPLAY_LICENSE_API_URL = "https://gew4-spclient.spotify.com/playplay/v1/key/{file_id}"
+EXTENDED_METADATA_API_URL = (
+    "https://spclient.wg.spotify.com/extended-metadata/v0/extended-metadata"
+)
 WIDEVINE_LICENSE_API_URL = (
     "https://gue1-spclient.spotify.com/widevine-license/v1/{type}/license"
 )

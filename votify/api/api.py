@@ -13,17 +13,18 @@ from .constants import (
     CLIENT_TOKEN_URL,
     CLIENT_VERSION,
     COOKIE_DOMAIN,
+    EXTENDED_METADATA_API_URL,
     GID_METADATA_URL,
     HOME_PAGE_URL,
     LYRICS_API_URL,
     PATHFINDER_API_URL,
     PLAYBACK_INFO_API_URL,
+    PLAYPLAY_LICENSE_API_URL,
     SEEK_TABLE_API_URL,
     SERVER_TIME_URL,
     SESSION_TOKEN_URL,
     TRACK_CREDITS_API_URL,
     VIDEO_MANIFEST_API_URL,
-    PLAYPLAY_LICENSE_API_URL,
     WIDEVINE_LICENSE_API_URL,
 )
 from .device_flow import SpotifyDeviceFlow
@@ -724,3 +725,23 @@ class SpotifyApi:
         logger.debug("Received PlayPlay license: (bytes)")
 
         return playplay_license
+
+    async def get_extended_metadata(self, request: bytes) -> dict:
+        await self._refresh_authorization_if_needed()
+
+        response = await self.client.post(
+            EXTENDED_METADATA_API_URL,
+            content=request,
+        )
+        extended_metadata = response.content
+
+        if response.status_code != 200 or not extended_metadata:
+            raise VotifyRequestException(
+                name="Extended metadata",
+                response_status_code=response.status_code,
+                response_text=response.text,
+            )
+
+        logger.debug("Received extended metadata: (bytes)")
+
+        return extended_metadata
