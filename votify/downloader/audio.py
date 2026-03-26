@@ -157,13 +157,15 @@ class SpotifyAudioDownloader(SpotifyBaseDownloader):
             ),
         )
 
+        byte_skip = 167 if input_path.lower().endswith(".ogg") else 0
+
         with open(input_path, "rb") as encrypted_file:
             encrypted_data = encrypted_file.read()
 
         decrypted_data = cipher.decrypt(encrypted_data)
 
         with open(output_path, "wb") as decrypted_file:
-            decrypted_file.write(decrypted_data[167:])
+            decrypted_file.write(decrypted_data[byte_skip:])
 
     async def _decrypt_mp4decrypt(
         self,
