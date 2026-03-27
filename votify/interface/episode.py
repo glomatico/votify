@@ -47,8 +47,10 @@ class SpotifyEpisodeInterface(SpotifyAudioInterface):
             show_items,
         )
 
-        media.cover_url = self.parse_cover_url(
-            episode_data["coverArt"]["sources"][0]["url"]
+        media.cover_url = (
+            self.parse_cover_url(episode_data["coverArt"]["sources"][0]["url"])
+            if episode_data["coverArt"]["sources"]
+            else None
         )
 
         if not self.skip_stream_info:

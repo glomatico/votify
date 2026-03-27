@@ -94,8 +94,10 @@ class SpotifyMusicVideoInterface(SpotifyVideoInterface):
 
         media.tags = await self.parse_tags(track_data, album_data)
 
-        media.cover_url = self.parse_cover_url(
-            album_data["coverArt"]["sources"][0]["url"]
+        media.cover_url = (
+            self.parse_cover_url(album_data["coverArt"]["sources"][0]["url"])
+            if album_data["coverArt"]["sources"]
+            else None
         )
 
         if not self.skip_stream_info:
