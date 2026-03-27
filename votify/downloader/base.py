@@ -271,7 +271,7 @@ class SpotifyBaseDownloader:
         )
 
     @alru_cache()
-    async def get_cover_bytes(self, cover_url) -> bytes | None:
+    async def get_cover_bytes(self, cover_url: str) -> bytes | None:
         async with httpx.AsyncClient() as client:
             response = await client.get(cover_url)
 
@@ -287,7 +287,7 @@ class SpotifyBaseDownloader:
         self,
         input_path: str,
         tags: MediaTags,
-        cover_url: str,
+        cover_url: str | None,
     ) -> None:
         exclude_tags = self.exclude_tags or []
         filtered_tags = MediaTags(
@@ -298,7 +298,7 @@ class SpotifyBaseDownloader:
             }
         )
 
-        cover_bytes = await self.get_cover_bytes(cover_url)
+        cover_bytes = await self.get_cover_bytes(cover_url) if cover_url else None
 
         logger.debug(f"Applying tags to '{input_path}': {filtered_tags}")
 

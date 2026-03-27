@@ -172,7 +172,7 @@ class SpotifyDownloader:
                 item.media.playlist_tags.track,
             )
 
-        if item.cover_path and self.save_cover_file:
+        if item.cover_path and self.save_cover_file and item.media.cover_url:
             cover_bytes = await self.base.get_cover_bytes(
                 item.media.cover_url,
             )
