@@ -411,6 +411,20 @@ class SpotifyApi:
 
         return show
 
+    async def get_artist_overview(self, artist_id: str) -> dict:
+        artist_overview = await self._pathfinder_request(
+            operation_name="queryArtistOverview",
+            persisted_query_hash="5b9e64f43843fa3a9b6a98543600299b0a2cbbbccfdcdcef2402eb9c1017ca4c",
+            variables={
+                "uri": f"spotify:artist:{artist_id}",
+                "preReleaseV2": False,
+            },
+        )
+
+        logger.debug(f"Received artist overview: {artist_overview}")
+
+        return artist_overview
+
     async def _get_artist_discography(
         self,
         artist_id: str,
