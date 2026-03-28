@@ -5,8 +5,6 @@ import time
 from http.cookiejar import MozillaCookieJar
 
 import base62
-from .proto.extendedmetadata_pb2 import BatchedEntityRequest, BatchedExtensionResponse
-from .proto.playplay_pb2 import PlayPlayLicenseRequest, PlayPlayLicenseResponse
 import httpx
 
 from ..utils import safe_json
@@ -15,6 +13,7 @@ from .constants import (
     CLIENT_TOKEN_URL,
     CLIENT_VERSION,
     COOKIE_DOMAIN,
+    DEVICE_CLIENT_TOKEN,
     EXTENDED_METADATA_API_URL,
     GID_METADATA_URL,
     HOME_PAGE_URL,
@@ -32,6 +31,8 @@ from .constants import (
 from .device_flow import SpotifyDeviceFlow
 from .enums import SessionType
 from .exceptions import VotifyRequestException
+from .proto.extendedmetadata_pb2 import BatchedEntityRequest, BatchedExtensionResponse
+from .proto.playplay_pb2 import PlayPlayLicenseRequest, PlayPlayLicenseResponse
 from .totp import Totp
 
 logger = logging.getLogger(__name__)
@@ -186,7 +187,10 @@ class SpotifyApi:
 
         self._access_token = token_data["access_token"]
 
-        self._set_authorization_header(token_data["access_token"])
+        self._set_authorization_header(
+            token_data["access_token"],
+            DEVICE_CLIENT_TOKEN,
+        )
         self._authorization_expire_time = (
             int(time.time()) + token_data["expires_in"]
         ) * 1000
