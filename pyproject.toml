@@ -16,7 +16,7 @@ dependencies = [
     "pybase62>=1.0.0",
     "pycryptodome>=3.23.0",
     "pywidevine>=1.9.0",
-    "unplayplay @ https://github.com/cycyrild/another-unplayplay/archive/116c8f7e33045568e0b6f6a78061c21925dba7c5.zip",
+    "unplayplay @ https://github.com/cycyrild/another-unplayplay/archive/main.zip",
     "yt-dlp>=2026.2.4",
 ]
 
@@ -28,7 +28,7 @@ votify = "votify.cli.cli:main"
 
 [dependency-groups]
 librespot = [
-    "librespot @ https://github.com/kokarare1212/librespot-python/archive/bcea3f64e00a78d680074979f3bbba19584bfe0a.zip",
+    "librespot @ https://github.com/AshokShau/librespot-python/archive/main.zip",
 ]
 dev = [
     "asynctest>=0.13.0",
