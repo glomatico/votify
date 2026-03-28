@@ -1008,7 +1008,7 @@ wheels = [
 
 [[package]]
 name = "votify"
-version = "1.9.1"
+version = "1.9.2"
 source = { virtual = "." }
 dependencies = [
     { name = "async-lru" },
@@ -1021,45 +1021,42 @@ dependencies = [
     { name = "pybase62" },
     { name = "pycryptodome" },
     { name = "pywidevine" },
-    { name = "unplayplay" },
     { name = "yt-dlp" },
 ]
 
-[package.dev-dependencies]
+[package.optional-dependencies]
 dev = [
     { name = "asynctest" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "python-dotenv" },
 ]
-librespot = [
+extras = [
     { name = "librespot" },
+    { name = "unplayplay" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "async-lru", specifier = ">=2.1.0" },
+    { name = "asynctest", marker = "extra == 'dev'", specifier = ">=0.13.0" },
     { name = "click", specifier = ">=8.3.1" },
     { name = "colorama", specifier = ">=0.4.6" },
     { name = "dataclass-click", specifier = ">=1.0.4" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "inquirerpy", specifier = ">=0.3.4" },
+    { name = "librespot", marker = "extra == 'extras'", url = "https://github.com/AshokShau/librespot-python/archive/refs/heads/master.zip" },
     { name = "pillow", specifier = ">=12.1.0" },
     { name = "pybase62", specifier = ">=1.0.0" },
     { name = "pycryptodome", specifier = ">=3.23.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.2" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.3.0" },
+    { name = "python-dotenv", marker = "extra == 'dev'", specifier = ">=1.2.1" },
     { name = "pywidevine", specifier = ">=1.9.0" },
-    { name = "unplayplay", url = "https://github.com/cycyrild/another-unplayplay/archive/refs/heads/main.zip" },
+    { name = "unplayplay", marker = "extra == 'extras'", url = "https://github.com/cycyrild/another-unplayplay/archive/refs/heads/main.zip" },
     { name = "yt-dlp", specifier = ">=2026.2.4" },
 ]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "asynctest", specifier = ">=0.13.0" },
-    { name = "pytest", specifier = ">=9.0.2" },
-    { name = "pytest-asyncio", specifier = ">=1.3.0" },
-    { name = "python-dotenv", specifier = ">=1.2.1" },
-]
-librespot = [{ name = "librespot", url = "https://github.com/AshokShau/librespot-python/archive/refs/heads/master.zip" }]
+provides-extras = ["extras", "dev"]
 
 [[package]]
 name = "wcwidth"
