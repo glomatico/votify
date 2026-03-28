@@ -12,7 +12,7 @@ dependencies = [
     "dataclass-click>=1.0.4",
     "httpx>=0.28.1",
     "inquirerpy>=0.3.4",
-    "mutagen",
+    "mutagen>=1.47.0",
     "pillow>=12.1.0",
     "pybase62>=1.0.0",
     "pycryptodome>=3.23.0",
