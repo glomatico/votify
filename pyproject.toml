@@ -25,10 +25,10 @@ repository = "https://github.com/glomatico/votify"
 [project.scripts]
 votify = "votify.cli.cli:main"
 
-[project.optional-dependencies]
+[dependency-groups]
 extras = [
-    "librespot @ https://github.com/AshokShau/librespot-python/archive/main.zip",
-    "unplayplay @ https://github.com/cycyrild/another-unplayplay/archive/main.zip",
+    "librespot",
+    "unplayplay",
 ]
 dev = [
     "asynctest>=0.13.0",
