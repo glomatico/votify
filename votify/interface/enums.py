@@ -124,6 +124,7 @@ class VideoResolution(Enum):
 
 
 class AutoMediaOption(Enum):
+    ARTIST_TOP_TRACKS = "artist-top-tracks"
     ARTIST_ALBUMS = "artist-albums"
     ARTIST_COMPILATIONS = "artist-compilations"
     ARTIST_SINGLES = "artist-singles"

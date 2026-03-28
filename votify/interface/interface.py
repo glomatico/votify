@@ -253,12 +253,63 @@ class SpotifyInterface:
                 bool(auto_media_option),
             ):
                 yield media
-        else:
+        elif artist_option == AutoMediaOption.ARTIST_VIDEOS:
             async for media in self._get_artist_media_videos(
                 media_id,
                 bool(auto_media_option),
             ):
                 yield media
+        else:
+            async for media in self._get_artist_top_tracks_media(
+                media_id,
+                bool(auto_media_option),
+            ):
+                yield media
+
+    async def _get_artist_top_tracks_media(
+        self,
+        media_id: str,
+        select_all: bool = False,
+    ) -> AsyncGenerator[SpotifyMedia | BaseException, None]:
+        artist_response = await self.base.api.get_artist_overview(media_id)
+        artist_data = artist_response["data"]["artistUnion"]
+
+        if artist_data["__typename"] != "Artist":
+            yield VotifyMediaNotFoundException(media_id, artist_data)
+            return
+
+        top_tracks_items = artist_data["discography"]["topTracks"]["items"]
+
+        if not top_tracks_items:
+            yield VotifyMediaNotFoundException(media_id, artist_data)
+            return
+
+        if select_all:
+            selection = top_tracks_items
+        else:
+            choices = [
+                Choice(
+                    name=" | ".join(
+                        [
+                            track_item["track"]["name"],
+                        ]
+                    ),
+                    value=track_item,
+                )
+                for track_item in top_tracks_items
+            ]
+            selection = await inquirer.select(
+                message="Select which top tracks to download (Title):",
+                choices=choices,
+                multiselect=True,
+            ).execute_async()
+
+        for track_item in selection:
+            track_id = track_item["track"]["id"]
+            media = await self._get_track_media(
+                track_id=track_id,
+            )
+            yield media
 
     async def _get_artist_media_videos(
         self,
