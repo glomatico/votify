@@ -335,15 +335,6 @@ requires-dist = [
 ]
 
 [[package]]
-name = "mutagen"
-version = "1.47.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/81/e6/64bc71b74eef4b68e61eb921dcf72dabd9e4ec4af1e11891bbd312ccbb77/mutagen-1.47.0.tar.gz", hash = "sha256:719fadef0a978c31b4cf3c956261b3c58b6948b32023078a2117b1de09f0fc99", size = 1274186, upload-time = "2023-09-03T16:33:33.411Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b0/7a/620f945b96be1f6ee357d211d5bf74ab1b7fe72a9f1525aafbfe3aee6875/mutagen-1.47.0-py3-none-any.whl", hash = "sha256:edd96f50c5907a9539d8e5bba7245f62c9f520aef333d13392a79a4f70aca719", size = 194391, upload-time = "2023-09-03T16:33:29.955Z" },
-]
-
-[[package]]
 name = "packaging"
 version = "26.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1026,8 +1017,6 @@ dependencies = [
     { name = "dataclass-click" },
     { name = "httpx" },
     { name = "inquirerpy" },
-    { name = "librespot" },
-    { name = "mutagen" },
     { name = "pillow" },
     { name = "pybase62" },
     { name = "pycryptodome" },
@@ -1055,8 +1044,6 @@ requires-dist = [
     { name = "dataclass-click", specifier = ">=1.0.4" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "inquirerpy", specifier = ">=0.3.4" },
-    { name = "librespot", url = "https://github.com/kokarare1212/librespot-python/archive/bcea3f64e00a78d680074979f3bbba19584bfe0a.zip" },
-    { name = "mutagen", specifier = ">=1.47.0" },
     { name = "pillow", specifier = ">=12.1.0" },
     { name = "pybase62", specifier = ">=1.0.0" },
     { name = "pycryptodome", specifier = ">=3.23.0" },
