@@ -3,6 +3,7 @@ import logging
 
 from async_lru import alru_cache
 from pywidevine import PSSH, Cdm, Device
+from unplayplay.key_emu import KeyEmu
 
 from ..api import SpotifyApi
 from .constants import URL_INFO_RE
@@ -72,8 +73,6 @@ class SpotifyBaseInterface:
 
     def _initialize_key_emu(self) -> None:
         if self.spotify_dll_path:
-            from unplayplay.key_emu import KeyEmu
-
             self.key_emu = KeyEmu(self.spotify_dll_path)
         else:
             self.key_emu = None
