@@ -17,6 +17,7 @@ dependencies = [
     "pybase62>=1.0.0",
     "pycryptodome>=3.23.0",
     "pywidevine>=1.9.0",
+    "unplayplay>=0.0.1",
     "yt-dlp>=2026.2.4",
 ]
 
@@ -26,10 +27,9 @@ repository = "https://github.com/glomatico/votify"
 [project.scripts]
 votify = "votify.cli.cli:main"
 
-[dependency-groups]
-extras = [
-    "librespot @ https://github.com/AshokShau/librespot-python/archive/refs/heads/master.zip",
-    "unplayplay @ https://github.com/cycyrild/another-unplayplay/archive/refs/heads/main.zip",
+[project.optional-dependencies]
+librespot = [
+    "librespot>=0.0.1",
 ]
 dev = [
     "asynctest>=0.13.0",
@@ -37,7 +37,3 @@ dev = [
     "pytest-asyncio>=1.3.0",
     "python-dotenv>=1.2.1",
 ]
-
-[tool.uv.sources]
-librespot = { url = "https://github.com/AshokShau/librespot-python/archive/refs/heads/master.zip" }
-unplayplay = { url = "https://github.com/cycyrild/another-unplayplay/archive/refs/heads/main.zip" }

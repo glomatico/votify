@@ -310,8 +310,8 @@ wheels = [
 
 [[package]]
 name = "librespot"
-version = "0.0.10"
-source = { url = "https://github.com/AshokShau/librespot-python/archive/refs/heads/master.zip" }
+version = "0.0.1"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "defusedxml" },
     { name = "protobuf" },
@@ -321,17 +321,9 @@ dependencies = [
     { name = "websocket-client" },
     { name = "zeroconf" },
 ]
-sdist = { hash = "sha256:c2b4fef763b02801d4daa418f2019f56ec08d35c174ed09fbaa49aff22be6aef" }
-
-[package.metadata]
-requires-dist = [
-    { name = "defusedxml", specifier = ">=0.7.1" },
-    { name = "protobuf", specifier = "==6.33.4" },
-    { name = "pycryptodomex", specifier = ">=3.23.0" },
-    { name = "pyogg", specifier = ">=0.6.14a1" },
-    { name = "requests" },
-    { name = "websocket-client", specifier = ">=1.9.0" },
-    { name = "zeroconf", specifier = ">=0.146.4" },
+sdist = { url = "https://files.pythonhosted.org/packages/f7/9f/8dbf93c9214e3a5287c4e688663de022a41bcab5c45ad6fe0273ca2d4414/librespot-0.0.1.tar.gz", hash = "sha256:0a957557b16855557d00bcefc033aeb42e04f85c8accc44394164e80d8be71b8", size = 100622, upload-time = "2022-02-09T11:55:01.408Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4a/cc/38f273c9c8b0a42866c6525779cfbb44a4bcb5737479c88aa539163d3adb/librespot-0.0.1-py3-none-any.whl", hash = "sha256:a0ab933d904a0df58870dfc25b3ae2001b232993f1f0e711847bebb496a3b0b2", size = 130526, upload-time = "2022-02-09T11:54:58.938Z" },
 ]
 
 [[package]]
@@ -989,21 +981,16 @@ wheels = [
 [[package]]
 name = "unplayplay"
 version = "0.0.1"
-source = { url = "https://github.com/cycyrild/another-unplayplay/archive/refs/heads/main.zip" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "capstone" },
     { name = "pefile" },
     { name = "pydantic" },
     { name = "unicorn" },
 ]
-sdist = { hash = "sha256:d16bb8363a93ff34be13f764435b8fdf156a6ce3603e742900d95eea416f2ca5" }
-
-[package.metadata]
-requires-dist = [
-    { name = "capstone" },
-    { name = "pefile" },
-    { name = "pydantic" },
-    { name = "unicorn" },
+sdist = { url = "https://files.pythonhosted.org/packages/34/7d/c2d54a3afcd724055a5916ba69ab0cb3b4e53797fa77fc7d9607b4b72013/unplayplay-0.0.1.tar.gz", hash = "sha256:0ac6160373520971ece9cbd9b50dfa41dd4ca6a2825a84b5124a7f77a715685b", size = 1266081, upload-time = "2026-03-28T11:48:14.04Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5f/f3/a870d8925e0018335f7581950e3e9d1829f46cfabb5d3f97ac9afb9c4345/unplayplay-0.0.1-py3-none-any.whl", hash = "sha256:d5c58b0d02f021b0af2fb338dd74597e905afa59725347ef43434e0590035772", size = 1365553, upload-time = "2026-03-28T11:48:12.699Z" },
 ]
 
 [[package]]
@@ -1031,48 +1018,43 @@ dependencies = [
     { name = "pybase62" },
     { name = "pycryptodome" },
     { name = "pywidevine" },
+    { name = "unplayplay" },
     { name = "yt-dlp" },
 ]
 
-[package.dev-dependencies]
+[package.optional-dependencies]
 dev = [
     { name = "asynctest" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "python-dotenv" },
 ]
-extras = [
+librespot = [
     { name = "librespot" },
-    { name = "unplayplay" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "async-lru", specifier = ">=2.1.0" },
+    { name = "asynctest", marker = "extra == 'dev'", specifier = ">=0.13.0" },
     { name = "click", specifier = ">=8.3.1" },
     { name = "colorama", specifier = ">=0.4.6" },
     { name = "dataclass-click", specifier = ">=1.0.4" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "inquirerpy", specifier = ">=0.3.4" },
-    { name = "mutagen" },
+    { name = "librespot", marker = "extra == 'librespot'", specifier = ">=0.0.1" },
+    { name = "mutagen", specifier = ">=1.47.0" },
     { name = "pillow", specifier = ">=12.1.0" },
     { name = "pybase62", specifier = ">=1.0.0" },
     { name = "pycryptodome", specifier = ">=3.23.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.2" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.3.0" },
+    { name = "python-dotenv", marker = "extra == 'dev'", specifier = ">=1.2.1" },
     { name = "pywidevine", specifier = ">=1.9.0" },
+    { name = "unplayplay", specifier = ">=0.0.1" },
     { name = "yt-dlp", specifier = ">=2026.2.4" },
 ]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "asynctest", specifier = ">=0.13.0" },
-    { name = "pytest", specifier = ">=9.0.2" },
-    { name = "pytest-asyncio", specifier = ">=1.3.0" },
-    { name = "python-dotenv", specifier = ">=1.2.1" },
-]
-extras = [
-    { name = "librespot", url = "https://github.com/AshokShau/librespot-python/archive/refs/heads/master.zip" },
-    { name = "unplayplay", url = "https://github.com/cycyrild/another-unplayplay/archive/refs/heads/main.zip" },
-]
+provides-extras = ["librespot", "dev"]
 
 [[package]]
 name = "wcwidth"
