@@ -9,7 +9,6 @@ from .constants import URL_INFO_RE
 from .enums import CoverSize, MediaRating
 from .exceptions import VotifyNoCdmException, VotifyUrlParseException
 from .types import DecryptionKey, PlaylistTags, SpotifyUrlInfo
-from unplayplay.key_emu import KeyEmu
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +72,8 @@ class SpotifyBaseInterface:
 
     def _initialize_key_emu(self) -> None:
         if self.spotify_dll_path:
+            from unplayplay.key_emu import KeyEmu
+
             self.key_emu = KeyEmu(self.spotify_dll_path)
         else:
             self.key_emu = None
