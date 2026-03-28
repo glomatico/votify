@@ -311,7 +311,7 @@ wheels = [
 [[package]]
 name = "librespot"
 version = "0.0.10"
-source = { url = "https://github.com/AshokShau/librespot-python/archive/refs/heads/master.zip" }
+source = { url = "https://github.com/kokarare1212/librespot-python/archive/bcea3f64e00a78d680074979f3bbba19584bfe0a.zip" }
 dependencies = [
     { name = "defusedxml" },
     { name = "protobuf" },
@@ -321,7 +321,7 @@ dependencies = [
     { name = "websocket-client" },
     { name = "zeroconf" },
 ]
-sdist = { hash = "sha256:c2b4fef763b02801d4daa418f2019f56ec08d35c174ed09fbaa49aff22be6aef" }
+sdist = { hash = "sha256:76e8b0660a2f31ad2624a2c01e8faaafebbe4b9c924c153969d8b39d493e73b1" }
 
 [package.metadata]
 requires-dist = [
@@ -989,14 +989,14 @@ wheels = [
 [[package]]
 name = "unplayplay"
 version = "0.0.1"
-source = { url = "https://github.com/cycyrild/another-unplayplay/archive/refs/heads/main.zip" }
+source = { url = "https://github.com/cycyrild/another-unplayplay/archive/116c8f7e33045568e0b6f6a78061c21925dba7c5.zip" }
 dependencies = [
     { name = "capstone" },
     { name = "pefile" },
     { name = "pydantic" },
     { name = "unicorn" },
 ]
-sdist = { hash = "sha256:8762a2c5046e7d3c74d57e777fdb3975bba514e5e7b38fad89d9c43a99821163" }
+sdist = { hash = "sha256:b962916477dc2de2b1cb953d11cc4cb8b95831b9f36af8d4820634144960c247" }
 
 [package.metadata]
 requires-dist = [
@@ -1026,6 +1026,7 @@ dependencies = [
     { name = "dataclass-click" },
     { name = "httpx" },
     { name = "inquirerpy" },
+    { name = "librespot" },
     { name = "mutagen" },
     { name = "pillow" },
     { name = "pybase62" },
@@ -1054,12 +1055,13 @@ requires-dist = [
     { name = "dataclass-click", specifier = ">=1.0.4" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "inquirerpy", specifier = ">=0.3.4" },
+    { name = "librespot", url = "https://github.com/kokarare1212/librespot-python/archive/bcea3f64e00a78d680074979f3bbba19584bfe0a.zip" },
     { name = "mutagen", specifier = ">=1.47.0" },
     { name = "pillow", specifier = ">=12.1.0" },
     { name = "pybase62", specifier = ">=1.0.0" },
     { name = "pycryptodome", specifier = ">=3.23.0" },
     { name = "pywidevine", specifier = ">=1.9.0" },
-    { name = "unplayplay", url = "https://github.com/cycyrild/another-unplayplay/archive/refs/heads/main.zip" },
+    { name = "unplayplay", url = "https://github.com/cycyrild/another-unplayplay/archive/116c8f7e33045568e0b6f6a78061c21925dba7c5.zip" },
     { name = "yt-dlp", specifier = ">=2026.2.4" },
 ]
 
@@ -1070,7 +1072,7 @@ dev = [
     { name = "pytest-asyncio", specifier = ">=1.3.0" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
 ]
-librespot = [{ name = "librespot", url = "https://github.com/AshokShau/librespot-python/archive/refs/heads/master.zip" }]
+librespot = [{ name = "librespot", url = "https://github.com/kokarare1212/librespot-python/archive/bcea3f64e00a78d680074979f3bbba19584bfe0a.zip" }]
 
 [[package]]
 name = "wcwidth"
