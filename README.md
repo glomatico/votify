@@ -74,7 +74,7 @@ Add these tools to your system PATH or specify their paths via command-line argu
 
 1. Install Votify via pip:
    ```bash
-   pip install votify[extras]
+   pip install https://github.com/glomatico/votify/archive/refs/heads/main.zip --group extras
    ```
 
 2. Set up the cookies file:
