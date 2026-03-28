@@ -311,7 +311,7 @@ wheels = [
 [[package]]
 name = "librespot"
 version = "0.0.10"
-source = { url = "https://github.com/kokarare1212/librespot-python/archive/bcea3f64e00a78d680074979f3bbba19584bfe0a.zip" }
+source = { url = "https://github.com/AshokShau/librespot-python/archive/refs/heads/master.zip" }
 dependencies = [
     { name = "defusedxml" },
     { name = "protobuf" },
@@ -321,7 +321,7 @@ dependencies = [
     { name = "websocket-client" },
     { name = "zeroconf" },
 ]
-sdist = { hash = "sha256:76e8b0660a2f31ad2624a2c01e8faaafebbe4b9c924c153969d8b39d493e73b1" }
+sdist = { hash = "sha256:c2b4fef763b02801d4daa418f2019f56ec08d35c174ed09fbaa49aff22be6aef" }
 
 [package.metadata]
 requires-dist = [
@@ -980,14 +980,14 @@ wheels = [
 [[package]]
 name = "unplayplay"
 version = "0.0.1"
-source = { url = "https://github.com/cycyrild/another-unplayplay/archive/116c8f7e33045568e0b6f6a78061c21925dba7c5.zip" }
+source = { url = "https://github.com/cycyrild/another-unplayplay/archive/refs/heads/main.zip" }
 dependencies = [
     { name = "capstone" },
     { name = "pefile" },
     { name = "pydantic" },
     { name = "unicorn" },
 ]
-sdist = { hash = "sha256:b962916477dc2de2b1cb953d11cc4cb8b95831b9f36af8d4820634144960c247" }
+sdist = { hash = "sha256:d16bb8363a93ff34be13f764435b8fdf156a6ce3603e742900d95eea416f2ca5" }
 
 [package.metadata]
 requires-dist = [
@@ -1048,7 +1048,7 @@ requires-dist = [
     { name = "pybase62", specifier = ">=1.0.0" },
     { name = "pycryptodome", specifier = ">=3.23.0" },
     { name = "pywidevine", specifier = ">=1.9.0" },
-    { name = "unplayplay", url = "https://github.com/cycyrild/another-unplayplay/archive/116c8f7e33045568e0b6f6a78061c21925dba7c5.zip" },
+    { name = "unplayplay", url = "https://github.com/cycyrild/another-unplayplay/archive/refs/heads/main.zip" },
     { name = "yt-dlp", specifier = ">=2026.2.4" },
 ]
 
@@ -1059,7 +1059,7 @@ dev = [
     { name = "pytest-asyncio", specifier = ">=1.3.0" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
 ]
-librespot = [{ name = "librespot", url = "https://github.com/kokarare1212/librespot-python/archive/bcea3f64e00a78d680074979f3bbba19584bfe0a.zip" }]
+librespot = [{ name = "librespot", url = "https://github.com/AshokShau/librespot-python/archive/refs/heads/master.zip" }]
 
 [[package]]
 name = "wcwidth"
