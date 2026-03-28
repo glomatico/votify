@@ -2,7 +2,6 @@ import asyncio
 import logging
 
 from pywidevine.license_protocol_pb2 import WidevinePsshData
-from unplayplay.consts import EMULATOR_SIZES, PLAYPLAY_TOKEN
 
 from ..api.enums import SessionType
 from ..api.proto.audio_files_extension_pb2 import AudioFilesExtensionResponse
@@ -22,6 +21,12 @@ from .exceptions import (
     VotifyNoKeyEmuException,
 )
 from .types import DecryptionKey, StreamInfo, StreamInfoAv
+
+try:
+    from unplayplay.consts import EMULATOR_SIZES, PLAYPLAY_TOKEN
+except ImportError:
+    EMULATOR_SIZES = None
+    PLAYPLAY_TOKEN = None
 
 logger = logging.getLogger(__name__)
 
