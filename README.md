@@ -318,6 +318,7 @@ Tags usable in the `exclude_tags` list only:
 
 ### Auto media options
 
+- `artist-top-tracks` - Auto-select artist top tracks
 - `artist-albums` - Auto-select albums
 - `artist-compilations` - Auto-select compilations
 - `artist-singles` - Auto-select singles
