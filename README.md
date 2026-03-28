@@ -74,12 +74,15 @@ Add these tools to your system PATH or specify their paths via command-line argu
 
 1. Install Votify via pip:
    ```bash
-   pip install https://github.com/glomatico/votify/archive/refs/heads/main.zip --group extras
+   pip install votify[librespot]
    ```
 
 2. Set up the cookies file:
    - Place the cookies file in your working directory as `cookies.txt`, or
    - Specify its path using `--cookies-path` or in the config file.
+
+> [!NOTE]
+> - **The 'librespot' extra is required when `session_type` is set to `librespot`.** If you want to use the desktop or web session types, the extra is not required and you can install the package with `pip install votify` instead.
 
 ## 🚀 Usage
 
