@@ -91,7 +91,7 @@ class SpotifySongInterface(SpotifyAudioInterface):
         try:
             lyrics_response = await self.api.get_lyrics(track_id)
         except VotifyRequestException as e:
-            if e.response_status_code != 404:
+            if e.response_status_code not in {404, 403}:
                 raise e
             return
 
