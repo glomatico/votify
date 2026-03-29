@@ -267,7 +267,7 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
 
         audio_file_info = next(
             (
-                (extended_audio_file, extended_audio_file.average_bitrate)
+                extended_audio_file
                 for extended_audio_file in audio_files.files
                 if extended_audio_file.file.format == int(audio_quality.format_id)
             ),
@@ -278,14 +278,14 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
 
         stream_url = await self._get_stream_url(
             audio_quality.format_id,
-            audio_file_info[0].file.file_id.hex(),
+            audio_file_info.file.file_id.hex(),
         )
 
         stream_info = StreamInfoAv(
             audio_track=StreamInfo(
                 stream_url=stream_url,
                 widevine_pssh=None,
-                file_id=audio_file_info[0].file.file_id,
+                file_id=audio_file_info.file.file_id,
                 file_format=audio_quality.file_format,
                 actual_file_format=audio_quality.actual_file_format,
             ),
