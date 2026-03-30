@@ -6,6 +6,7 @@ from http.cookiejar import MozillaCookieJar
 
 import base62
 import httpx
+from httpx_retries import RetryTransport, Retry
 
 from ..utils import safe_json
 from .constants import (
@@ -117,7 +118,16 @@ class SpotifyApi:
         await self._initialize_user_profile()
 
     def _initialize_client(self) -> None:
-        self.client = httpx.AsyncClient()
+        self._transport = RetryTransport(
+            retry=Retry(
+                total=6,
+                backoff_factor=1,
+                status_forcelist=[429, 500, 502, 503, 504],
+            )
+        )
+        self.client = httpx.AsyncClient(
+            transport=self._transport,
+        )
 
         self.client.headers.update(
             {
@@ -551,7 +561,7 @@ class SpotifyApi:
         return video_manifest
 
     async def get_seek_table(self, file_id: str) -> dict:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(transport=self._transport) as client:
             response = await client.get(
                 SEEK_TABLE_API_URL.format(file_id=file_id),
                 headers={
