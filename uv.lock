@@ -269,6 +269,18 @@ wheels = [
 ]
 
 [[package]]
+name = "httpx-retries"
+version = "0.4.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a4/13/5eac2df576c02280f79e4639a6d4c93a25cfe94458275f5aa55f5e6c8ea0/httpx_retries-0.4.6.tar.gz", hash = "sha256:a076d8a5ede5d5794e9c241da17b15b393b482129ddd2fdf1fa56a3fa1f28a7f", size = 13466, upload-time = "2026-02-17T16:16:05.995Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f2/97/63f56da4400034adde22adfe7524635dba068f17d6858f92ecd96f55b53e/httpx_retries-0.4.6-py3-none-any.whl", hash = "sha256:d66d912173b844e065ffb109345a453b922f4c2cd9c9e11139304cb33e7a1ee1", size = 8490, upload-time = "2026-02-17T16:16:04.137Z" },
+]
+
+[[package]]
 name = "idna"
 version = "3.11"
 source = { registry = "https://pypi.org/simple" }
@@ -1012,6 +1024,7 @@ dependencies = [
     { name = "colorama" },
     { name = "dataclass-click" },
     { name = "httpx" },
+    { name = "httpx-retries" },
     { name = "inquirerpy" },
     { name = "mutagen" },
     { name = "pillow" },
@@ -1041,6 +1054,7 @@ requires-dist = [
     { name = "colorama", specifier = ">=0.4.6" },
     { name = "dataclass-click", specifier = ">=1.0.4" },
     { name = "httpx", specifier = ">=0.28.1" },
+    { name = "httpx-retries", specifier = ">=0.4.6" },
     { name = "inquirerpy", specifier = ">=0.3.4" },
     { name = "librespot", marker = "extra == 'librespot'", specifier = ">=0.0.1" },
     { name = "mutagen", specifier = ">=1.47.0" },
