@@ -1016,7 +1016,7 @@ wheels = [
 
 [[package]]
 name = "votify"
-version = "1.9.3"
+version = "1.9.4"
 source = { virtual = "." }
 dependencies = [
     { name = "async-lru" },
