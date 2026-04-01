@@ -42,8 +42,12 @@ Add these tools to your system PATH or specify their paths via command-line argu
 | **Songs in AAC Quality** | `audio_quality: aac-medium\|aac-high`<br/>`session_type: librespot\|web`<br/>`audio_remux_mode: ffmpeg` | .wvd file<br/>FFmpeg |
 | | `audio_quality: aac-medium\|aac-high`<br/>`session_type: librespot\|web`<br/>`audio_remux_mode: mp4box` | .wvd file<br/>MP4Box<br/>mp4decrypt |
 | | `audio_quality: aac-medium\|aac-high`<br/>`session_type: librespot\|web`<br/>`audio_remux_mode: mp4decrypt` | .wvd file<br/>mp4decrypt |
+| | `audio_quality: aac-medium\|aac-high`<br/>`session_type: desktop`<br/>`audio_remux_mode: ffmpeg` | Spotify DLL<br/>FFmpeg |
+| | `audio_quality: aac-medium\|aac-high`<br/>`session_type: desktop`<br/>`audio_remux_mode: mp4box` | Spotify DLL<br/>MP4Box<br/>mp4decrypt |
+| | `audio_quality: aac-medium\|aac-high`<br/>`session_type: desktop`<br/>`audio_remux_mode: mp4decrypt` | Spotify DLL<br/>mp4decrypt |
 | **Songs in FLAC Quality** | `audio_quality: flac-mp4\|flac-mp4-24`<br/>`session_type: librespot\|web`<br/>`audio_remux_mode: ffmpeg` | **L1-certified** .wvd file<br/>FFmpeg |
 | | `audio_quality: flac-flac\|flac-flac-24`<br/>`session_type: desktop` | Spotify DLL |
+| | `audio_quality: flac-mp4\|flac-mp4-24`<br/>`session_type: desktop`<br/>`audio_remux_mode: ffmpeg` | Spotify DLL<br/>FFmpeg |
 | **Podcasts in Vorbis** | `audio_quality: vorbis-low\|vorbis-medium\|vorbis-high` | None |
 | **Podcasts in AAC Quality** | `audio_quality: aac-medium\|aac-high`<br/>`audio_remux_mode: ffmpeg` | FFmpeg |
 | | `audio_quality: aac-medium\|aac-high`<br/>`audio_remux_mode: mp4box` | MP4Box<br/>mp4decrypt |
