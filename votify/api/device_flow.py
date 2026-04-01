@@ -13,6 +13,7 @@ from .constants import (
     DEVICE_RESOLVE_URL,
     DEVICE_SCOPE,
     DEVICE_TOKEN_URL,
+    TIMEOUT,
 )
 
 logger = logging.getLogger(__name__)
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class SpotifyDeviceFlow:
     def __init__(self, sp_dc: str) -> None:
-        self.client = httpx.AsyncClient()
+        self.client = httpx.AsyncClient(timeout=TIMEOUT)
         self.client.cookies.set("sp_dc", sp_dc, domain=".spotify.com")
 
     async def get_token(self) -> dict:
@@ -38,7 +39,7 @@ class SpotifyDeviceFlow:
         return token_data
 
     async def _initiate_device_authorization(self) -> dict:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
             response = await client.post(
                 DEVICE_AUTH_URL,
                 data={
@@ -104,7 +105,7 @@ class SpotifyDeviceFlow:
             raise ValueError("Failed to submit user code")
 
     async def _exchange_device_code(self, device_code: str) -> dict:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
             response = await client.post(
                 DEVICE_TOKEN_URL,
                 data={

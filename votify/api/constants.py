@@ -1,3 +1,4 @@
+TIMEOUT = 30
 HOME_PAGE_URL = "https://open.spotify.com/"
 COOKIE_DOMAIN = ".spotify.com"
 CLIENT_VERSION = "1.2.87.27.ga2033a72"

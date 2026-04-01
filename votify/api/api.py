@@ -24,6 +24,7 @@ from .constants import (
     PLAYPLAY_LICENSE_API_URL,
     SEEK_TABLE_API_URL,
     SERVER_TIME_URL,
+    TIMEOUT,
     SESSION_TOKEN_URL,
     TRACK_CREDITS_API_URL,
     VIDEO_MANIFEST_API_URL,
@@ -127,6 +128,7 @@ class SpotifyApi:
         )
         self.client = httpx.AsyncClient(
             transport=self._transport,
+            timeout=TIMEOUT,
         )
 
         self.client.headers.update(
@@ -559,7 +561,10 @@ class SpotifyApi:
         return video_manifest
 
     async def get_seek_table(self, file_id: str) -> dict:
-        async with httpx.AsyncClient(transport=self._transport) as client:
+        async with httpx.AsyncClient(
+            transport=self._transport,
+            timeout=TIMEOUT,
+        ) as client:
             response = await client.get(
                 SEEK_TABLE_API_URL.format(file_id=file_id),
                 headers={
