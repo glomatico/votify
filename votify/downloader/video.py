@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from pathlib import Path
 
@@ -226,11 +227,13 @@ class SpotifyVideoDownloader(SpotifyBaseDownloader):
             else (None, None)
         )
 
-        self._download_stream(
+        await asyncio.to_thread(
+            self._download_stream,
             encrypted_video_path if decryption_key else decrypted_video_path,
             item.media.stream_info.video_track.stream_url,
         )
-        self._download_stream(
+        await asyncio.to_thread(
+            self._download_stream,
             encrypted_audio_path if decryption_key else decrypted_audio_path,
             item.media.stream_info.audio_track.stream_url,
         )
