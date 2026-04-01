@@ -66,12 +66,6 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
             stream_info = None
 
             if audio_quality.mp4:
-                if self.api.session_type not in {
-                    SessionType.LIBRESPOT,
-                    SessionType.WEB,
-                }:
-                    session_type_skipped = True
-                    continue
                 session_type_skipped = False
                 stream_info = await self._get_stream_info_web(
                     media_id=media_id,
@@ -161,6 +155,7 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
                 widevine_pssh=pssh,
                 file_format=audio_quality.file_format,
                 actual_file_format=audio_quality.actual_file_format,
+                file_id=bytes.fromhex(file_id),
             ),
         )
 
@@ -344,7 +339,7 @@ class SpotifyAudioInterface(SpotifyBaseInterface):
         )
 
         return DecryptionKey(
-            decryption_key=decryption_key,
+            decryption_key=bytes(decryption_key),
         )
 
     async def get_decryption_key(
