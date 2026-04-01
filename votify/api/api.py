@@ -201,9 +201,7 @@ class SpotifyApi:
             token_data["access_token"],
             DEVICE_CLIENT_TOKEN,
         )
-        self._authorization_expire_time = (
-            int(time.time()) + token_data["expires_in"]
-        ) * 1000
+        self._authorization_expire_time = int(time.time()) + token_data["expires_in"]
 
     async def _initialize_user_profile(self) -> None:
         self.user_profile = await self._get_user_profile() if self.sp_dc else None
