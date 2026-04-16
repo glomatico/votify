@@ -48,17 +48,17 @@ class SpotifyDownloader:
         self,
         url: str | None = None,
         auto_media_option: AutoMediaOption | None = None,
-    ) -> AsyncGenerator[DownloadItem | BaseException, None]:
+    ) -> AsyncGenerator[DownloadItem, None]:
         async for media in self.base.interface.get_media(url, auto_media_option):
-            if isinstance(media, BaseException):
-                yield media
-                continue
+            if media.error:
+                yield DownloadItem(media)
 
-            if media.tags.media_type in {
+            elif media.tags.media_type in {
                 MediaType.SONG,
                 MediaType.PODCAST,
             }:
                 yield self.audio.parse_item(media)
+
             elif media.tags.media_type in {
                 MediaType.MUSIC_VIDEO,
                 MediaType.PODCAST_VIDEO,
