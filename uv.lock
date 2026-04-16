@@ -992,7 +992,7 @@ wheels = [
 
 [[package]]
 name = "unplayplay"
-version = "0.0.1"
+version = "0.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "capstone" },
@@ -1000,9 +1000,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "unicorn" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/34/7d/c2d54a3afcd724055a5916ba69ab0cb3b4e53797fa77fc7d9607b4b72013/unplayplay-0.0.1.tar.gz", hash = "sha256:0ac6160373520971ece9cbd9b50dfa41dd4ca6a2825a84b5124a7f77a715685b", size = 1266081, upload-time = "2026-03-28T11:48:14.04Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0d/03/1765a77926485c25891fdc50308c065466c35d328d2e0a7bffbbbb5c53bb/unplayplay-0.0.2.tar.gz", hash = "sha256:af5876fc11032e05df7141575d2158f76057630006b1fae256880ca6a4c7cf49", size = 1276553, upload-time = "2026-04-16T14:38:14.391Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5f/f3/a870d8925e0018335f7581950e3e9d1829f46cfabb5d3f97ac9afb9c4345/unplayplay-0.0.1-py3-none-any.whl", hash = "sha256:d5c58b0d02f021b0af2fb338dd74597e905afa59725347ef43434e0590035772", size = 1365553, upload-time = "2026-03-28T11:48:12.699Z" },
+    { url = "https://files.pythonhosted.org/packages/0c/76/71ee76bf2152e8a0984130e0e857717ecfd60804daa42cc6d5a839d6a5a4/unplayplay-0.0.2-py3-none-any.whl", hash = "sha256:94bd29528df534c59b6cec095afe4341ce6da6d75e5de8a8cb92c29d0be5f83b", size = 1374955, upload-time = "2026-04-16T14:38:12.89Z" },
 ]
 
 [[package]]
@@ -1016,7 +1016,7 @@ wheels = [
 
 [[package]]
 name = "votify"
-version = "1.9.7"
+version = "1.9.8"
 source = { virtual = "." }
 dependencies = [
     { name = "async-lru" },
@@ -1065,7 +1065,7 @@ requires-dist = [
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.3.0" },
     { name = "python-dotenv", marker = "extra == 'dev'", specifier = ">=1.2.1" },
     { name = "pywidevine", specifier = ">=1.9.0" },
-    { name = "unplayplay", specifier = ">=0.0.1" },
+    { name = "unplayplay", specifier = ">=0.0.2" },
     { name = "yt-dlp", specifier = ">=2026.2.4" },
 ]
 provides-extras = ["librespot", "dev"]
