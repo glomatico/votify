@@ -173,11 +173,18 @@ class SpotifyInterface:
                 track_data = item["track"]
                 track_id = track_data["uri"].split(":")[-1]
 
-                yield await self._get_track_media(
-                    track_id=track_id,
-                    album_data=album_data,
-                    album_items=album_items,
-                )
+                try:
+                    yield await self._get_track_media(
+                        track_id=track_id,
+                        album_data=album_data,
+                        album_items=album_items,
+                    )
+                except Exception as e:
+                    yield SpotifyMedia(
+                        media_id=track_id,
+                        media_metadata=track_data,
+                        error=e,
+                    )
 
     async def _get_show_media(
         self,
@@ -195,11 +202,18 @@ class SpotifyInterface:
             for item in show_items:
                 episode_id = item["entity"]["_uri"].split(":")[-1]
 
-                yield await self._get_episode_media(
-                    episode_id=episode_id,
-                    show_data=show_data,
-                    show_items=show_items,
-                )
+                try:
+                    yield await self._get_episode_media(
+                        episode_id=episode_id,
+                        show_data=show_data,
+                        show_items=show_items,
+                    )
+                except Exception as e:
+                    yield SpotifyMedia(
+                        media_id=episode_id,
+                        media_metadata=item["entity"],
+                        error=e,
+                    )
 
     async def _get_playlist_media(
         self,
@@ -229,25 +243,33 @@ class SpotifyInterface:
                 track_data = item["itemV2"]["data"]
                 track_id = track_data["uri"].split(":")[-1]
 
-                if track_data["__typename"] == "Track":
-                    media = await self._get_track_media(
-                        track_id=track_id,
-                    )
-                elif track_data["__typename"] == "Episode":
-                    media = await self._get_episode_media(
-                        episode_id=track_id,
-                    )
-                else:
-                    media = SpotifyMedia(
-                        media_id=track_id,
-                        media_metadata=track_data,
-                        error=VotifyMediaNotFoundException(track_id),
-                    )
+                base_media = SpotifyMedia(
+                    media_id=track_id,
+                    media_metadata=track_data,
+                )
+                media = None
 
-                media.playlist_metadata = playlist_data
-                media.playlist_tags = self.base.get_playlist_tags(playlist_data, index)
+                try:
+                    if track_data["__typename"] == "Track":
+                        media = await self._get_track_media(
+                            track_id=track_id,
+                        )
+                    elif track_data["__typename"] == "Episode":
+                        media = await self._get_episode_media(
+                            episode_id=track_id,
+                        )
+                    else:
+                        base_media.error = VotifyMediaNotFoundException(track_id)
 
-                yield media
+                    media.playlist_metadata = playlist_data
+                    media.playlist_tags = self.base.get_playlist_tags(
+                        playlist_data,
+                        index,
+                    )
+                except Exception as e:
+                    base_media.error = e
+
+                yield media or base_media
 
     async def _get_artist_media(
         self,
@@ -514,22 +536,27 @@ class SpotifyInterface:
                 track_data = item["track"]["data"]
                 track_id = item["track"]["_uri"].split(":")[-1]
 
-                if track_data["__typename"] == "Track":
-                    media = await self._get_track_media(
-                        track_id=track_id,
-                    )
-                elif track_data["__typename"] == "Episode":
-                    media = await self._get_episode_media(
-                        episode_id=track_id,
-                    )
-                else:
-                    media = SpotifyMedia(
-                        media_id=track_id,
-                        media_metadata=track_data,
-                        error=VotifyMediaNotFoundException(track_id),
-                    )
+                base_media = SpotifyMedia(
+                    media_id=track_id,
+                    media_metadata=track_data,
+                )
+                media = None
 
-                yield media
+                try:
+                    if track_data["__typename"] == "Track":
+                        media = await self._get_track_media(
+                            track_id=track_id,
+                        )
+                    elif track_data["__typename"] == "Episode":
+                        media = await self._get_episode_media(
+                            episode_id=track_id,
+                        )
+                    else:
+                        base_media.error = VotifyMediaNotFoundException(track_id)
+                except Exception as e:
+                    base_media.error = e
+
+                yield media or base_media
 
             offset += len(items)
 
