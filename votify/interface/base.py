@@ -1,5 +1,6 @@
 import datetime
 import logging
+from pathlib import Path
 
 from async_lru import alru_cache
 from pywidevine import PSSH, Cdm, Device
@@ -73,7 +74,7 @@ class SpotifyBaseInterface:
 
     def _initialize_key_emu(self) -> None:
         if self.spotify_dll_path:
-            self.key_emu = KeyEmu(self.spotify_dll_path)
+            self.key_emu = KeyEmu(Path(self.spotify_dll_path))
         else:
             self.key_emu = None
 
