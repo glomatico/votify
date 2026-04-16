@@ -50,11 +50,18 @@ class SpotifyInterface:
         track_response = await self.base.api.get_track(track_id)
         track_data = track_response["data"]["trackUnion"]
 
+        base_media = SpotifyMedia(
+            media_id=track_id,
+            media_metadata=track_data,
+        )
+
         if track_data["__typename"] != "Track":
-            return VotifyMediaNotFoundException(track_id, track_data)
+            base_media.error = VotifyMediaNotFoundException(track_id)
+            return base_media
 
         if not track_data["playability"]["playable"]:
-            return VotifyMediaUnstreamableException(track_id, track_data)
+            base_media.error = VotifyMediaUnstreamableException(track_id)
+            return base_media
 
         if self.flat_filter:
             flat_filter_result = self.flat_filter(track_data)
@@ -62,11 +69,11 @@ class SpotifyInterface:
                 flat_filter_result = await flat_filter_result
 
             if flat_filter_result:
-                return VotifyMediaFlatFilterException(
+                base_media.error = VotifyMediaFlatFilterException(
                     track_id,
-                    track_data,
                     flat_filter_result,
                 )
+                return base_media
 
         try:
             if (
@@ -93,7 +100,8 @@ class SpotifyInterface:
                 album_items=album_items,
             )
         except BaseException as e:
-            return e
+            base_media.error = e
+            return base_media
 
     async def _get_episode_media(
         self,
@@ -104,11 +112,18 @@ class SpotifyInterface:
         episode_response = await self.base.api.get_episode(episode_id)
         episode_data = episode_response["data"]["episodeUnionV2"]
 
+        base_media = SpotifyMedia(
+            media_id=episode_id,
+            media_metadata=episode_data,
+        )
+
         if episode_data["__typename"] != "Episode":
-            return VotifyMediaNotFoundException(episode_id, episode_data)
+            base_media.error = VotifyMediaNotFoundException(episode_id)
+            return base_media
 
         if not episode_data["playability"]["playable"]:
-            return VotifyMediaUnstreamableException(episode_id, episode_data)
+            base_media.error = VotifyMediaUnstreamableException(episode_id)
+            return base_media
 
         if self.flat_filter:
             flat_filter_result = self.flat_filter(episode_data)
@@ -116,11 +131,11 @@ class SpotifyInterface:
                 flat_filter_result = await flat_filter_result
 
             if flat_filter_result:
-                return VotifyMediaFlatFilterException(
+                base_media.error = VotifyMediaFlatFilterException(
                     episode_id,
-                    episode_data,
                     flat_filter_result,
                 )
+                return base_media
 
         try:
             if "VIDEO" in episode_data["mediaTypes"] and self.prefer_video:
@@ -136,7 +151,8 @@ class SpotifyInterface:
                 show_items=show_items,
             )
         except BaseException as e:
-            return e
+            base_media.error = e
+            return base_media
 
     async def _get_album_media(
         self,
@@ -147,7 +163,11 @@ class SpotifyInterface:
         )
 
         if album_data["__typename"] != "Album":
-            yield VotifyMediaNotFoundException(media_id, album_data)
+            yield SpotifyMedia(
+                media_id=media_id,
+                media_metadata=album_data,
+                error=VotifyMediaNotFoundException(media_id),
+            )
         else:
             for item in album_items:
                 track_data = item["track"]
@@ -166,7 +186,11 @@ class SpotifyInterface:
         show_data, show_items = await self.base.get_show_data_cached(show_id=media_id)
 
         if show_data["__typename"] != "Podcast":
-            yield VotifyMediaNotFoundException(media_id, show_data)
+            yield SpotifyMedia(
+                media_id=media_id,
+                media_metadata=show_data,
+                error=VotifyMediaNotFoundException(media_id),
+            )
         else:
             for item in show_items:
                 episode_id = item["entity"]["_uri"].split(":")[-1]
@@ -185,7 +209,11 @@ class SpotifyInterface:
         playlist_data = playlist_response["data"]["playlistV2"]
 
         if playlist_data["__typename"] != "Playlist":
-            yield VotifyMediaNotFoundException(media_id, playlist_data)
+            yield SpotifyMedia(
+                media_id=media_id,
+                media_metadata=playlist_data,
+                error=VotifyMediaNotFoundException(media_id),
+            )
         else:
             playlist_items = playlist_data["content"]["items"]
             while len(playlist_items) < playlist_data["content"]["totalCount"]:
@@ -210,8 +238,11 @@ class SpotifyInterface:
                         episode_id=track_id,
                     )
                 else:
-                    yield VotifyMediaNotFoundException(track_id, track_data)
-                    return
+                    media = SpotifyMedia(
+                        media_id=track_id,
+                        media_metadata=track_data,
+                        error=VotifyMediaNotFoundException(track_id),
+                    )
 
                 media.playlist_metadata = playlist_data
                 media.playlist_tags = self.base.get_playlist_tags(playlist_data, index)
@@ -279,14 +310,20 @@ class SpotifyInterface:
         artist_data = artist_response["data"]["artistUnion"]
 
         if artist_data["__typename"] != "Artist":
-            yield VotifyMediaNotFoundException(media_id, artist_data)
-            return
+            yield SpotifyMedia(
+                media_id=media_id,
+                media_metadata=artist_data,
+                error=VotifyMediaNotFoundException(media_id),
+            )
 
         top_tracks_items = artist_data["discography"]["topTracks"]["items"]
 
         if not top_tracks_items:
-            yield VotifyMediaNotFoundException(media_id, artist_data)
-            return
+            yield SpotifyMedia(
+                media_id=media_id,
+                media_metadata=artist_data,
+                error=VotifyMediaNotFoundException(media_id),
+            )
 
         if select_all:
             selection = top_tracks_items
@@ -324,8 +361,11 @@ class SpotifyInterface:
         videos_data = videos_response["data"]["artistUnion"]
 
         if videos_data["__typename"] != "Artist":
-            yield VotifyMediaNotFoundException(media_id, videos_data)
-            return
+            yield SpotifyMedia(
+                media_id=media_id,
+                media_metadata=videos_data,
+                error=VotifyMediaNotFoundException(media_id),
+            )
 
         related_items = videos_data["relatedMusicVideos"]["items"]
         unmapped_items = videos_data["unmappedMusicVideos"]["items"]
@@ -346,8 +386,11 @@ class SpotifyInterface:
         video_items = related_items + unmapped_items
 
         if not video_items:
-            yield VotifyMediaNotFoundException(media_id, videos_data)
-            return
+            yield SpotifyMedia(
+                media_id=media_id,
+                media_metadata=videos_data,
+                error=VotifyMediaNotFoundException(media_id),
+            )
 
         if select_all:
             selection = video_items
@@ -391,8 +434,11 @@ class SpotifyInterface:
         albums_data = albums_response["data"]["artistUnion"]
 
         if albums_data["__typename"] != "Artist":
-            yield VotifyMediaNotFoundException(media_id, albums_data)
-            return
+            yield SpotifyMedia(
+                media_id=media_id,
+                media_metadata=albums_data,
+                error=VotifyMediaNotFoundException(media_id),
+            )
 
         album_items = albums_data["discography"][key]["items"]
         while len(album_items) < albums_data["discography"][key]["totalCount"]:
@@ -411,8 +457,11 @@ class SpotifyInterface:
         ]
 
         if not album_items_filtered:
-            yield VotifyMediaNotFoundException(media_id, albums_data)
-            return
+            yield SpotifyMedia(
+                media_id=media_id,
+                media_metadata=albums_data,
+                error=VotifyMediaNotFoundException(media_id),
+            )
 
         if select_all:
             selection = album_items_filtered
@@ -452,8 +501,11 @@ class SpotifyInterface:
             liked_tracks_data = liked_tracks_response["data"]["me"]["library"]["tracks"]
 
             if liked_tracks_data["__typename"] != "UserLibraryTrackPage":
-                yield VotifyMediaNotFoundException("liked-tracks", liked_tracks_data)
-                return
+                yield SpotifyMedia(
+                    media_id="liked-tracks",
+                    media_metadata=liked_tracks_data,
+                    error=VotifyMediaNotFoundException("liked-tracks"),
+                )
 
             total = liked_tracks_data["totalCount"]
             items = liked_tracks_data["items"]
@@ -471,7 +523,11 @@ class SpotifyInterface:
                         episode_id=track_id,
                     )
                 else:
-                    media = VotifyMediaNotFoundException(track_id, track_data)
+                    media = SpotifyMedia(
+                        media_id=track_id,
+                        media_metadata=track_data,
+                        error=VotifyMediaNotFoundException(track_id),
+                    )
 
                 yield media
 
@@ -489,13 +545,12 @@ class SpotifyInterface:
             url_info = self.base.parse_url_info(url)
 
             if not url_info or url_info.media_type in self.base.disallowed_media_types:
-                yield VotifyUnsupportedMediaTypeException(
-                    getattr(
-                        url_info,
-                        "media_type",
-                        "Null URL",
-                    ),
+                media_type = getattr(
+                    url_info,
+                    "media_type",
+                    "Null URL",
                 )
+                raise VotifyUnsupportedMediaTypeException(media_type)
             elif url_info.media_type == "track":
                 yield await self._get_track_media(url_info.media_id)
             elif url_info.media_type == "episode":
