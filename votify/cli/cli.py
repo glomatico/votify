@@ -216,26 +216,11 @@ async def main(config: CliConfig):
             )
             try:
                 item = await download_queue.__anext__()
-                if isinstance(item, BaseException):
-                    raise item
             except StopAsyncIteration:
                 break
             except VotifyUrlParseException as e:
                 logger.error(url_progress + f" {str(e)}")
                 break
-            except VotifyMediaException as e:
-                media_title = "Unknown Title"
-                if e.media_metadata and e.media_metadata.get("name"):
-                    media_title = e.media_metadata["name"]
-
-                if isinstance(e, VotifyMediaFlatFilterException):
-                    e = VotifyMediaFileExists(media_path=e.result)
-
-                logger.warning(
-                    download_queue_progress + f' Skipping "{media_title}": {str(e)}'
-                )
-                download_index += 1
-                continue
             except Exception as e:
                 error_count += 1
                 logger.error(
@@ -245,23 +230,25 @@ async def main(config: CliConfig):
                 download_index += 1
                 continue
 
-            media_title = item.media.media_metadata["name"] if item else "Unknown Title"
-
             try:
+                media_title = item.media.media_metadata.get("name", "Unknown Title")
+
+                if item.media.error:
+                    raise item.media.error
+
                 logger.info(download_queue_progress + f' Downloading "{media_title}"')
 
                 await downloader.download(item)
+            except VotifyDownloaderException as e:
+                logger.warning(
+                    download_queue_progress + f' Skipping "{media_title}": {str(e)}'
+                )
             except Exception as e:
-                if isinstance(e, VotifyDownloaderException):
-                    logger.warning(
-                        download_queue_progress + f' Skipping "{media_title}": {str(e)}'
-                    )
-                else:
-                    error_count += 1
-                    logger.error(
-                        download_queue_progress + f' Error downloading "{media_title}"',
-                        exc_info=not config.no_exceptions,
-                    )
+                error_count += 1
+                logger.error(
+                    download_queue_progress + f' Error downloading "{media_title}"',
+                    exc_info=not config.no_exceptions,
+                )
             finally:
                 download_index += 1
                 if (
