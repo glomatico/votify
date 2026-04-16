@@ -181,7 +181,8 @@ class MediaLyrics:
 @dataclass
 class SpotifyMedia:
     media_id: str
-    media_metadata: dict | None = None
+    media_metadata: dict
+    error: BaseException | None = None
     album_metadata: dict | None = None
     show_metadata: dict | None = None
     playlist_metadata: dict | None = None
