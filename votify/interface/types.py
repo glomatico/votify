@@ -67,6 +67,7 @@ class MediaTags:
     title: str = None
     track: int = None
     track_total: int = None
+    upc: str = None
     url: str = None
 
     def as_mp4_tags(self, date_format: str = None) -> dict[str, list[Any]]:
@@ -126,6 +127,9 @@ class MediaTags:
             "\xa9nam": self.title,
             "trkn": track_mp4,
             "\xa9url": self.url,
+            "----:com.apple.iTunes:UPC": (
+                MP4FreeForm(self.upc.encode("utf-8")) if self.upc is not None else None
+            ),
         }
         return {
             k: ([v] if not isinstance(v, (list, bool)) else v)
@@ -163,6 +167,7 @@ class MediaTags:
             "TRACKNUMBER": [str(self.track)],
             "TRACKTOTAL": [str(self.track_total)],
             "URL": [self.url],
+            "UPC": [self.upc],
         }
         return {k: v for k, v in flac_tags.items() if v[0] is not None}
 
