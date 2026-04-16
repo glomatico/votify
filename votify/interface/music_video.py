@@ -88,9 +88,7 @@ class SpotifyMusicVideoInterface(SpotifyVideoInterface):
                     track_data["albumOfTrack"]["uri"].split(":")[-1]
                 )
 
-        media = SpotifyMedia(track_data["uri"].split(":")[-1])
-
-        media.media_metadata = track_data
+        media = SpotifyMedia(track_data["uri"].split(":")[-1], track_data)
 
         media.tags = await self.parse_tags(track_data, album_data)
 

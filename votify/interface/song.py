@@ -50,9 +50,8 @@ class SpotifySongInterface(SpotifyAudioInterface):
                     track_data["albumOfTrack"]["uri"].split(":")[-1]
                 )
 
-        media = SpotifyMedia(track_data["uri"].split(":")[-1])
+        media = SpotifyMedia(track_data["uri"].split(":")[-1], track_data)
 
-        media.media_metadata = track_data
         media.album_metadata = album_data
         media.lyrics = await self.get_lyrics(media.media_id)
         media.tags = await self.parse_tags(
