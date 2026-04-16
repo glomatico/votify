@@ -250,6 +250,7 @@ Tags usable in template folder/file options and in the `exclude_tags` list:
 - `producer`, `publisher`
 - `rating`
 - `title`, `track`, `track_total`
+- `upc`
 
 Tags usable in the `exclude_tags` list only:
 
