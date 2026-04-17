@@ -1,3 +1,4 @@
 TEMP_PATH_TEMPLATE = "votify_temp_{}"
 ILLEGAL_CHARS_RE = r'[\\/:*?"<>|;]'
 ILLEGAL_CHAR_REPLACEMENT = "_"
+MAX_PATH_PART_BYTES = 255
