@@ -18,7 +18,12 @@ from ..interface.enums import MediaType
 from ..interface.interface import SpotifyInterface
 from ..interface.types import MediaTags, PlaylistTags
 from ..utils import CustomStringFormatter
-from .constants import ILLEGAL_CHAR_REPLACEMENT, ILLEGAL_CHARS_RE, TEMP_PATH_TEMPLATE
+from .constants import (
+    ILLEGAL_CHAR_REPLACEMENT,
+    ILLEGAL_CHARS_RE,
+    MAX_PATH_PART_BYTES,
+    TEMP_PATH_TEMPLATE,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -104,15 +109,36 @@ class SpotifyBaseDownloader:
         )
 
         if file_ext is None:
-            sanitized_string = sanitized_string[: self.truncate]
+            sanitized_string = self._truncate_sanitized_part(
+                sanitized_string, self.truncate
+            )
             if sanitized_string.endswith("."):
                 sanitized_string = sanitized_string[:-1] + ILLEGAL_CHAR_REPLACEMENT
         else:
             if self.truncate is not None:
-                sanitized_string = sanitized_string[: self.truncate - len(file_ext)]
+                sanitized_string = self._truncate_sanitized_part(
+                    sanitized_string,
+                    self.truncate - len(file_ext),
+                )
+            else:
+                sanitized_string = self._truncate_sanitized_part(
+                    sanitized_string,
+                    MAX_PATH_PART_BYTES - len(file_ext.encode("utf-8")),
+                )
             sanitized_string += file_ext
 
         return sanitized_string.strip()
+
+    def _truncate_sanitized_part(self, value: str, max_length: int | None) -> str:
+        if max_length is not None:
+            max_length = max(max_length, 0)
+            value = value[:max_length]
+
+        encoded_value = value.encode("utf-8")
+        if len(encoded_value) <= MAX_PATH_PART_BYTES:
+            return value
+
+        return encoded_value[:MAX_PATH_PART_BYTES].decode("utf-8", errors="ignore")
 
     def get_final_path(
         self,
