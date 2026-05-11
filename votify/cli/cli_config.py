@@ -126,6 +126,14 @@ class CliConfig:
             ),
         ),
     ]
+    limit: Annotated[
+        int | None,
+        option(
+            "--limit",
+            help="Maximum number of URLs to process",
+            default=None,
+        ),
+    ]
     # API specific options
     session_type: Annotated[
         SessionType,
