@@ -188,6 +188,7 @@ The file is created automatically on first run. Command-line arguments override 
 | `--no-exceptions` / `no_exceptions` | Don't print exceptions | `false` |
 | `--no-config-file`, `-n` / - | Don't use a config file | `false` |
 | `--database-path` / `database_path` | Path to the SQLite database file for registering downloaded media | `null` |
+| `--limit` / `limit` | Maximum number of URLs to process | `null` |
 | `--auto-media-option` / `auto_media_option` | Auto media option | `null` |
 | **Spotify** | | |
 | `--session-type` / `session_type` | Session type to use | `librespot` |

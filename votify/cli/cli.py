@@ -204,6 +204,9 @@ async def main(config: CliConfig):
 
     error_count = 0
     for url_index, url in enumerate(urls, 1):
+        if config.limit is not None and url_index > config.limit:
+            logger.info(f"Reached limit of {config.limit} URL(s), stopping")
+            break
         url_progress = click.style(f"[URL {url_index}/{len(urls)}]", dim=True)
         logger.info(url_progress + f' Processing "{url}"')
         download_queue = downloader.get_download_item(url, config.auto_media_option)
