@@ -37,5 +37,5 @@ DEVICE_TOKEN_URL = "https://accounts.spotify.com/api/token"
 DEVICE_RESOLVE_URL = "https://accounts.spotify.com/pair/api/resolve"
 DEVICE_CLIENT_ID = "65b708073fc0480ea92a077233ca87bd"  # Spotify for Desktop
 DEVICE_SCOPE = "app-remote-control,playlist-modify,playlist-modify-private,playlist-modify-public,playlist-read,playlist-read-collaborative,playlist-read-private,streaming,transfer-auth-session,ugc-image-upload,user-follow-modify,user-follow-read,user-library-modify,user-library-read,user-modify,user-modify-playback-state,user-modify-private,user-personalized,user-read-birthdate,user-read-currently-playing,user-read-email,user-read-play-history,user-read-playback-position,user-read-playback-state,user-read-private,user-read-recently-played,user-top-read"
-DEVICE_FLOW_USER_AGENT = "Spotify/128600502 Win32_x86_64/0 (PC desktop)"
-DEVICE_CLIENT_TOKEN = "AADYATyeSD/y5/hrnY8iTzYaPodQdTzz/ffPg5WV8tD5KN53Yi/93r5TSMLRYo4aQCNgzl/1ckCkhFbOjPBWigpOdpvOZxfgJ3mov8/1IBpg05yWPKxwB7xV8SjNIlphPfj9LbrfbLZczrdYD0Wa++z+7sioGtI+m2GcgkOiRQgFqwEn8kP/PkIc/vHADZ1Zs3SZKif+5pXLlJ/0SDr8eZ+xECOXtfCw6jBAkl4r+wOMFrAMmE2JuLGFLg5PDD0="
+DEVICE_FLOW_USER_AGENT = "Spotify/128700414 Win32_x86_64/Windows 10 (10.0.26100; x64)"
+DEVICE_CLIENT_TOKEN = "AACGR5f9VPMzpwuXCfxLbnOaoBIv84PHvFosqXCe+MGx58b89UuUejjOoKC34lVsZYXREPW2yd29t6WY2INhRNWWqZn13bGfmoGowxTumhU5QT7dXvmfIgh0EoF3liPLY6p1+655XJzvtkOUtM6eIZhuJRF2rjFdxePi5ft5rulsB3pO04M6v9MHZxEiAdfN8hBCOZuzggdECz8cc0U54cHFZfSuraBldNGR9sEnhhIyYIYJ9MCMAo6261/TiNCL2g=="
