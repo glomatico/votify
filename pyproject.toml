@@ -15,6 +15,7 @@ dependencies = [
     "inquirerpy>=0.3.4",
     "mutagen>=1.47.0",
     "pillow>=12.1.0",
+    "protobuf>=6.33.5",
     "pybase62>=1.0.0",
     "pycryptodome>=3.23.0",
     "pywidevine>=1.9.0",
@@ -30,7 +31,7 @@ votify = "votify.cli.cli:main"
 
 [project.optional-dependencies]
 librespot = [
-    "librespot>=0.0.1",
+    "librespot>=0.0.1,<0.0.2",
 ]
 dev = [
     "asynctest>=0.13.0",
