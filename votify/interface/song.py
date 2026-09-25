@@ -175,22 +175,32 @@ class SpotifySongInterface(SpotifyAudioInterface):
         tracks: list[dict],
         track_uri: str,
     ) -> tuple[int, int, int]:
-        track_numbers = []
-        current_track_index = None
+        track_numbers = [item["track"]["trackNumber"] for item in tracks]
 
-        for i, item in enumerate(tracks):
-            track_num = item["track"]["trackNumber"]
-            track_numbers.append(track_num)
-            if item["track"]["uri"] == track_uri:
-                current_track_index = i
+        # Album tracksV2 items carry discNumber, but albumOfTrack.tracks from
+        # getTrack does not. Without it, assume the items are in album order
+        # and start a new disc wherever the track number goes down.
+        disc_numbers = [item["track"].get("discNumber") for item in tracks]
+        if not all(isinstance(disc_num, int) for disc_num in disc_numbers):
+            disc_numbers = []
+            disc = 1
+            for i, track_num in enumerate(track_numbers):
+                if i > 0 and track_num < track_numbers[i - 1]:
+                    disc += 1
+                disc_numbers.append(disc)
 
-        track_total = max(track_numbers)
-        disc_total = len(track_numbers) // track_total
+        current_track_index = next(
+            i for i, item in enumerate(tracks) if item["track"]["uri"] == track_uri
+        )
 
-        disc = 1
-        for i in range(1, current_track_index + 1):
-            if track_numbers[i] < track_numbers[i - 1]:
-                disc += 1
+        # Discs can have different track counts, so track_total is per disc.
+        disc = disc_numbers[current_track_index]
+        disc_total = max(disc_numbers)
+        track_total = max(
+            track_num
+            for track_num, track_disc in zip(track_numbers, disc_numbers)
+            if track_disc == disc
+        )
 
         return disc, disc_total, track_total
 
