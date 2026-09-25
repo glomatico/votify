@@ -177,6 +177,10 @@ class SpotifyApi:
             )
 
     async def _initialize_authorization_with_totp(self) -> None:
+        # On refresh, drop the expired headers from the previous session,
+        # otherwise the client token endpoint rejects the request with 400.
+        self.client.headers.pop("authorization", None)
+        self.client.headers.pop("client-token", None)
         self.totp = await Totp.initialize()
         session_info = await self._get_session_token()
         client_token = await self._get_client_token(session_info["clientId"])
