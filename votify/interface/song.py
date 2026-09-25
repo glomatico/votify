@@ -36,19 +36,11 @@ class SpotifySongInterface(SpotifyAudioInterface):
             track_id = track_data["uri"].split(":")[-1]
 
         if not album_data:
-            if (
-                track_data["albumOfTrack"].get("tracks")
-                and len(track_data["albumOfTrack"]["tracks"]["items"])
-                == track_data["albumOfTrack"]["tracks"]["totalCount"]
-            ):
-                album_data, album_items = (
-                    track_data["albumOfTrack"],
-                    track_data["albumOfTrack"]["tracks"]["items"],
-                )
-            else:
-                album_data, album_items = await self.get_album_data_cached(
-                    track_data["albumOfTrack"]["uri"].split(":")[-1]
-                )
+            # albumOfTrack.tracks items only have trackNumber and uri, while
+            # _parse_disc_info needs discNumber from the album's tracksV2.
+            album_data, album_items = await self.get_album_data_cached(
+                track_data["albumOfTrack"]["uri"].split(":")[-1]
+            )
 
         media = SpotifyMedia(track_data["uri"].split(":")[-1], track_data)
 
@@ -175,22 +167,18 @@ class SpotifySongInterface(SpotifyAudioInterface):
         tracks: list[dict],
         track_uri: str,
     ) -> tuple[int, int, int]:
-        track_numbers = []
-        current_track_index = None
-
-        for i, item in enumerate(tracks):
-            track_num = item["track"]["trackNumber"]
-            track_numbers.append(track_num)
-            if item["track"]["uri"] == track_uri:
-                current_track_index = i
-
-        track_total = max(track_numbers)
-        disc_total = len(track_numbers) // track_total
-
-        disc = 1
-        for i in range(1, current_track_index + 1):
-            if track_numbers[i] < track_numbers[i - 1]:
-                disc += 1
+        # Discs can have different track counts, so track_total is per disc.
+        disc = next(
+            item["track"]["discNumber"]
+            for item in tracks
+            if item["track"]["uri"] == track_uri
+        )
+        disc_total = max(item["track"]["discNumber"] for item in tracks)
+        track_total = max(
+            item["track"]["trackNumber"]
+            for item in tracks
+            if item["track"]["discNumber"] == disc
+        )
 
         return disc, disc_total, track_total
 
