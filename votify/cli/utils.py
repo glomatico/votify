@@ -56,7 +56,7 @@ class CustomLoggerFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         return logging.Formatter(
             (
-                click.style(self.base_format, **self.format_colors.get(record.levelno))
+                click.style(self.base_format, **self.format_colors.get(record.levelno, {}))
                 if self.use_colors
                 else self.base_format
             )
